@@ -1,0 +1,18 @@
+{
+  "regions": ["sin1"],
+  "functions": {
+    "app/api/generate-task/route.ts": {
+      "maxDuration": 120
+    }
+  },
+  "crons": [
+    {
+      "path": "/api/cron/purge-data",
+      "schedule": "0 0 1 * *"
+    },
+    {
+      "path": "/api/cron/cleanup-temp-blobs",
+      "schedule": "0 3 * * *"
+    }
+  ]
+}

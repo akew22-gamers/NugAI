@@ -1,0 +1,205 @@
+import { NextRequest, NextResponse } from 'next/server'
+import { auth } from '@/lib/auth'
+import { prisma } from '@/lib/prisma'
+import { generate } from '@/lib/ai'
+import { combinedSearch, formatSearchResultsForPrompt } from '@/lib/search'
+import { buildSystemPrompt, buildUserPrompt } from '@/lib/prompts/task-generation'
+import { isProviderConfigured } from '@/lib/ai'
+
+interface GenerateTaskRequest {
+  task_type: 'DISCUSSION' | 'ASSIGNMENT'
+  course_id: string | null
+  course_name: string
+  module_book_title: string
+  tutor_name: string
+  min_words_target: number
+  questions: string[]
+}
+
+async function checkQuota(userId: string): Promise<{ canProceed: boolean; error?: string }> {
+  const today = new Date().toISOString().split('T')[0]
+
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: {
+      subscription_tier: true,
+      daily_usage_count: true,
+      last_usage_date: true,
+    },
+  })
+
+  if (!user) {
+    return { canProceed: false, error: 'User not found' }
+  }
+
+  if (user.last_usage_date?.toISOString().split('T')[0] !== today) {
+    await prisma.user.update({
+      where: { id: userId },
+      data: {
+        daily_usage_count: 0,
+        last_usage_date: today,
+      },
+    })
+    return { canProceed: true }
+  }
+
+  if (user.subscription_tier === 'PREMIUM') {
+    return { canProceed: true }
+  }
+
+  if (user.daily_usage_count >= 5) {
+    return { canProceed: false, error: 'Daily quota exceeded. Upgrade to Premium for unlimited access.' }
+  }
+
+  return { canProceed: true }
+}
+
+export async function POST(request: NextRequest) {
+  const session = await auth()
+
+  if (!session || !session.user) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
+  if (session.user.role !== 'USER') {
+    return NextResponse.json({ error: 'Only users can generate tasks' }, { status: 403 })
+  }
+
+  try {
+    const body: GenerateTaskRequest = await request.json()
+
+    if (!body.questions || body.questions.length === 0) {
+      return NextResponse.json({ error: 'Questions are required' }, { status: 400 })
+    }
+
+    if (!body.course_name || !body.module_book_title) {
+      return NextResponse.json({ error: 'Course info is required' }, { status: 400 })
+    }
+
+    if (!(await isProviderConfigured())) {
+      return NextResponse.json(
+        { error: 'AI provider not configured. Contact admin.' },
+        { status: 503 }
+      )
+    }
+
+    const quotaCheck = await checkQuota(session.user.id)
+    if (!quotaCheck.canProceed) {
+      return NextResponse.json({ error: quotaCheck.error }, { status: 403 })
+    }
+
+    const profile = await prisma.studentProfile.findUnique({
+      where: { user_id: session.user.id },
+    })
+
+    if (!profile) {
+      return NextResponse.json({ error: 'Profile not found' }, { status: 404 })
+    }
+
+    const searchQuery = `${body.course_name} ${body.module_book_title}`
+    const searchResults = await combinedSearch({
+      query: searchQuery,
+      maxResults: 5,
+    })
+    const searchContext = formatSearchResultsForPrompt(searchResults.results)
+
+    const answers: string[] = []
+    let totalTokens = 0
+
+    for (const question of body.questions) {
+      const systemPrompt = buildSystemPrompt({
+        study_program: profile.study_program,
+        university_name: profile.university_name,
+        course_name: body.course_name,
+        module_book_title: body.module_book_title,
+        tutor_name: body.tutor_name,
+        min_words_target: body.min_words_target,
+        task_type: body.task_type,
+        question_text: question,
+        search_context: searchContext,
+      })
+
+      const userPrompt = buildUserPrompt({
+        study_program: profile.study_program,
+        university_name: profile.university_name,
+        course_name: body.course_name,
+        module_book_title: body.module_book_title,
+        tutor_name: body.tutor_name,
+        min_words_target: body.min_words_target,
+        task_type: body.task_type,
+        question_text: question,
+        search_context: searchContext,
+      })
+
+      const result = await generate({
+        systemPrompt,
+        userPrompt,
+        maxTokens: body.min_words_target * 2,
+        temperature: 0.7,
+      })
+
+      answers.push(result.text)
+      totalTokens += result.usage?.totalTokens || 0
+    }
+
+    const taskSession = await prisma.taskSession.create({
+      data: {
+        user_id: session.user.id,
+        course_id: body.course_id,
+        task_type: body.task_type,
+        min_words_target: body.min_words_target,
+        course_name_snapshot: body.course_name,
+        module_book_title_snapshot: body.module_book_title,
+        tutor_name_snapshot: body.tutor_name,
+        task_items: {
+          create: body.questions.map((question, index) => ({
+            question_text: question,
+            answer_text: answers[index],
+            status: 'COMPLETED',
+            references_used: searchResults.results.length > 0
+              ? JSON.parse(JSON.stringify({ references: searchResults.results.slice(0, 2) }))
+              : undefined,
+          })),
+        },
+      },
+      include: {
+        task_items: true,
+      },
+    })
+
+    await prisma.$transaction([
+      prisma.user.update({
+        where: { id: session.user.id },
+        data: {
+          daily_usage_count: { increment: 1 },
+          last_usage_date: new Date().toISOString().split('T')[0],
+        },
+      }),
+      prisma.dailyUsageLog.create({
+        data: {
+          user_id: session.user.id,
+          session_id: taskSession.id,
+          llm_tokens_used: totalTokens,
+          tavily_calls: searchResults.tavilyResults,
+          exa_calls: searchResults.exaResults,
+          date: new Date(),
+        },
+      }),
+    ])
+
+    return NextResponse.json({
+      sessionId: taskSession.id,
+      answers,
+      references: searchResults.results.slice(0, 2).map((r) => ({
+        type: r.type || 'web',
+        title: r.title,
+        url: r.url,
+        author: r.metadata?.author as string | undefined,
+      })),
+    })
+  } catch (error) {
+    console.error('Task generation failed:', error)
+    const message = error instanceof Error ? error.message : 'Generation failed'
+    return NextResponse.json({ error: message }, { status: 500 })
+  }
+}

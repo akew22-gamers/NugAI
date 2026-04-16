@@ -54,6 +54,19 @@ enum ReferenceType {
   WEB
 }
 
+enum AIProviderType {
+  DEEPSEEK
+  OPENAI
+  GROQ
+  TOGETHER
+  CUSTOM
+}
+
+enum SearchProviderType {
+  TAVILY
+  EXA
+}
+
 // ====================
 // USER & AUTHENTICATION
 // ====================
@@ -222,6 +235,40 @@ model DataPurgeLog {
   @@index([user_id])
   @@map("data_purge_logs")
 }
+
+// ====================
+// AI PROVIDER CONFIGURATION
+// ====================
+
+model AIProvider {
+  id                String         @id @default(uuid())
+  provider_type     AIProviderType
+  provider_name     String         @db.VarChar(50)      // Display name: "DeepSeek", "OpenAI", etc.
+  base_url          String         @db.VarChar(200)     // OpenAI-compatible API base URL
+  api_key           String         @db.VarChar(255)     // Encrypted API key
+  available_models  Json?                               // Fetched models from provider endpoint
+  default_model     String         @db.VarChar(100)     // Selected default model ID
+  is_active         Boolean        @default(true)
+  last_model_fetch  DateTime?
+  created_at        DateTime       @default(now())
+  updated_at        DateTime       @updatedAt
+  
+  @@index([provider_type])
+  @@index([is_active])
+  @@map("ai_providers")
+}
+
+model SearchProvider {
+  id            String             @id @default(uuid())
+  provider_type SearchProviderType
+  api_key       String             @db.VarChar(255)     // Encrypted API key
+  is_active     Boolean            @default(true)
+  created_at    DateTime           @default(now())
+  updated_at    DateTime           @updatedAt
+  
+  @@unique([provider_type])        // Only one config per provider type
+  @@map("search_providers")
+}
 ```
 
 ---
@@ -231,7 +278,7 @@ model DataPurgeLog {
 ```
 ┌─────────────────────────────────────────────────────────────────────────────────┐
 │                              NUGAI DATABASE ERD                                  │
-│                              Version 2.0 (Revised)                               │
+│                              Version 3.0 (Multi-Provider)                        │
 └─────────────────────────────────────────────────────────────────────────────────┘
 
 ┌──────────────┐       1:1        ┌─────────────────────┐
@@ -244,11 +291,11 @@ model DataPurgeLog {
 │ subscription │                  │ university_name     │
 │ daily_usage  │                  │ faculty             │
 │ last_usage   │                  │ study_program       │
-│ admin_login  │◄─ NEW            │ upbjj_branch        │
+│ admin_login  │◄─ Rate Limit     │ upbjj_branch        │
 │  attempts    │                  │ university_logo_url │
-│ admin_login  │◄─ NEW            │ default_min_words   │
+│ admin_login  │◄─ Rate Limit     │ default_min_words   │
 │ locked_until │                  │ default_tone        │
-│ created_at   │                  │ pdf_font_url (OPT)  │◄─ Changed: Optional
+│ created_at   │                  │ pdf_font_url (OPT)  │
 └──────┬───────┘                  └─────────────────────┘
        │
        │ 1:N
@@ -262,12 +309,12 @@ model DataPurgeLog {
 │ id (PK)      │           │ id (PK)             │  │ id (PK)             │
 │ user_id (FK) │           │ user_id (FK)        │  │ user_id (FK)        │
 │ course_name  │           │ course_id (FK, N)   │  │ session_id (FK)     │
-│ module_title │           │ task_type           │  │ deepseek_tokens     │
+│ module_title │           │ task_type           │  │ llm_tokens_used ◄───│◄─ Changed
 │ tutor_name   │           │ min_words_target    │  │ tavily_calls        │
 │ created_at   │           │ regenerate_count    │  │ exa_calls           │
-└──────┬───────┘           │ course_name_snap ◄──│◄─ NEW: Snapshot      │
-       │                   │ module_title_snap ◄─│◄─ NEW: Snapshot      │
-       │ 1:N               │ tutor_name_snap   ◄─│◄─ NEW: Snapshot      │
+└──────┬───────┘           │ course_name_snap ◄──│◄─ Snapshot           │
+       │                   │ module_title_snap ◄─│◄─ Snapshot           │
+       │ 1:N               │ tutor_name_snap   ◄─│◄─ Snapshot           │
        │                   │ created_at          │  │ estimated_cost      │
        │                   └──────────┬──────────┘  │ date                │
        │                              │             │ created_at          │
@@ -283,7 +330,7 @@ model DataPurgeLog {
        │                   │ answer_text         │
        │                   │ references_used (J) │
        │                   │ regenerate_count    │
-       │                   │ status (incl.DRAFT) │◄─ NEW: DRAFT status
+       │                   │ status (incl.DRAFT) │◄─ DRAFT status
        │                   │ created_at          │
        │                   └─────────────────────┘
        │
@@ -294,13 +341,36 @@ model DataPurgeLog {
                                     │   DataPurgeLog      │
                                     ├─────────────────────┤
                                     │ id (PK)             │
-                                    │ user_id (FK, REQ)   │◄─ Changed: Required
+                                    │ user_id (FK, REQ)   │◄─ Required
                                     │ username_snapshot   │◄─ NEW
                                     │ sessions_purged     │
                                     │ items_purged        │
                                     │ purge_date          │
                                     │ reason              │
                                     └─────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                           PROVIDER CONFIGURATION (Admin Only)                    │
+└─────────────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────┐           ┌─────────────────────┐
+│    AIProvider       │           │   SearchProvider    │
+├─────────────────────┤           ├─────────────────────┤
+│ id (PK)             │           │ id (PK)             │
+│ provider_type (E)   │◄─ DEEPSEEK│ provider_type (E)   │◄─ TAVILY/EXA
+│ provider_name       │   OPENAI  │ api_key (ENC)       │◄─ Encrypted
+│ base_url            │   GROQ    │ is_active           │
+│ api_key (ENC)       │◄─ Encrypted│ created_at          │
+│ available_models (J)│   TOGETHER│ updated_at          │
+│ default_model       │   CUSTOM  │                     │
+│ is_active           │           │ @@unique(provider)  │◄─ One per type
+│ last_model_fetch    │           └─────────────────────┘
+│ created_at          │
+│ updated_at          │
+│                     │
+│ @@index(provider)   │
+│ @@index(is_active)  │
+└─────────────────────┘
 
 Legend:
 PK  = Primary Key
@@ -310,7 +380,9 @@ N   = Nullable
 REQ = Required (Non-Nullable)
 OPT = Optional (Nullable)
 J   = JSON Field
-NEW = New Field (v2.0)
+E   = Enum Field
+ENC = Encrypted Field
+NEW = New Field
 1:1 = One-to-One Relation
 1:N = One-to-Many Relation
 ```
@@ -445,6 +517,9 @@ interface ReferencesUsed {
 | User | `last_usage_date` | Quota reset check |
 | StudentProfile | `university_name` | Analytics grouping |
 | StudentProfile | `study_program` | Analytics grouping |
+| AIProvider | `provider_type` | Filter by provider type |
+| AIProvider | `is_active` | Filter active providers |
+| SearchProvider | `provider_type (unique)` | One config per provider type |
 | Course | `user_id` | User's course list |
 | Course | `course_name` | Search courses |
 | TaskSession | `user_id` | User's session list |
@@ -924,6 +999,138 @@ for (const session of sessionsToPurge) {
 }
 ```
 
+### 10. AI Provider Configuration
+
+```typescript
+// Get active AI provider with config
+const provider = await prisma.aiProvider.findFirst({
+  where: { is_active: true },
+  select: {
+    id: true,
+    provider_type: true,
+    provider_name: true,
+    base_url: true,
+    api_key: true, // Encrypted - decrypt before use
+    default_model: true,
+    available_models: true,
+  },
+});
+
+// Create new AI provider (Admin)
+const newProvider = await prisma.aiProvider.create({
+  data: {
+    provider_type: 'DEEPSEEK',
+    provider_name: 'DeepSeek',
+    base_url: 'https://api.deepseek.com/v1',
+    api_key: encryptedApiKey, // Encrypt before storing
+    default_model: 'deepseek-chat',
+    available_models: {
+      models: [
+        { id: 'deepseek-chat', name: 'DeepSeek Chat', owned_by: 'deepseek' },
+        { id: 'deepseek-reasoner', name: 'DeepSeek Reasoner', owned_by: 'deepseek' },
+      ],
+      fetched_at: new Date().toISOString(),
+    },
+  },
+});
+
+// Update provider's default model
+await prisma.aiProvider.update({
+  where: { id: providerId },
+  data: {
+    default_model: 'deepseek-reasoner',
+    updated_at: new Date(),
+  },
+});
+
+// Fetch and store available models from provider
+// (External API call + database update)
+const response = await fetch(`${provider.base_url}/models`, {
+  headers: { Authorization: `Bearer ${decryptedApiKey}` },
+});
+const models = await response.json();
+
+await prisma.aiProvider.update({
+  where: { id: providerId },
+  data: {
+    available_models: {
+      models: models.data,
+      fetched_at: new Date().toISOString(),
+    },
+    last_model_fetch: new Date(),
+  },
+});
+```
+
+### 11. Search Provider Configuration
+
+```typescript
+// Get active search providers
+const searchProviders = await prisma.searchProvider.findMany({
+  where: { is_active: true },
+});
+
+// Get specific provider config
+const tavilyConfig = await prisma.searchProvider.findUnique({
+  where: { provider_type: 'TAVILY' },
+});
+
+// Create or update search provider (Admin)
+await prisma.searchProvider.upsert({
+  where: { provider_type: 'TAVILY' },
+  create: {
+    provider_type: 'TAVILY',
+    api_key: encryptedApiKey,
+    is_active: true,
+  },
+  update: {
+    api_key: encryptedApiKey,
+    is_active: true,
+    updated_at: new Date(),
+  },
+});
+```
+
+### 12. API Key Encryption/Decryption
+
+```typescript
+// Encryption utility (lib/encryption.ts)
+import { createCipheriv, createDecipheriv, randomBytes } from 'crypto';
+
+const ENCRYPTION_KEY = process.env.API_KEY_ENCRYPTION_KEY; // 32-byte key
+const ALGORITHM = 'aes-256-gcm';
+
+export function encryptApiKey(apiKey: string): string {
+  const iv = randomBytes(16);
+  const cipher = createCipheriv(ALGORITHM, ENCRYPTION_KEY, iv);
+  
+  let encrypted = cipher.update(apiKey, 'utf8', 'hex');
+  encrypted += cipher.final('hex');
+  
+  const authTag = cipher.getAuthTag();
+  
+  // Return iv:authTag:encrypted (all hex)
+  return `${iv.toString('hex')}:${authTag.toString('hex')}:${encrypted}`;
+}
+
+export function decryptApiKey(encrypted: string): string {
+  const [ivHex, authTagHex, encryptedData] = encrypted.split(':');
+  
+  const decipher = createDecipheriv(
+    ALGORITHM,
+    ENCRYPTION_KEY,
+    Buffer.from(ivHex, 'hex')
+  );
+  
+  decipher.setAuthTag(Buffer.from(authTagHex, 'hex'));
+  
+  let decrypted = decipher.update(encryptedData, 'hex', 'utf8');
+  decrypted += decipher.final('utf8');
+  
+  return decrypted;
+}
+```
+
 ---
 
 ## Data Constraints Summary
@@ -1010,15 +1217,16 @@ await prisma.user.update({
 
 ---
 
-**Document Version:** 2.0 (Revised after audit)
+**Document Version:** 3.0 (Multi-Provider Architecture)
 **Last Updated:** April 2026
 **Prisma Version:** 5.x
-**Changes from v1.0:**
-- Added DRAFT status to TaskItemStatus enum
-- Added snapshot fields to TaskSession (course_name, module_book_title, tutor_name)
-- Added composite indexes for performance optimization
-- Changed DataPurgeLog.user_id to required (non-nullable)
-- Added username_snapshot to DataPurgeLog
-- Added admin login rate limiting fields to User table
-- Updated pdf_font_url to optional in documentation (schema already nullable)
-- Added JSON validation requirements section
+**Changes from v2.0:**
+- Added AIProviderType enum (DEEPSEEK, OPENAI, GROQ, TOGETHER, CUSTOM)
+- Added SearchProviderType enum (TAVILY, EXA)
+- Added AIProvider model for multi-provider configuration
+- Added SearchProvider model for Tavily/Exa configuration
+- Changed DailyUsageLog.deepseek_tokens_used to llm_tokens_used (generic)
+- Added provider configuration query patterns
+- Added API key encryption/decryption patterns
+- Updated ERD with Provider Configuration section
+- Added indexes for provider tables

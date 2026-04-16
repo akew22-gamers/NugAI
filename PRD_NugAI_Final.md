@@ -52,12 +52,28 @@ NugAI adalah aplikasi web berbasis AI (LLM) yang dirancang untuk mengotomatisasi
 ### 3.3. AI & Search Services
 | Category | Technology | Notes |
 |----------|------------|-------|
-| AI SDK | Vercel AI SDK | Streaming response support |
-| LLM Provider | DeepSeek API | Primary AI engine |
-| Search API | Tavily API | General facts & web search |
-| Search API | Exa API | Academic journals & books search |
+| AI SDK | Vercel AI SDK | Streaming response support, OpenAI-compatible |
+| LLM Provider | Multi-Provider (OpenAI-Compatible) | DeepSeek, OpenAI, Groq, Together AI, or Custom |
+| Provider Config | Admin-managed | API key, Base URL, Model selection configured by Admin |
+| Search API | Tavily API | General facts & web search (Admin-managed) |
+| Search API | Exa API | Academic journals & books search (Admin-managed) |
 | OCR Engine | Tesseract.js | Client-side image-to-text |
 | PDF Generation | @react-pdf/renderer | Server/client-side rendering with custom font embedding |
+
+#### 3.3.1. Supported AI Providers (Preset)
+| Provider | Base URL | Notes |
+|----------|----------|-------|
+| DeepSeek | https://api.deepseek.com/v1 | Cost-effective, good for academic tasks |
+| OpenAI | https://api.openai.com/v1 | Premium quality, higher cost |
+| Groq | https://api.groq.com/openai/v1 | Fast inference, LPU-based |
+| Together AI | https://api.together.xyz/v1 | Open-source models hosting |
+| Custom | User-defined | Any OpenAI-compatible API endpoint |
+
+#### 3.3.2. Model Selection Flow
+1. Admin configures provider (Base URL + API Key)
+2. System fetches available models from provider endpoint (`/models`)
+3. Admin selects default model for task generation
+4. Users use the configured model without seeing API credentials
 
 ### 3.4. Monitoring & Tracking
 | Category | Technology | Notes |
@@ -225,6 +241,68 @@ Menyimpan log usage untuk tracking API cost di Admin dashboard. Created AFTER se
 
 This ensures DailyUsageLog exists only for completed/failed sessions, not for quota checks.
 
+### 4.8. `AIProvider` Table
+Menyimpan konfigurasi provider AI yang dikelola oleh Admin. (Admin-only management).
+| Field | Type | Constraints | Description |
+|-------|------|-------------|-------------|
+| `id` | UUID | PK | Primary key |
+| `provider_type` | Enum | `DEEPSEEK`, `OPENAI`, `GROQ`, `TOGETHER`, `CUSTOM` | Provider type (preset or custom) |
+| `provider_name` | String | Required | Display name (e.g., "DeepSeek", "OpenAI") |
+| `base_url` | String | Required | OpenAI-compatible API base URL |
+| `api_key` | String | Required, Encrypted | API key (encrypted in database) |
+| `available_models` | JSON | Nullable | List of fetched models from provider |
+| `default_model` | String | Required | Selected default model ID for task generation |
+| `is_active` | Boolean | Default: true | Provider is active/inactive |
+| `last_model_fetch` | Timestamp | Nullable | Last time models were fetched from provider |
+| `created_at` | Timestamp | Auto-generated | Creation time |
+| `updated_at` | Timestamp | Auto-updated | Last update time |
+
+**Provider Types:**
+- `DEEPSEEK`: Pre-configured with DeepSeek base URL
+- `OPENAI`: Pre-configured with OpenAI base URL
+- `GROQ`: Pre-configured with Groq base URL
+- `TOGETHER`: Pre-configured with Together AI base URL
+- `CUSTOM`: Admin-defined base URL for any OpenAI-compatible provider
+
+**Model Fetch Flow:**
+1. Admin saves provider config (base_url + api_key)
+2. System calls `{base_url}/models` endpoint (OpenAI-compatible)
+3. Response parsed and stored in `available_models` JSON
+4. Admin selects `default_model` from available models
+5. `last_model_fetch` updated to track freshness
+
+**available_models JSON Structure:**
+```json
+{
+  "models": [
+    {
+      "id": "deepseek-chat",
+      "name": "DeepSeek Chat",
+      "owned_by": "deepseek"
+    },
+    {
+      "id": "deepseek-reasoner",
+      "name": "DeepSeek Reasoner",
+      "owned_by": "deepseek"
+    }
+  ],
+  "fetched_at": "2026-04-16T10:30:00Z"
+}
+```
+
+### 4.9. `SearchProvider` Table
+Menyimpan konfigurasi Search API (Tavily/Exa) yang dikelola oleh Admin.
+| Field | Type | Constraints | Description |
+|-------|------|-------------|-------------|
+| `id` | UUID | PK | Primary key |
+| `provider_type` | Enum | `TAVILY`, `EXA` | Search provider type |
+| `api_key` | String | Required, Encrypted | API key (encrypted) |
+| `is_active` | Boolean | Default: true | Provider is active |
+| `created_at` | Timestamp | Auto-generated | Creation time |
+| `updated_at` | Timestamp | Auto-updated | Last update time |
+
+**Note:** Both Tavily and Exa are configured by Admin. Only one active config per provider type allowed.
+
 ---
 
 ## 5. User Flow & Core Features
@@ -310,7 +388,9 @@ This ensures DailyUsageLog exists only for completed/failed sessions, not for qu
 - Build System Prompt dengan injected context
 
 **Phase 4 - LLM Streaming:**
-- Call DeepSeek API via Vercel AI SDK (`streamText`)
+- Call configured AI provider via Vercel AI SDK (`streamText`)
+- Use OpenAI-compatible interface with dynamic base_url and api_key
+- Model: `AIProvider.default_model` (selected by Admin)
 - Stream response to client (real-time display)
 - On `onFinish` callback → **Transaction:**
   - Create `TaskSession` record with snapshot fields (course_name, module_title, tutor_name)
@@ -619,6 +699,21 @@ const documentMeta = {
 - Reset user password (manual - generate temporary password)
 - Delete user (with cascade cleanup)
 
+**AI Provider Management Panel:**
+- Configure AI providers (DeepSeek, OpenAI, Groq, Together AI, Custom)
+- Input Base URL and API Key for each provider
+- Fetch available models from provider endpoint
+- Select default model for task generation
+- Toggle provider active/inactive status
+- View provider health status (API connectivity check)
+- Cost estimation per provider based on model pricing
+
+**Search API Configuration:**
+- Configure Tavily API key
+- Configure Exa API key
+- Toggle search providers active/inactive
+- View search API usage metrics
+
 **Admin Login Protection (Rate Limiting):**
 - Admin login icon visible on login page (not hidden)
 - Rate limiting: Max 5 failed attempts per admin account
@@ -628,7 +723,7 @@ const documentMeta = {
 
 **API Usage Dashboard:**
 - Daily/Weekly/Monthly usage metrics
-- DeepSeek token consumption chart
+- LLM token consumption chart (per provider)
 - Tavily API calls count
 - Exa API calls count
 - Estimated cost calculation (USD/IDR)
@@ -1055,15 +1150,27 @@ DATABASE_URL="postgres://..."
 NEXTAUTH_SECRET="..."
 NEXTAUTH_URL="https://nugai.vercel.app"
 
-DEEPSEEK_API_KEY="..."
-TAVILY_API_KEY="..."
-EXA_API_KEY="..."
+# Optional - Default providers (can be configured via Admin dashboard instead)
+# If not set, Admin must configure providers in dashboard before app can function
+DEEPSEEK_API_KEY="..."      # Optional: Pre-configured DeepSeek
+TAVILY_API_KEY="..."        # Optional: Pre-configured Tavily
+EXA_API_KEY="..."            # Optional: Pre-configured Exa
 
-SENTRY_DSN="..."
+SENTY_DSN="..."
 
-# Optional
+# Required for blob storage
 VERCEL_BLOB_READ_WRITE_TOKEN="..." # For logo/font storage
+
+# API Key Encryption (IMPORTANT)
+API_KEY_ENCRYPTION_KEY="..." # 32-byte key for encrypting API keys in database
 ```
+
+**Note on API Key Management:**
+- API keys can be stored in environment variables OR configured via Admin dashboard
+- Environment variables provide initial/default configuration
+- Admin dashboard configuration overrides environment variables
+- API keys in database are encrypted using `API_KEY_ENCRYPTION_KEY`
+- Admin dashboard provides UI for provider management without exposing raw keys
 
 ### 14.3. Blob Storage (Vercel Blob)
 
@@ -1089,6 +1196,8 @@ VERCEL_BLOB_READ_WRITE_TOKEN="..." # For logo/font storage
 │   ├── /(admin)
 │   │   ├── /admin/page.tsx
 │   │   ├── /admin/users/page.tsx
+│   │   ├── /admin/providers/page.tsx        // AI Provider configuration
+│   │   ├── /admin/search-providers/page.tsx // Search API configuration
 │   │   ├── /admin/analytics/page.tsx
 │   ├── /(student)
 │   │   ├── /dashboard/page.tsx
@@ -1101,7 +1210,12 @@ VERCEL_BLOB_READ_WRITE_TOKEN="..." # For logo/font storage
 │   │   ├── /generate-task/route.ts
 │   │   ├── /regenerate/route.ts
 │   │   ├── /courses/route.ts
-│   │   ├── /admin/users/route.ts
+│   │   ├── /admin
+│   │   │   ├── /users/route.ts
+│   │   │   ├── /providers/route.ts              // AI Provider CRUD
+│   │   │   ├── /providers/fetch-models/route.ts // Fetch models from provider
+│   │   │   ├── /search-providers/route.ts       // Search API config
+│   │   │   ├── /analytics/route.ts
 │   │   ├── /cron/purge-data/route.ts    // Monthly data purge
 │   │   ├── /cron/cleanup-temp-blobs/route.ts  // Daily blob cleanup
 │   │   ├── /user/change-password/route.ts  // Self password change
@@ -1109,6 +1223,13 @@ VERCEL_BLOB_READ_WRITE_TOKEN="..." # For logo/font storage
 │   ├── page.tsx (landing)
 ├── /components
 │   ├── /ui (shadcn components)
+│   ├── /admin
+│   │   ├── UserManagement.tsx
+│   │   ├── AIProviderConfig.tsx           // AI Provider configuration panel
+│   │   ├── ProviderForm.tsx               // Provider form (Base URL, API Key)
+│   │   ├── ModelSelector.tsx              // Model selection from fetched models
+│   │   ├── SearchProviderConfig.tsx       // Tavily/Exa configuration
+│   │   ├── AnalyticsDashboard.tsx
 │   ├── /task
 │   │   ├── TaskWizard.tsx
 │   │   ├── Step1Input.tsx
@@ -1119,13 +1240,12 @@ VERCEL_BLOB_READ_WRITE_TOKEN="..." # For logo/font storage
 │   │   ├── DiscussionTemplate.tsx
 │   │   ├── AssignmentTemplate.tsx
 │   │   ├── CoverPage.tsx
-│   ├── /admin
-│   │   ├── UserManagement.tsx
-│   │   ├── AnalyticsDashboard.tsx
 ├── /lib
 │   ├── prisma.ts
 │   ├── auth.ts
-│   ├── ai.ts (DeepSeek integration)
+│   ├── ai.ts (OpenAI-compatible provider integration)
+│   ├── provider.ts (AIProvider & SearchProvider management)
+│   ├── encryption.ts (API key encryption/decryption)
 │   ├── search.ts (Tavily, Exa)
 │   ├── ocr.ts (Tesseract.js)
 │   ├── pdf.ts (@react-pdf/renderer)
@@ -1165,22 +1285,18 @@ VERCEL_BLOB_READ_WRITE_TOKEN="..." # For logo/font storage
 
 ---
 
-**Document Version:** Final v2.0 (Revised after audit)
+**Document Version:** Final v3.0 (Multi-Provider Architecture)
 **Last Updated:** April 2026
 **Status:** Ready for Implementation
-**Changes from v1.0:**
-- Font upload changed to OPTIONAL (user can skip, system provides default)
-- Added DRAFT status to TaskItem
-- Added snapshot fields to TaskSession (preserve course data for PDF)
-- Clarified DailyUsageLog creation sequence (after session, not before)
-- Added server-side quota enforcement with transaction
-- Regenerate now counts toward daily quota
-- Removed "standard scraper" fallback for search APIs
-- Added admin login rate limiting (5 attempts, 15 min lock)
-- Added API key sanitization in Sentry
-- Added Security Considerations section (Section 13)
-- Changed notification from email to in-app only
-- Added Vercel Cron Jobs specification
-- Added blob storage cleanup cron
-- Added general API rate limiting
-- Updated section numbering (14-16)
+**Changes from v2.0:**
+- Changed from DeepSeek-only to multi-provider architecture
+- Added OpenAI-compatible API support (DeepSeek, OpenAI, Groq, Together AI, Custom)
+- Added AIProvider table for provider configuration management
+- Added SearchProvider table for Tavily/Exa configuration
+- API keys now managed via Admin dashboard (encrypted in database)
+- Added preset providers with pre-configured base URLs
+- Added model fetch flow from provider endpoint
+- Admin dashboard now includes AI Provider and Search Provider configuration panels
+- Environment variables for API keys changed to optional (can be configured via dashboard)
+- Added API_KEY_ENCRYPTION_KEY for secure storage
+- Updated file structure with new provider management files
