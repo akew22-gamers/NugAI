@@ -4,41 +4,49 @@ import { NextResponse } from "next/server"
 export default auth((req) => {
   const { nextUrl } = req
   const isLoggedIn = !!req.auth
-  const user = req.auth?.user
 
-  const isPublicRoute = [
-    "/",
-    "/login",
-    "/onboarding",
-    "/api/auth",
-  ].some(route => nextUrl.pathname.startsWith(route))
+  const isAuthPage = nextUrl.pathname.startsWith("/login")
+  const isOnboardingPage = nextUrl.pathname.startsWith("/onboarding")
+  const isAdminPage = nextUrl.pathname.startsWith("/admin")
+  const isStudentPage = nextUrl.pathname.startsWith("/dashboard") || 
+                        nextUrl.pathname.startsWith("/task") ||
+                        nextUrl.pathname.startsWith("/courses") ||
+                        nextUrl.pathname.startsWith("/settings")
+  const isApiAuth = nextUrl.pathname.startsWith("/api/auth")
+  const isPublicApi = nextUrl.pathname.startsWith("/api/public") ||
+                      nextUrl.pathname === "/api/health"
 
-  if (isPublicRoute) {
+  if (isApiAuth || isPublicApi) {
     return NextResponse.next()
   }
 
-  if (!isLoggedIn) {
-    return NextResponse.redirect(new URL("/login", nextUrl))
-  }
-
-  const isAdmin = user?.role === "ADMIN"
-  const isAdminRoute = nextUrl.pathname.startsWith("/admin")
-  const isStudentRoute = [
-    "/dashboard",
-    "/task",
-    "/courses",
-    "/settings",
-  ].some(route => nextUrl.pathname.startsWith(route))
-
-  if (isAdmin) {
-    if (isStudentRoute) {
-      return NextResponse.redirect(new URL("/admin", nextUrl))
+  if (isAuthPage) {
+    if (isLoggedIn) {
+      const role = req.auth?.user?.role
+      const redirectUrl = role === "ADMIN" ? "/admin" : "/dashboard"
+      return NextResponse.redirect(new URL(redirectUrl, nextUrl))
     }
     return NextResponse.next()
   }
 
-  if (isAdminRoute) {
-    return NextResponse.redirect(new URL("/dashboard", nextUrl))
+  if (isAdminPage) {
+    if (!isLoggedIn) {
+      return NextResponse.redirect(new URL("/login?admin=true", nextUrl))
+    }
+    if (req.auth?.user?.role !== "ADMIN") {
+      return NextResponse.redirect(new URL("/dashboard", nextUrl))
+    }
+    return NextResponse.next()
+  }
+
+  if (isStudentPage) {
+    if (!isLoggedIn) {
+      return NextResponse.redirect(new URL("/login", nextUrl))
+    }
+    if (req.auth?.user?.role !== "USER") {
+      return NextResponse.redirect(new URL("/admin", nextUrl))
+    }
+    return NextResponse.next()
   }
 
   return NextResponse.next()
@@ -46,14 +54,13 @@ export default auth((req) => {
 
 export const config = {
   matcher: [
-    /*
-     * Match all request paths except:
-     * - api/auth (auth routes)
-     * - _next/static (static files)
-     * - _next/image (image optimization)
-     * - favicon.ico
-     * - public files
-     */
-    "/((?!api/auth|_next/static|_next/image|favicon.ico|public).*)",
+    "/login/:path*",
+    "/admin/:path*",
+    "/dashboard/:path*",
+    "/task/:path*",
+    "/courses/:path*",
+    "/settings/:path*",
+    "/onboarding/:path*",
+    "/api/:path*",
   ],
 }
