@@ -5,8 +5,8 @@ import { Zap, Clock, Crown } from "lucide-react"
 
 interface QuotaData {
   tier: "FREE" | "PREMIUM"
-  remaining: number
-  limit: number
+  remaining: number | null
+  limit: number | null
   resetAt: string
 }
 
