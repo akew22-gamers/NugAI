@@ -93,7 +93,7 @@ export async function DELETE(
 
     await prisma.taskItem.deleteMany({
       where: {
-        task_session_id: id,
+        session_id: id,
       },
     })
 
