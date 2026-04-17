@@ -134,8 +134,8 @@ export function Step1Input({ initialData, onComplete }: Step1InputProps) {
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-      <Card className="rounded-xl border border-zinc-200 bg-white shadow-sm lg:col-span-1 h-fit">
-        <CardContent className="p-6 pt-8 flex flex-col justify-start">
+      <Card className="rounded-xl border border-zinc-200 bg-white shadow-sm lg:col-span-1">
+        <CardContent className="p-6 pt-8 flex flex-col justify-center h-full">
           <div className="space-y-4">
             <div>
               <Label>Jenis Tugas</Label>
@@ -231,8 +231,8 @@ export function Step1Input({ initialData, onComplete }: Step1InputProps) {
         </CardContent>
       </Card>
 
-      <Card className="rounded-xl border border-zinc-200 bg-white shadow-sm lg:col-span-2 h-fit">
-        <CardContent className="p-6 pt-8">
+      <Card className="rounded-xl border border-zinc-200 bg-white shadow-sm lg:col-span-2">
+        <CardContent className="p-6 pt-8 flex flex-col justify-center h-full">
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <Label>Soal/Tugas</Label>
@@ -277,7 +277,7 @@ export function Step1Input({ initialData, onComplete }: Step1InputProps) {
       </Card>
 
       <div className="lg:col-span-3">
-        <Button onClick={handleSubmit} className="w-full">
+        <Button onClick={handleSubmit} className="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-2">
           Generate Jawaban
         </Button>
       </div>

@@ -271,10 +271,10 @@ export default function AdminUsersPage() {
         <div className="space-y-4">
           {users.map((user) => (
             <Card key={user.id}>
-              <CardContent className="flex items-center py-6">
-                <div className="flex-1 space-y-1">
-                  <div className="flex items-center gap-2">
-                    <p className="font-semibold text-slate-900">{user.username}</p>
+              <CardContent className="flex items-center justify-between py-4 px-6">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    <p className="font-semibold text-slate-900 truncate">{user.username}</p>
                     <span
                       className={`text-xs font-medium px-2 py-0.5 rounded ${
                         user.subscription_tier === "PREMIUM"
@@ -286,15 +286,15 @@ export default function AdminUsersPage() {
                     </span>
                   </div>
                   {user.student_profile && (
-                    <p className="text-sm text-slate-600">
+                    <p className="text-sm text-slate-600 truncate">
                       {user.student_profile.full_name} ({user.student_profile.nim})
                     </p>
                   )}
-                  <p className="text-sm text-slate-500">
+                  <p className="text-sm text-slate-500 mt-1">
                     {user._count.task_sessions} tugas | Dibuat: {new Date(user.created_at).toLocaleDateString("id-ID")}
                   </p>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 shrink-0">
                     <Select
                       options={[
                         { value: "FREE", label: "FREE" },
