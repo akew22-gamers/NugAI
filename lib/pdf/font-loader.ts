@@ -1,25 +1,23 @@
 import { Font } from '@react-pdf/renderer'
 
+let fontsRegistered = false
+
 export function registerFonts(): void {
+  if (fontsRegistered) return
+  
   try {
     Font.register({
-      family: 'Roboto',
+      family: 'Helvetica',
       fonts: [
-        {
-          src: 'https://fonts.gstatic.com/s/roboto/v30/KFOmCnqEu92Fr1Me5WZLCzYlKw.woff2',
-          fontWeight: 400,
-        },
-        {
-          src: 'https://fonts.gstatic.com/s/roboto/v30/KFOlCnqEu92Fr1MmWUlfCRc4EsA.woff2',
-          fontWeight: 700,
-        },
+        { src: 'https://fonts.gstatic.com/s/opensans/v18/mem8YaGs126MiZpBA-UFVZ0bf8pkAg.woff2' },
       ],
     })
+    fontsRegistered = true
   } catch (e) {
-    console.error('Font registration failed, will fallback:', e)
+    console.error('Font registration error:', e)
   }
 }
 
 export function getFontFamily(): string {
-  return 'Roboto'
+  return 'Helvetica'
 }

@@ -8,7 +8,6 @@ import { TaskFormData } from "@/app/(student)/task/new/page"
 import { TaskResult } from "@/app/(student)/task/new/page"
 import { Download, RefreshCw, ArrowLeft, Loader2, Copy, Check } from "lucide-react"
 import { toast } from "sonner"
-import { useSession } from "next-auth/react"
 
 interface Step3ResultProps {
   formData: TaskFormData
@@ -25,14 +24,10 @@ export function Step3Result({
   onReset,
   isProcessing,
 }: Step3ResultProps) {
-  const { data: session } = useSession()
   const [activeQuestion, setActiveQuestion] = useState(0)
   const [regenerateInstructions, setRegenerateInstructions] = useState("")
   const [showRegenerateInput, setShowRegenerateInput] = useState(false)
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null)
-
-  const studentName = session?.user?.name || "User"
-  const studentNim = session?.user?.username || ""
 
   const handleCopyAnswer = async (index: number) => {
     const answer = result.answers[index]
@@ -102,22 +97,6 @@ export function Step3Result({
           Download PDF
         </Button>
       </div>
-
-      {formData.task_type === "DISCUSSION" && (
-        <Card className="rounded-xl border border-zinc-200 bg-white shadow-sm">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold text-lg">
-                {studentName.charAt(0).toUpperCase()}
-              </div>
-              <div>
-                <p className="font-semibold text-zinc-900">{studentName}</p>
-                <p className="text-sm text-zinc-500">NIM: {studentNim}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
 
       {formData.task_type === "ASSIGNMENT" && formData.questions.length > 1 && (
         <Card className="rounded-xl border border-zinc-200 bg-white shadow-sm">
