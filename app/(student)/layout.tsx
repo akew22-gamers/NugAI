@@ -1,6 +1,5 @@
 import { Sidebar } from "@/components/layout/Sidebar"
 import { MobileNav } from "@/components/layout/MobileNav"
-import { SessionProvider } from "next-auth/react"
 
 export default function StudentLayout({
   children,
@@ -8,16 +7,14 @@ export default function StudentLayout({
   children: React.ReactNode
 }) {
   return (
-    <SessionProvider>
-      <div className="min-h-screen bg-white">
-        <Sidebar />
-        <MobileNav />
-        <main className="lg:ml-64 min-h-screen">
-          <div className="p-4 lg:p-8">
-            {children}
-          </div>
-        </main>
-      </div>
-    </SessionProvider>
+    <div className="min-h-screen bg-white">
+      <Sidebar />
+      <MobileNav />
+      <main className="lg:ml-64 min-h-screen">
+        <div className="p-4 lg:p-8">
+          {children}
+        </div>
+      </main>
+    </div>
   )
 }
