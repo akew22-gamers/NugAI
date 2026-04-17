@@ -41,15 +41,16 @@ export function ProfileForm({ className }: ProfileFormProps) {
         const response = await fetch("/api/profile")
         if (response.ok) {
           const result = await response.json()
-          const data = result.data
-          setFormData({
-            full_name: data.full_name || "",
-            nim: data.nim || "",
-            university_name: data.university_name || "",
-            faculty: data.faculty || "",
-            study_program: data.study_program || "",
-            upbjj_branch: data.upbjj_branch || "",
-          })
+          if (result.data) {
+            setFormData({
+              full_name: result.data.full_name || "",
+              nim: result.data.nim || "",
+              university_name: result.data.university_name || "",
+              faculty: result.data.faculty || "",
+              study_program: result.data.study_program || "",
+              upbjj_branch: result.data.upbjj_branch || "",
+            })
+          }
         } else {
           const errorData = await response.json()
           toast.error("Gagal memuat data profil", {
