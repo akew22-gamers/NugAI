@@ -231,9 +231,9 @@ export function Step1Input({ initialData, onComplete }: Step1InputProps) {
         </CardContent>
       </Card>
 
-      <Card className="rounded-xl border border-zinc-200 bg-white shadow-sm lg:col-span-2">
-        <CardContent className="p-6 pt-8 flex flex-col justify-center h-full">
-          <div className="space-y-4">
+      <Card className="rounded-xl border border-zinc-200 bg-white shadow-sm lg:col-span-2 flex flex-col">
+        <CardContent className="p-6 pt-8 flex flex-col h-full">
+          <div className="flex flex-col h-full space-y-4">
             <div className="flex items-center justify-between">
               <Label>Soal/Tugas</Label>
               <Button variant="outline" size="sm" onClick={handleAddQuestion} className="gap-2">
@@ -243,7 +243,7 @@ export function Step1Input({ initialData, onComplete }: Step1InputProps) {
             </div>
 
             {questions.map((question, index) => (
-              <div key={index} className="space-y-2">
+              <div key={index} className="flex flex-col gap-2 flex-1">
                 <div className="flex items-center gap-2">
                   <span className="text-sm font-medium text-zinc-600">Soal {index + 1}</span>
                   {questions.length > 1 && (
@@ -261,8 +261,7 @@ export function Step1Input({ initialData, onComplete }: Step1InputProps) {
                   value={question}
                   onChange={(e) => handleQuestionChange(index, e.target.value)}
                   placeholder="Masukkan soal/tugas atau upload gambar untuk OCR"
-                  rows={4}
-                  className={errors.questions && index === 0 ? "border-red-500" : ""}
+                  className={`flex-1 min-h-[200px] resize-y ${errors.questions && index === 0 ? "border-red-500" : ""}`}
                 />
                 <OCRDropzone
                   onComplete={(text) => handleOCRComplete(text, index)}

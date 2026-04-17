@@ -9,7 +9,6 @@ import { Select } from "@/components/ui/select"
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
@@ -17,10 +16,12 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
 import { SubscriptionTier, UserRole } from "@prisma/client"
+import { Crown, User, Trash2, KeyRound } from "lucide-react"
 
 interface User {
   id: string
@@ -44,11 +45,15 @@ interface User {
 export default function AdminUsersPage() {
   const [users, setUsers] = useState<User[]>([])
   const [isLoading, setIsLoading] = useState(true)
-  const [isDialogOpen, setIsDialogOpen] = useState(false)
-  const [editingUser, setEditingUser] = useState<User | null>(null)
   const [isSaving, setIsSaving] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
-
+  
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
+  const [isResetPasswordDialogOpen, setIsResetPasswordDialogOpen] = useState(false)
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
+  const [selectedUser, setSelectedUser] = useState<User | null>(null)
+  const [newPassword, setNewPassword] = useState("")
+  
   const [username, setUsername] = useState("")
   const [password, setPassword] = useState("")
   const [role, setRole] = useState<UserRole>("USER")
@@ -118,7 +123,7 @@ export default function AdminUsersPage() {
       })
 
       if (response.ok) {
-        setIsDialogOpen(false)
+        setIsCreateDialogOpen(false)
         resetForm()
         fetchUsers()
         toast.success("Pengguna berhasil dibuat")
@@ -158,24 +163,33 @@ export default function AdminUsersPage() {
     }
   }
 
-  const handleResetPassword = async (userId: string) => {
-    const newPassword = prompt("Masukkan password baru (min 8 karakter):")
-    if (!newPassword || newPassword.length < 8) {
-      if (newPassword) toast.error("Password minimal 8 karakter")
+  const openResetPasswordDialog = (user: User) => {
+    setSelectedUser(user)
+    setNewPassword("")
+    setIsResetPasswordDialogOpen(true)
+  }
+
+  const handleResetPassword = async () => {
+    if (!selectedUser || !newPassword || newPassword.length < 8) {
+      toast.error("Password minimal 8 karakter")
       return
     }
 
+    setIsSaving(true)
     try {
       const response = await fetch("/api/admin/users", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          id: userId,
+          id: selectedUser.id,
           password: newPassword,
         }),
       })
 
       if (response.ok) {
+        setIsResetPasswordDialogOpen(false)
+        setSelectedUser(null)
+        setNewPassword("")
         toast.success("Password berhasil direset")
       } else {
         const error = await response.json()
@@ -184,20 +198,28 @@ export default function AdminUsersPage() {
     } catch (error) {
       console.error("Failed to reset password:", error)
       toast.error("Gagal reset password")
+    } finally {
+      setIsSaving(false)
     }
   }
 
-  const handleDelete = async (userId: string) => {
-    if (!confirm("Apakah Anda yakin ingin menghapus pengguna ini?")) {
-      return
-    }
+  const openDeleteDialog = (user: User) => {
+    setSelectedUser(user)
+    setIsDeleteDialogOpen(true)
+  }
 
+  const handleDelete = async () => {
+    if (!selectedUser) return
+
+    setIsSaving(true)
     try {
-      const response = await fetch(`/api/admin/users?id=${userId}`, {
+      const response = await fetch(`/api/admin/users?id=${selectedUser.id}`, {
         method: "DELETE",
       })
 
       if (response.ok) {
+        setIsDeleteDialogOpen(false)
+        setSelectedUser(null)
         fetchUsers()
         toast.success("Pengguna berhasil dihapus")
       } else {
@@ -207,6 +229,8 @@ export default function AdminUsersPage() {
     } catch (error) {
       console.error("Failed to delete user:", error)
       toast.error("Gagal menghapus pengguna")
+    } finally {
+      setIsSaving(false)
     }
   }
 
@@ -224,7 +248,7 @@ export default function AdminUsersPage() {
 
   const openNewUserDialog = () => {
     resetForm()
-    setIsDialogOpen(true)
+    setIsCreateDialogOpen(true)
   }
 
   return (
@@ -261,40 +285,60 @@ export default function AdminUsersPage() {
       {isLoading ? (
         <div className="text-center py-8 text-slate-500">Memuat pengguna...</div>
       ) : users.length === 0 ? (
-        <Card className="h-[200px]">
-          <CardContent className="h-full flex flex-col items-center justify-center text-center">
+        <Card>
+          <CardContent className="py-12 flex flex-col items-center justify-center text-center">
+            <User className="w-12 h-12 text-slate-400 mb-4" />
             <p className="text-slate-500">Belum ada pengguna terdaftar.</p>
-            <p className="text-slate-500 mt-2">Tambahkan pengguna untuk mulai menggunakan aplikasi.</p>
+            <p className="text-slate-400 mt-2">Tambahkan pengguna untuk mulai menggunakan aplikasi.</p>
           </CardContent>
         </Card>
       ) : (
-        <div className="space-y-4">
+        <div className="space-y-3">
           {users.map((user) => (
-            <Card key={user.id}>
-              <CardContent className="flex items-center justify-between py-4 px-6">
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1">
-                    <p className="font-semibold text-slate-900 truncate">{user.username}</p>
-                    <span
-                      className={`text-xs font-medium px-2 py-0.5 rounded ${
-                        user.subscription_tier === "PREMIUM"
-                          ? "text-amber-600 bg-amber-50"
-                          : "text-slate-600 bg-slate-100"
-                      }`}
-                    >
-                      {user.subscription_tier}
-                    </span>
+            <Card key={user.id} className="overflow-hidden">
+              <CardContent className="p-0">
+                <div className="flex items-center gap-4 p-4 px-6">
+                  <div className="flex items-center justify-center w-10 h-10 rounded-full bg-slate-100 shrink-0">
+                    {user.role === "ADMIN" ? (
+                      <Crown className="w-5 h-5 text-amber-600" />
+                    ) : (
+                      <User className="w-5 h-5 text-slate-600" />
+                    )}
                   </div>
-                  {user.student_profile && (
-                    <p className="text-sm text-slate-600 truncate">
-                      {user.student_profile.full_name} ({user.student_profile.nim})
+                  
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <p className="font-semibold text-slate-900">{user.username}</p>
+                      <span
+                        className={`text-xs font-medium px-2 py-0.5 rounded-full ${
+                          user.subscription_tier === "PREMIUM"
+                            ? "text-amber-700 bg-amber-100"
+                            : "text-slate-600 bg-slate-100"
+                        }`}
+                      >
+                        {user.subscription_tier}
+                      </span>
+                      <span
+                        className={`text-xs font-medium px-2 py-0.5 rounded-full ${
+                          user.role === "ADMIN"
+                            ? "text-purple-700 bg-purple-100"
+                            : "text-emerald-700 bg-emerald-100"
+                        }`}
+                      >
+                        {user.role === "ADMIN" ? "Admin" : "Student"}
+                      </span>
+                    </div>
+                    {user.student_profile && (
+                      <p className="text-sm text-slate-600 mt-1">
+                        {user.student_profile.full_name} • {user.student_profile.nim}
+                      </p>
+                    )}
+                    <p className="text-xs text-slate-400 mt-1">
+                      {user._count.task_sessions} tugas • {new Date(user.created_at).toLocaleDateString("id-ID")}
                     </p>
-                  )}
-                  <p className="text-sm text-slate-500 mt-1">
-                    {user._count.task_sessions} tugas | Dibuat: {new Date(user.created_at).toLocaleDateString("id-ID")}
-                  </p>
-                </div>
-                <div className="flex items-center gap-2 shrink-0">
+                  </div>
+                  
+                  <div className="flex items-center gap-2 shrink-0">
                     <Select
                       options={[
                         { value: "FREE", label: "FREE" },
@@ -304,31 +348,34 @@ export default function AdminUsersPage() {
                       onChange={(e) =>
                         handleUpdateTier(user.id, e.target.value as SubscriptionTier)
                       }
-                      className="w-32"
+                      className="w-28 h-9"
                     />
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => handleResetPassword(user.id)}
+                      onClick={() => openResetPasswordDialog(user)}
+                      className="gap-1"
                     >
-                      Reset Password
+                      <KeyRound className="w-4 h-4" />
+                      Reset
                     </Button>
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                      onClick={() => handleDelete(user.id)}
+                      className="text-red-600 hover:text-red-700 hover:bg-red-50 gap-1"
+                      onClick={() => openDeleteDialog(user)}
                     >
-                      Hapus
+                      <Trash2 className="w-4 h-4" />
                     </Button>
                   </div>
+                </div>
               </CardContent>
             </Card>
           ))}
         </div>
       )}
 
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+      <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
             <DialogTitle>Tambah Pengguna Baru</DialogTitle>
@@ -388,7 +435,7 @@ export default function AdminUsersPage() {
 
             {role === "USER" && (
               <div className="space-y-4 pt-4 border-t border-slate-200">
-                <p className="text-sm text-slate-600">Data Student (Wajib)</p>
+                <p className="text-sm font-medium text-slate-700">Data Student (Wajib)</p>
 
                 <div className="space-y-2">
                   <Label htmlFor="full_name">Nama Lengkap</Label>
@@ -442,19 +489,81 @@ export default function AdminUsersPage() {
               </div>
             )}
 
-            <div className="flex items-center justify-end gap-2 pt-4">
+            <DialogFooter className="pt-4">
               <Button
-                variant="ghost"
+                variant="outline"
                 type="button"
-                onClick={() => setIsDialogOpen(false)}
+                onClick={() => setIsCreateDialogOpen(false)}
               >
                 Batal
               </Button>
               <Button type="submit" disabled={isSaving}>
                 {isSaving ? "Menyimpan..." : "Simpan"}
               </Button>
-            </div>
+            </DialogFooter>
           </form>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isResetPasswordDialogOpen} onOpenChange={setIsResetPasswordDialogOpen}>
+        <DialogContent className="sm:max-w-[400px]">
+          <DialogHeader>
+            <DialogTitle>Reset Password</DialogTitle>
+            <DialogDescription>
+              Masukkan password baru untuk {selectedUser?.username}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="new_password">Password Baru</Label>
+              <Input
+                id="new_password"
+                type="password"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                placeholder="Min 8 karakter"
+              />
+              <p className="text-xs text-slate-500">Minimal 8 karakter</p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsResetPasswordDialogOpen(false)}
+            >
+              Batal
+            </Button>
+            <Button onClick={handleResetPassword} disabled={isSaving}>
+              {isSaving ? "Menyimpan..." : "Reset Password"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <DialogContent className="sm:max-w-[400px]">
+          <DialogHeader>
+            <DialogTitle>Hapus Pengguna</DialogTitle>
+            <DialogDescription>
+              Apakah Anda yakin ingin menghapus pengguna <strong>{selectedUser?.username}</strong>? 
+              Semua data tugas pengguna ini juga akan dihapus.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsDeleteDialogOpen(false)}
+            >
+              Batal
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleDelete}
+              disabled={isSaving}
+            >
+              {isSaving ? "Menghapus..." : "Hapus"}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

@@ -8,11 +8,13 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { cn } from "@/lib/utils"
 
-export interface ProfileData {
+interface ProfileData {
   full_name: string
-  student_id: string
-  university: string
-  major: string
+  nim: string
+  university_name: string
+  faculty: string
+  study_program: string
+  upbjj_branch: string
 }
 
 interface ProfileFormProps {
@@ -23,29 +25,36 @@ export function ProfileForm({ className }: ProfileFormProps) {
   const router = useRouter()
   const [formData, setFormData] = useState<ProfileData>({
     full_name: "",
-    student_id: "",
-    university: "",
-    major: "",
+    nim: "",
+    university_name: "",
+    faculty: "",
+    study_program: "",
+    upbjj_branch: "",
   })
   const [isLoading, setIsLoading] = useState(false)
   const [isFetching, setIsFetching] = useState(true)
   const [errors, setErrors] = useState<Partial<Record<keyof ProfileData, string>>>({})
 
-  // Fetch current profile on mount
   useEffect(() => {
     const fetchProfile = async () => {
       try {
         const response = await fetch("/api/profile")
         if (response.ok) {
-          const data = await response.json()
+          const result = await response.json()
+          const data = result.data
           setFormData({
             full_name: data.full_name || "",
-            student_id: data.student_id || "",
-            university: data.university || "",
-            major: data.major || "",
+            nim: data.nim || "",
+            university_name: data.university_name || "",
+            faculty: data.faculty || "",
+            study_program: data.study_program || "",
+            upbjj_branch: data.upbjj_branch || "",
           })
         } else {
-          toast.error("Gagal memuat data profil")
+          const errorData = await response.json()
+          toast.error("Gagal memuat data profil", {
+            description: errorData.error || "Silakan coba lagi"
+          })
         }
       } catch {
         toast.error("Gagal memuat data profil")
@@ -64,16 +73,20 @@ export function ProfileForm({ className }: ProfileFormProps) {
       newErrors.full_name = "Nama lengkap wajib diisi"
     }
 
-    if (!formData.student_id.trim()) {
-      newErrors.student_id = "NIM wajib diisi"
+    if (!formData.nim.trim()) {
+      newErrors.nim = "NIM wajib diisi"
     }
 
-    if (!formData.university.trim()) {
-      newErrors.university = "Nama universitas wajib diisi"
+    if (!formData.university_name.trim()) {
+      newErrors.university_name = "Nama universitas wajib diisi"
     }
 
-    if (!formData.major.trim()) {
-      newErrors.major = "Program studi wajib diisi"
+    if (!formData.faculty.trim()) {
+      newErrors.faculty = "Fakultas wajib diisi"
+    }
+
+    if (!formData.study_program.trim()) {
+      newErrors.study_program = "Program studi wajib diisi"
     }
 
     setErrors(newErrors)
@@ -91,7 +104,7 @@ export function ProfileForm({ className }: ProfileFormProps) {
 
     try {
       const response = await fetch("/api/profile", {
-        method: "PUT",
+        method: "PATCH",
         headers: {
           "Content-Type": "application/json",
         },
@@ -99,18 +112,17 @@ export function ProfileForm({ className }: ProfileFormProps) {
       })
 
       if (response.ok) {
-        toast.success("Profile updated successfully")
-        router.push("/dashboard")
+        toast.success("Profil berhasil diperbarui")
         router.refresh()
       } else {
         const data = await response.json()
-        toast.error("Failed to update profile", {
-          description: data.error || "Please try again",
+        toast.error("Gagal memperbarui profil", {
+          description: data.error || "Silakan coba lagi"
         })
       }
     } catch {
-      toast.error("An error occurred", {
-        description: "Failed to update profile. Please try again.",
+      toast.error("Terjadi kesalahan", {
+        description: "Gagal memperbarui profil. Silakan coba lagi."
       })
     } finally {
       setIsLoading(false)
@@ -121,7 +133,6 @@ export function ProfileForm({ className }: ProfileFormProps) {
     e: React.ChangeEvent<HTMLInputElement>
   ) => {
     setFormData((prev) => ({ ...prev, [field]: e.target.value }))
-    // Clear error when user starts typing
     if (errors[field]) {
       setErrors((prev) => ({ ...prev, [field]: undefined }))
     }
@@ -131,7 +142,7 @@ export function ProfileForm({ className }: ProfileFormProps) {
     return (
       <div className={cn("space-y-6", className)}>
         <div className="space-y-4">
-          {[...Array(4)].map((_, i) => (
+          {[...Array(6)].map((_, i) => (
             <div key={i} className="space-y-2">
               <div className="h-4 w-20 bg-zinc-200 rounded animate-pulse" />
               <div className="h-9 w-full bg-zinc-200 rounded animate-pulse" />
@@ -165,57 +176,87 @@ export function ProfileForm({ className }: ProfileFormProps) {
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="student_id">NIM</Label>
+          <Label htmlFor="nim">NIM</Label>
           <Input
-            id="student_id"
+            id="nim"
             type="text"
-            value={formData.student_id}
-            onChange={handleChange("student_id")}
+            value={formData.nim}
+            onChange={handleChange("nim")}
             placeholder="Masukkan NIM Anda"
             disabled={isLoading}
             className={cn(
-              errors.student_id && "border-red-500 focus-visible:ring-red-500"
+              errors.nim && "border-red-500 focus-visible:ring-red-500"
             )}
           />
-          {errors.student_id && (
-            <p className="text-sm text-red-600">{errors.student_id}</p>
+          {errors.nim && (
+            <p className="text-sm text-red-600">{errors.nim}</p>
           )}
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="university">Universitas</Label>
+          <Label htmlFor="university_name">Universitas</Label>
           <Input
-            id="university"
+            id="university_name"
             type="text"
-            value={formData.university}
-            onChange={handleChange("university")}
+            value={formData.university_name}
+            onChange={handleChange("university_name")}
             placeholder="Masukkan nama universitas Anda"
             disabled={isLoading}
             className={cn(
-              errors.university && "border-red-500 focus-visible:ring-red-500"
+              errors.university_name && "border-red-500 focus-visible:ring-red-500"
             )}
           />
-          {errors.university && (
-            <p className="text-sm text-red-600">{errors.university}</p>
+          {errors.university_name && (
+            <p className="text-sm text-red-600">{errors.university_name}</p>
           )}
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="major">Program Studi</Label>
+          <Label htmlFor="faculty">Fakultas</Label>
           <Input
-            id="major"
+            id="faculty"
             type="text"
-            value={formData.major}
-            onChange={handleChange("major")}
+            value={formData.faculty}
+            onChange={handleChange("faculty")}
+            placeholder="Masukkan nama fakultas Anda"
+            disabled={isLoading}
+            className={cn(
+              errors.faculty && "border-red-500 focus-visible:ring-red-500"
+            )}
+          />
+          {errors.faculty && (
+            <p className="text-sm text-red-600">{errors.faculty}</p>
+          )}
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="study_program">Program Studi</Label>
+          <Input
+            id="study_program"
+            type="text"
+            value={formData.study_program}
+            onChange={handleChange("study_program")}
             placeholder="Masukkan program studi Anda"
             disabled={isLoading}
             className={cn(
-              errors.major && "border-red-500 focus-visible:ring-red-500"
+              errors.study_program && "border-red-500 focus-visible:ring-red-500"
             )}
           />
-          {errors.major && (
-            <p className="text-sm text-red-600">{errors.major}</p>
+          {errors.study_program && (
+            <p className="text-sm text-red-600">{errors.study_program}</p>
           )}
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="upbjj_branch">UPBJJ Branch (Opsional)</Label>
+          <Input
+            id="upbjj_branch"
+            type="text"
+            value={formData.upbjj_branch}
+            onChange={handleChange("upbjj_branch")}
+            placeholder="Masukkan UPBJJ branch Anda"
+            disabled={isLoading}
+          />
         </div>
       </div>
 
