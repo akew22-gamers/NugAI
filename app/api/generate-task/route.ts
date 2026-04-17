@@ -76,9 +76,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Course info is required' }, { status: 400 })
     }
 
-    if (!(await isProviderConfigured())) {
+    const providerConfigured = await isProviderConfigured()
+    if (!providerConfigured) {
       return NextResponse.json(
-        { error: 'AI provider not configured. Contact admin.' },
+        { error: 'AI provider belum dikonfigurasi. Admin harus setup AI provider di /admin/providers' },
         { status: 503 }
       )
     }
@@ -93,7 +94,7 @@ export async function POST(request: NextRequest) {
     })
 
     if (!profile) {
-      return NextResponse.json({ error: 'Profile not found' }, { status: 404 })
+      return NextResponse.json({ error: 'Profile tidak ditemukan. Silakan lengkapi profile di /settings' }, { status: 404 })
     }
 
     const searchQuery = `${body.course_name} ${body.module_book_title}`
@@ -199,7 +200,26 @@ export async function POST(request: NextRequest) {
     })
   } catch (error) {
     console.error('Task generation failed:', error)
-    const message = error instanceof Error ? error.message : 'Generation failed'
-    return NextResponse.json({ error: message }, { status: 500 })
+    
+    if (error instanceof Error) {
+      if (error.message.includes('API_KEY_ENCRYPTION_KEY')) {
+        return NextResponse.json({ 
+          error: 'Encryption key tidak valid. Periksa API_KEY_ENCRYPTION_KEY di environment.' 
+        }, { status: 500 })
+      }
+      if (error.message.includes('No active AI provider')) {
+        return NextResponse.json({ 
+          error: 'AI provider belum dikonfigurasi. Admin harus setup di /admin/providers' 
+        }, { status: 503 })
+      }
+      if (error.message.includes('Decryption failed')) {
+        return NextResponse.json({ 
+          error: 'API key tidak bisa di-decrypt. Encryption key berbeda dengan saat provider dibuat. Hapus provider dan buat baru.' 
+        }, { status: 500 })
+      }
+      return NextResponse.json({ error: error.message }, { status: 500 })
+    }
+    
+    return NextResponse.json({ error: 'Gagal generate jawaban' }, { status: 500 })
   }
 }
