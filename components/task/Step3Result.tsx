@@ -6,8 +6,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Textarea } from "@/components/ui/textarea"
 import { TaskFormData } from "@/app/(student)/task/new/page"
 import { TaskResult } from "@/app/(student)/task/new/page"
-import { Download, RefreshCw, ArrowLeft, Loader2 } from "lucide-react"
+import { Download, RefreshCw, ArrowLeft, Loader2, Copy, Check } from "lucide-react"
 import { toast } from "sonner"
+import { useSession } from "next-auth/react"
 
 interface Step3ResultProps {
   formData: TaskFormData
@@ -24,9 +25,26 @@ export function Step3Result({
   onReset,
   isProcessing,
 }: Step3ResultProps) {
+  const { data: session } = useSession()
   const [activeQuestion, setActiveQuestion] = useState(0)
   const [regenerateInstructions, setRegenerateInstructions] = useState("")
   const [showRegenerateInput, setShowRegenerateInput] = useState(false)
+  const [copiedIndex, setCopiedIndex] = useState<number | null>(null)
+
+  const studentName = session?.user?.name || "User"
+  const studentNim = session?.user?.username || ""
+
+  const handleCopyAnswer = async (index: number) => {
+    const answer = result.answers[index]
+    try {
+      await navigator.clipboard.writeText(answer)
+      setCopiedIndex(index)
+      toast.success("Jawaban berhasil di-copy")
+      setTimeout(() => setCopiedIndex(null), 2000)
+    } catch {
+      toast.error("Gagal copy jawaban")
+    }
+  }
 
   const handleDownloadPDF = async () => {
     try {
@@ -40,20 +58,21 @@ export function Step3Result({
       })
 
       if (!response.ok) {
-        throw new Error("Gagal generate PDF")
+        const errorData = await response.json()
+        throw new Error(errorData.error || "Gagal generate PDF")
       }
 
       const blob = await response.blob()
       const url = window.URL.createObjectURL(blob)
       const a = window.document.createElement("a")
       a.href = url
-      a.download = `Tugas-${formData.course_name}.pdf`
+      a.download = `Tugas-${formData.course_name.replace(/\s+/g, '-')}.pdf`
       a.click()
       window.URL.revokeObjectURL(url)
 
       toast.success("PDF berhasil di-download")
     } catch (error) {
-      toast.error("Gagal generate PDF")
+      toast.error(error instanceof Error ? error.message : "Gagal generate PDF")
     }
   }
 
@@ -67,6 +86,10 @@ export function Step3Result({
     return text.trim().split(/\s+/).filter((w) => w.length > 0).length
   }
 
+  const currentAnswer = result.answers[activeQuestion] || ""
+  const wordCount = countWords(currentAnswer)
+  const meetsTarget = wordCount >= formData.min_words_target
+
   return (
     <div className="space-y-6">
       <div className="flex gap-2">
@@ -74,16 +97,32 @@ export function Step3Result({
           <ArrowLeft className="w-4 h-4" />
           Buat Tugas Baru
         </Button>
-        <Button onClick={handleDownloadPDF} className="gap-2">
+        <Button onClick={handleDownloadPDF} className="gap-2 bg-emerald-600 hover:bg-emerald-700">
           <Download className="w-4 h-4" />
           Download PDF
         </Button>
       </div>
 
+      {formData.task_type === "DISCUSSION" && (
+        <Card className="rounded-xl border border-zinc-200 bg-white shadow-sm">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold text-lg">
+                {studentName.charAt(0).toUpperCase()}
+              </div>
+              <div>
+                <p className="font-semibold text-zinc-900">{studentName}</p>
+                <p className="text-sm text-zinc-500">NIM: {studentNim}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {formData.task_type === "ASSIGNMENT" && formData.questions.length > 1 && (
         <Card className="rounded-xl border border-zinc-200 bg-white shadow-sm">
           <CardContent className="p-4">
-            <div className="flex gap-2">
+            <div className="flex gap-2 flex-wrap">
               {formData.questions.map((_, index) => (
                 <Button
                   key={index}
@@ -102,16 +141,36 @@ export function Step3Result({
       <Card className="rounded-xl border border-zinc-200 bg-white shadow-sm">
         <CardHeader>
           <CardTitle className="flex items-center justify-between">
-            <span>Jawaban {formData.task_type === "ASSIGNMENT" ? `Soal ${activeQuestion + 1}` : ""}</span>
-            <span className="text-sm text-zinc-500">
-              {countWords(result.answers[activeQuestion] || "")} kata
+            <span>
+              Jawaban {formData.task_type === "ASSIGNMENT" ? `Soal ${activeQuestion + 1}` : "Diskusi"}
             </span>
+            <div className="flex items-center gap-3">
+              <span className={`text-sm ${meetsTarget ? "text-emerald-600" : "text-amber-600"}`}>
+                {wordCount} kata {meetsTarget ? "✓" : `(min: ${formData.min_words_target})`}
+              </span>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => handleCopyAnswer(activeQuestion)}
+                className="gap-1"
+              >
+                {copiedIndex === activeQuestion ? (
+                  <Check className="w-4 h-4 text-emerald-600" />
+                ) : (
+                  <Copy className="w-4 h-4" />
+                )}
+                {copiedIndex === activeQuestion ? "Copied!" : "Copy"}
+              </Button>
+            </div>
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="prose prose-sm max-w-none">
+          <div 
+            className="prose prose-sm max-w-none max-h-[400px] overflow-y-auto pr-2"
+            style={{ scrollbarWidth: 'thin', scrollbarColor: '#d4d4d8 #f4f4f5' }}
+          >
             <p className="whitespace-pre-wrap text-zinc-700 leading-relaxed">
-              {result.answers[activeQuestion]}
+              {currentAnswer}
             </p>
           </div>
 
@@ -120,7 +179,7 @@ export function Step3Result({
               <Textarea
                 value={regenerateInstructions}
                 onChange={(e) => setRegenerateInstructions(e.target.value)}
-                placeholder="Instruksi perbaikan (opsional)"
+                placeholder="Instruksi perbaikan (opsional), contoh: 'tambahkan contoh konkret', 'perbaiki referensi'"
                 rows={2}
               />
               <div className="flex gap-2">
@@ -148,30 +207,6 @@ export function Step3Result({
               Regenerate Jawaban
             </Button>
           )}
-        </CardContent>
-      </Card>
-
-      <Card className="rounded-xl border border-zinc-200 bg-white shadow-sm">
-        <CardHeader>
-          <CardTitle>Referensi</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-2">
-          {result.references.map((ref, index) => (
-            <div key={index} className="text-sm text-zinc-600">
-              <p className="font-medium">{index + 1}. {ref.title}</p>
-              {ref.author && <p>Penulis: {ref.author}</p>}
-              {ref.url && (
-                <a
-                  href={ref.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-blue-600 hover:underline"
-                >
-                  {ref.url}
-                </a>
-              )}
-            </div>
-          ))}
         </CardContent>
       </Card>
     </div>

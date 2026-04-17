@@ -134,6 +134,8 @@ export async function POST(request: NextRequest) {
         task_type: body.task_type,
         question_text: question,
         search_context: searchContext,
+        student_name: profile.full_name,
+        student_nim: profile.nim,
       })
 
       const result = await generate({
