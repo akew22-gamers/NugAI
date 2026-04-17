@@ -10,7 +10,7 @@ import { OCRDropzone } from "@/components/task/OCRDropzone"
 import { Course } from "@/components/courses/CourseCard"
 import { TaskFormData } from "@/app/(student)/task/new/page"
 import { useSession } from "next-auth/react"
-import { Loader2, Plus, X } from "lucide-react"
+import { Loader2, Plus, X, Search, ChevronDown, Check } from "lucide-react"
 
 interface Step1InputProps {
   initialData: TaskFormData
@@ -30,6 +30,8 @@ export function Step1Input({ initialData, onComplete }: Step1InputProps) {
   const [minWords, setMinWords] = useState(initialData.min_words_target)
   const [questions, setQuestions] = useState<string[]>(initialData.questions.length > 0 ? initialData.questions : [""])
   const [errors, setErrors] = useState<Record<string, string>>({})
+  const [courseSearch, setCourseSearch] = useState("")
+  const [isCourseDropdownOpen, setIsCourseDropdownOpen] = useState(false)
 
   useEffect(() => {
     if (status === "authenticated") {
@@ -58,13 +60,30 @@ export function Step1Input({ initialData, onComplete }: Step1InputProps) {
       setCourseName(course.course_name)
       setModuleBookTitle(course.module_book_title)
       setTutorName(course.tutor_name)
+      setCourseSearch(course.course_name)
+      setIsCourseDropdownOpen(false)
     } else {
       setSelectedCourseId(null)
       setCourseName("")
       setModuleBookTitle("")
       setTutorName("")
+      setCourseSearch("")
+      setIsCourseDropdownOpen(false)
     }
   }
+
+  const handleCourseSearchChange = (value: string) => {
+    setCourseSearch(value)
+    setSelectedCourseId(null)
+    setCourseName(value)
+    setModuleBookTitle("")
+    setTutorName("")
+    setIsCourseDropdownOpen(true)
+  }
+
+  const filteredCourses = courses.filter((course) =>
+    course.course_name.toLowerCase().includes(courseSearch.toLowerCase())
+  )
 
   const handleAddQuestion = () => {
     setQuestions([...questions, ""])
@@ -157,27 +176,55 @@ export function Step1Input({ initialData, onComplete }: Step1InputProps) {
 
             <div>
               <Label>Pilih Mata Kuliah (Opsional)</Label>
-              <select
-                className="w-full mt-2 p-2 border border-zinc-200 rounded-lg"
-                value={selectedCourseId || ""}
-                onChange={(e) => handleCourseSelect(e.target.value)}
-              >
-                <option value="">Input Manual</option>
-                {courses.map((course) => (
-                  <option key={course.id} value={course.id}>
-                    {course.course_name}
-                  </option>
-                ))}
-              </select>
+              <div className="relative mt-2">
+                <div
+                  className="flex items-center gap-2 w-full p-2 border border-zinc-200 rounded-lg cursor-pointer bg-white"
+                  onClick={() => setIsCourseDropdownOpen(!isCourseDropdownOpen)}
+                >
+                  <Search className="w-4 h-4 text-zinc-400" />
+                  <input
+                    type="text"
+                    value={courseSearch}
+                    onChange={(e) => handleCourseSearchChange(e.target.value)}
+                    placeholder="Cari atau input manual..."
+                    className="flex-1 outline-none text-sm bg-transparent"
+                    onFocus={() => setIsCourseDropdownOpen(true)}
+                  />
+                  <ChevronDown className="w-4 h-4 text-zinc-400" />
+                </div>
+                
+                {isCourseDropdownOpen && filteredCourses.length > 0 && (
+                  <div className="absolute z-10 w-full mt-1 bg-white border border-zinc-200 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+                    {filteredCourses.map((course) => (
+                      <div
+                        key={course.id}
+                        className="flex items-center gap-2 p-2 hover:bg-zinc-50 cursor-pointer"
+                        onClick={() => handleCourseSelect(course.id)}
+                      >
+                        {selectedCourseId === course.id && (
+                          <Check className="w-4 h-4 text-emerald-600" />
+                        )}
+                        <span className={selectedCourseId === course.id ? "font-medium" : ""}>
+                          {course.course_name}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
 
             <div>
               <Label>Nama Mata Kuliah</Label>
               <Input
                 value={courseName}
-                onChange={(e) => setCourseName(e.target.value)}
+                onChange={(e) => {
+                  setCourseName(e.target.value)
+                  setSelectedCourseId(null)
+                  setModuleBookTitle("")
+                  setTutorName("")
+                }}
                 placeholder="Masukkan nama mata kuliah"
-                disabled={selectedCourseId !== null}
                 className={errors.courseName ? "border-red-500" : ""}
               />
               {errors.courseName && (
@@ -191,7 +238,6 @@ export function Step1Input({ initialData, onComplete }: Step1InputProps) {
                 value={moduleBookTitle}
                 onChange={(e) => setModuleBookTitle(e.target.value)}
                 placeholder="Masukkan judul modul/buku"
-                disabled={selectedCourseId !== null}
                 className={errors.moduleBookTitle ? "border-red-500" : ""}
               />
               {errors.moduleBookTitle && (
@@ -205,7 +251,6 @@ export function Step1Input({ initialData, onComplete }: Step1InputProps) {
                 value={tutorName}
                 onChange={(e) => setTutorName(e.target.value)}
                 placeholder="Masukkan nama tutor"
-                disabled={selectedCourseId !== null}
                 className={errors.tutorName ? "border-red-500" : ""}
               />
               {errors.tutorName && (

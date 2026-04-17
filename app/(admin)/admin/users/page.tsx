@@ -339,17 +339,26 @@ export default function AdminUsersPage() {
                   </div>
                   
                   <div className="flex items-center gap-2 shrink-0">
-                    <Select
-                      options={[
-                        { value: "FREE", label: "FREE" },
-                        { value: "PREMIUM", label: "PREMIUM" },
-                      ]}
-                      value={user.subscription_tier}
-                      onChange={(e) =>
-                        handleUpdateTier(user.id, e.target.value as SubscriptionTier)
-                      }
-                      className="w-28 h-9"
-                    />
+                    <button
+                      onClick={() => handleUpdateTier(user.id, user.subscription_tier === "FREE" ? "PREMIUM" : "FREE")}
+                      className={cn(
+                        "relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2",
+                        user.subscription_tier === "PREMIUM" ? "bg-amber-500" : "bg-slate-200"
+                      )}
+                    >
+                      <span
+                        className={cn(
+                          "inline-block h-4 w-4 transform rounded-full bg-white transition-transform",
+                          user.subscription_tier === "PREMIUM" ? "translate-x-6" : "translate-x-1"
+                        )}
+                      />
+                    </button>
+                    <span className={cn(
+                      "text-xs font-medium",
+                      user.subscription_tier === "PREMIUM" ? "text-amber-600" : "text-slate-500"
+                    )}>
+                      {user.subscription_tier}
+                    </span>
                     <Button
                       variant="outline"
                       size="sm"

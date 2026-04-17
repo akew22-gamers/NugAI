@@ -11,36 +11,37 @@ import { QuickActions } from "@/components/dashboard/QuickActions"
 
 interface QuotaData {
   tier: "FREE" | "PREMIUM"
-  remaining: number
-  limit: number
+  remaining: number | null
+  limit: number | null
   resetAt: string
 }
 
-interface Task {
+interface TaskSession {
   id: string
-  title: string
-  subject: string
-  status: "PENDING" | "PROCESSING" | "COMPLETED" | "FAILED"
-  createdAt: string
+  task_type: "DISCUSSION" | "ASSIGNMENT"
+  min_words_target: number
+  created_at: string
+  course_name: string | null
+  module_book_title: string | null
+  tutor_name: string | null
+  items_count: number
 }
 
 export default function DashboardPage() {
   const { data: session, status } = useSession()
   const [quota, setQuota] = useState<QuotaData | null>(null)
-  const [recentTasks, setRecentTasks] = useState<Task[]>([])
+  const [recentTasks, setRecentTasks] = useState<TaskSession[]>([])
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
-        // Fetch quota data
         const quotaRes = await fetch("/api/quota")
         if (quotaRes.ok) {
           const quotaData = await quotaRes.json()
           setQuota(quotaData)
         }
 
-        // Fetch recent tasks
         const tasksRes = await fetch("/api/tasks?limit=5")
         if (tasksRes.ok) {
           const tasksData = await tasksRes.json()
@@ -82,12 +83,11 @@ export default function DashboardPage() {
     )
   }
 
-  const userName = session?.user?.name || session?.user?.username || "Pengguna"
+  const userName = session?.user?.username || "Pengguna"
   const subscriptionTier = session?.user?.subscriptionTier || "FREE"
 
   return (
     <div className="space-y-8">
-      {/* Welcome Section */}
       <section className="space-y-2">
         <div className="flex items-center gap-3">
           <h1 className="text-3xl font-bold tracking-tight text-zinc-900">
@@ -109,13 +109,11 @@ export default function DashboardPage() {
         </p>
       </section>
 
-      {/* Quota & Quick Actions Grid */}
       <div className="grid gap-6 lg:grid-cols-2">
         <QuotaDisplay quota={quota} isLoading={isLoading} />
         <QuickActions />
       </div>
 
-      {/* Recent Tasks */}
       <RecentTasks tasks={recentTasks} isLoading={isLoading} />
     </div>
   )

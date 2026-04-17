@@ -1,50 +1,33 @@
 "use client"
 
 import Link from "next/link"
-import { FileText, CheckCircle2, XCircle, Loader2, ArrowRight } from "lucide-react"
+import { FileText, CheckCircle2, ArrowRight } from "lucide-react"
 
-interface Task {
+interface TaskSession {
   id: string
-  title: string
-  subject: string
-  status: "PENDING" | "PROCESSING" | "COMPLETED" | "FAILED"
-  createdAt: string
+  task_type: "DISCUSSION" | "ASSIGNMENT"
+  min_words_target: number
+  created_at: string
+  course_name: string | null
+  module_book_title: string | null
+  tutor_name: string | null
+  items_count: number
 }
 
 interface RecentTasksProps {
-  tasks: Task[]
+  tasks: TaskSession[]
   isLoading?: boolean
 }
 
 export function RecentTasks({ tasks, isLoading }: RecentTasksProps) {
-  const getStatusIcon = (status: Task["status"]) => {
-    switch (status) {
-      case "COMPLETED":
-        return <CheckCircle2 className="h-4 w-4 text-green-600" />
-      case "FAILED":
-        return <XCircle className="h-4 w-4 text-red-600" />
-      case "PROCESSING":
-        return <Loader2 className="h-4 w-4 animate-spin text-amber-600" />
-      default:
-        return <FileText className="h-4 w-4 text-zinc-400" />
-    }
-  }
-
-  const getStatusText = (status: Task["status"]) => {
-    switch (status) {
-      case "COMPLETED":
-        return "Selesai"
-      case "FAILED":
-        return "Gagal"
-      case "PROCESSING":
-        return "Diproses"
-      default:
-        return "Menunggu"
-    }
+  const getTaskTypeLabel = (type: "DISCUSSION" | "ASSIGNMENT") => {
+    return type === "DISCUSSION" ? "Tugas Diskusi" : "Tugas Soal"
   }
 
   const formatDate = (dateString: string) => {
+    if (!dateString) return "Tanggal tidak valid"
     const date = new Date(dateString)
+    if (isNaN(date.getTime())) return "Tanggal tidak valid"
     return date.toLocaleDateString("id-ID", {
       day: "numeric",
       month: "short",
@@ -102,18 +85,18 @@ export function RecentTasks({ tasks, isLoading }: RecentTasksProps) {
             >
               <div className="flex items-center gap-3">
                 <div className="flex h-9 w-9 items-center justify-center rounded-lg border border-zinc-200 bg-white">
-                  {getStatusIcon(task.status)}
+                  <CheckCircle2 className="h-4 w-4 text-emerald-600" />
                 </div>
                 <div>
                   <h4 className="font-medium text-zinc-900 group-hover:text-zinc-700">
-                    {task.title}
+                    {task.course_name || "Tugas Tanpa Mata Kuliah"}
                   </h4>
                   <p className="text-sm text-zinc-500">
-                    {task.subject} {getStatusText(task.status)}
+                    {getTaskTypeLabel(task.task_type)} • {task.items_count} soal
                   </p>
                 </div>
               </div>
-              <span className="text-xs text-zinc-400">{formatDate(task.createdAt)}</span>
+              <span className="text-xs text-zinc-400">{formatDate(task.created_at)}</span>
             </Link>
           ))
         )}
