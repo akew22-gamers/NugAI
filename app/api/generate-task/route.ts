@@ -17,7 +17,9 @@ interface GenerateTaskRequest {
 }
 
 async function checkQuota(userId: string): Promise<{ canProceed: boolean; error?: string }> {
-  const today = new Date().toISOString().split('T')[0]
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  const todayStr = today.toISOString().split('T')[0]
 
   const user = await prisma.user.findUnique({
     where: { id: userId },
@@ -32,7 +34,9 @@ async function checkQuota(userId: string): Promise<{ canProceed: boolean; error?
     return { canProceed: false, error: 'User not found' }
   }
 
-  if (user.last_usage_date?.toISOString().split('T')[0] !== today) {
+  const lastUsageStr = user.last_usage_date?.toISOString().split('T')[0]
+
+  if (lastUsageStr !== todayStr) {
     await prisma.user.update({
       where: { id: userId },
       data: {
@@ -173,7 +177,7 @@ export async function POST(request: NextRequest) {
         where: { id: session.user.id },
         data: {
           daily_usage_count: { increment: 1 },
-          last_usage_date: new Date().toISOString().split('T')[0],
+          last_usage_date: new Date(),
         },
       }),
       prisma.dailyUsageLog.create({
