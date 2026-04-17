@@ -1,0 +1,497 @@
+"use client"
+
+import { useState, useEffect } from "react"
+import { toast } from "sonner"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Select } from "@/components/ui/select"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import { AIProviderType } from "@prisma/client"
+
+interface Provider {
+  id: string
+  provider_type: AIProviderType
+  provider_name: string
+  base_url: string
+  default_model: string
+  is_active: boolean
+  available_models?: {
+    models: Array<{ id: string; name?: string; owned_by?: string }>
+    fetched_at: string
+  }
+  last_model_fetch?: Date
+}
+
+interface Model {
+  id: string
+  name?: string
+  owned_by?: string
+}
+
+const PROVIDER_OPTIONS = [
+  { value: "DEEPSEEK", label: "DeepSeek" },
+  { value: "OPENAI", label: "OpenAI" },
+  { value: "GROQ", label: "Groq" },
+  { value: "TOGETHER", label: "Together AI" },
+  { value: "CUSTOM", label: "Custom" },
+]
+
+const PRESET_BASE_URLS: Record<string, string> = {
+  DEEPSEEK: "https://api.deepseek.com/v1",
+  OPENAI: "https://api.openai.com/v1",
+  GROQ: "https://api.groq.com/openai/v1",
+  TOGETHER: "https://api.together.xyz/v1",
+  CUSTOM: "",
+}
+
+export default function AdminProvidersPage() {
+  const [providers, setProviders] = useState<Provider[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [isDialogOpen, setIsDialogOpen] = useState(false)
+  const [isEditing, setIsEditing] = useState(false)
+  const [editingProvider, setEditingProvider] = useState<Provider | null>(null)
+  const [isFetchingModels, setIsFetchingModels] = useState(false)
+  const [availableModels, setAvailableModels] = useState<Model[]>([])
+
+  const [providerType, setProviderType] = useState<AIProviderType>("DEEPSEEK")
+  const [providerName, setProviderName] = useState("")
+  const [baseUrl, setBaseUrl] = useState(PRESET_BASE_URLS["DEEPSEEK"])
+  const [apiKey, setApiKey] = useState("")
+  const [defaultModel, setDefaultModel] = useState("")
+  const [isSaving, setIsSaving] = useState(false)
+
+  useEffect(() => {
+    fetchProviders()
+  }, [])
+
+  const fetchProviders = async () => {
+    setIsLoading(true)
+    try {
+      const response = await fetch("/api/admin/providers")
+      if (response.ok) {
+        const data = await response.json()
+        setProviders(data.providers)
+      }
+    } catch (error) {
+      console.error("Failed to fetch providers:", error)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleProviderTypeChange = (value: AIProviderType) => {
+    setProviderType(value)
+    if (value !== "CUSTOM") {
+      setBaseUrl(PRESET_BASE_URLS[value])
+      setProviderName("")
+    } else {
+      setBaseUrl("")
+      setProviderName("")
+    }
+    setAvailableModels([])
+    setDefaultModel("")
+  }
+
+  const handleFetchModels = async () => {
+    if (!baseUrl || !apiKey) {
+      toast.error("Base URL dan API Key harus diisi sebelum fetch model")
+      return
+    }
+
+    setIsFetchingModels(true)
+    try {
+      const response = await fetch("/api/admin/providers/fetch-models", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          base_url: baseUrl,
+          api_key: apiKey,
+        }),
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        setAvailableModels(data.models)
+        if (data.models.length > 0 && !defaultModel) {
+          setDefaultModel(data.models[0].id)
+        }
+        toast.success(`${data.models.length} model berhasil dimuat`)
+      } else {
+        const error = await response.json()
+        toast.error(error.error || "Gagal fetch model")
+      }
+    } catch (error) {
+      console.error("Failed to fetch models:", error)
+      toast.error("Gagal fetch model dari provider")
+    } finally {
+      setIsFetchingModels(false)
+    }
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+
+    if (!apiKey) {
+      toast.error("API Key harus diisi")
+      return
+    }
+
+    if (providerType === "CUSTOM" && !baseUrl) {
+      toast.error("Base URL harus diisi untuk provider custom")
+      return
+    }
+
+    setIsSaving(true)
+    try {
+      const url = "/api/admin/providers"
+      const method = isEditing ? "PATCH" : "POST"
+
+      const body = isEditing
+        ? {
+            id: editingProvider?.id,
+            provider_name: providerType === "CUSTOM" ? providerName : undefined,
+            base_url: providerType === "CUSTOM" ? baseUrl : undefined,
+            api_key: apiKey || undefined,
+            default_model: defaultModel || undefined,
+          }
+        : {
+            provider_type: providerType,
+            provider_name: providerType === "CUSTOM" ? providerName : "",
+            base_url: baseUrl,
+            api_key: apiKey,
+            default_model: defaultModel || "",
+          }
+
+      const response = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      })
+
+      if (response.ok) {
+        setIsDialogOpen(false)
+        resetForm()
+        fetchProviders()
+        toast.success(isEditing ? "Provider berhasil diperbarui" : "Provider berhasil ditambahkan")
+      } else {
+        const error = await response.json()
+        toast.error(error.error || "Gagal menyimpan provider")
+      }
+    } catch (error) {
+      console.error("Failed to save provider:", error)
+      toast.error("Gagal menyimpan provider")
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
+  const handleSetActive = async (id: string) => {
+    try {
+      const response = await fetch("/api/admin/providers", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id }),
+      })
+
+      if (response.ok) {
+        fetchProviders()
+        toast.success("Provider berhasil diaktifkan")
+      } else {
+        const error = await response.json()
+        toast.error(error.error || "Gagal mengaktifkan provider")
+      }
+    } catch (error) {
+      console.error("Failed to set active provider:", error)
+      toast.error("Gagal mengaktifkan provider")
+    }
+  }
+
+  const handleDelete = async (id: string) => {
+    if (!confirm("Apakah Anda yakin ingin menghapus provider ini?")) {
+      return
+    }
+
+    try {
+      const response = await fetch(`/api/admin/providers?id=${id}`, {
+        method: "DELETE",
+      })
+
+      if (response.ok) {
+        fetchProviders()
+        toast.success("Provider berhasil dihapus")
+      } else {
+        const error = await response.json()
+        toast.error(error.error || "Gagal menghapus provider")
+      }
+    } catch (error) {
+      console.error("Failed to delete provider:", error)
+      toast.error("Gagal menghapus provider")
+    }
+  }
+
+  const handleEdit = async (provider: Provider) => {
+    setIsEditing(true)
+    setEditingProvider(provider)
+    setProviderType(provider.provider_type)
+    setProviderName(provider.provider_name)
+    setBaseUrl(provider.base_url)
+    setApiKey("")
+    setDefaultModel(provider.default_model)
+    
+    if (provider.available_models?.models) {
+      setAvailableModels(provider.available_models.models)
+    }
+
+    setIsDialogOpen(true)
+  }
+
+  const resetForm = () => {
+    setIsEditing(false)
+    setEditingProvider(null)
+    setProviderType("DEEPSEEK")
+    setProviderName("")
+    setBaseUrl(PRESET_BASE_URLS["DEEPSEEK"])
+    setApiKey("")
+    setDefaultModel("")
+    setAvailableModels([])
+  }
+
+  const openNewProviderDialog = () => {
+    resetForm()
+    setIsDialogOpen(true)
+  }
+
+  const modelOptions = availableModels.map((m) => ({
+    value: m.id,
+    label: m.name || m.id,
+  }))
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900">Provider AI</h1>
+          <p className="text-slate-600 mt-1">
+            Kelola provider AI untuk generasi tugas
+          </p>
+        </div>
+        <Button onClick={openNewProviderDialog}>Tambah Provider</Button>
+      </div>
+
+      {isLoading ? (
+        <div className="text-center py-8 text-slate-500">Memuat provider...</div>
+      ) : providers.length === 0 ? (
+        <Card className="h-[200px]">
+          <CardContent className="h-full flex flex-col items-center justify-center text-center">
+            <p className="text-slate-500">Belum ada provider AI yang dikonfigurasi.</p>
+            <p className="text-slate-500 mt-2">Tambahkan provider untuk mulai menggunakan AI.</p>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {providers.map((provider) => (
+            <Card
+              key={provider.id}
+              className={
+                provider.is_active ? "border-green-500 border-2" : ""
+              }
+            >
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-lg">
+                    {provider.provider_name}
+                  </CardTitle>
+                  {provider.is_active && (
+                    <span className="text-xs font-medium text-green-600 bg-green-50 px-2 py-1 rounded">
+                      AKTIF
+                    </span>
+                  )}
+                </div>
+                <CardDescription>
+                  {provider.provider_type}
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  <div className="text-sm">
+                    <span className="text-slate-500">Base URL:</span>
+                    <span className="ml-2 text-slate-700">{provider.base_url}</span>
+                  </div>
+                  <div className="text-sm">
+                    <span className="text-slate-500">Default Model:</span>
+                    <span className="ml-2 text-slate-700">
+                      {provider.default_model || "Tidak ada"}
+                    </span>
+                  </div>
+                  {provider.last_model_fetch && (
+                    <div className="text-sm">
+                      <span className="text-slate-500">Model Fetch:</span>
+                      <span className="ml-2 text-slate-700">
+                        {new Date(provider.last_model_fetch).toLocaleDateString("id-ID")}
+                      </span>
+                    </div>
+                  )}
+                  <div className="flex items-center gap-2 pt-3">
+                    {!provider.is_active && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleSetActive(provider.id)}
+                      >
+                        Aktifkan
+                      </Button>
+                    )}
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleEdit(provider)}
+                    >
+                      Edit
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                      onClick={() => handleDelete(provider.id)}
+                    >
+                      Hapus
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
+
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>
+              {isEditing ? "Edit Provider" : "Tambah Provider AI"}
+            </DialogTitle>
+            <DialogDescription>
+              {isEditing
+                ? "Perbarui konfigurasi provider AI"
+                : "Konfigurasi provider AI baru untuk generasi tugas"}
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="provider_type">Jenis Provider</Label>
+              <Select
+                id="provider_type"
+                options={PROVIDER_OPTIONS}
+                value={providerType}
+                onChange={(e) =>
+                  handleProviderTypeChange(e.target.value as AIProviderType)
+                }
+                disabled={isEditing && editingProvider?.provider_type !== "CUSTOM"}
+              />
+            </div>
+
+            {providerType === "CUSTOM" && (
+              <div className="space-y-2">
+                <Label htmlFor="provider_name">Nama Provider</Label>
+                <Input
+                  id="provider_name"
+                  value={providerName}
+                  onChange={(e) => setProviderName(e.target.value)}
+                  placeholder="Nama provider custom"
+                />
+              </div>
+            )}
+
+            <div className="space-y-2">
+              <Label htmlFor="base_url">Base URL</Label>
+              <Input
+                id="base_url"
+                value={baseUrl}
+                onChange={(e) => setBaseUrl(e.target.value)}
+                placeholder="https://api.provider.com/v1"
+                disabled={providerType !== "CUSTOM"}
+              />
+              {providerType !== "CUSTOM" && (
+                <p className="text-xs text-slate-500">
+                  Base URL otomatis untuk provider preset
+                </p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="api_key">API Key</Label>
+              <Input
+                id="api_key"
+                type="password"
+                value={apiKey}
+                onChange={(e) => setApiKey(e.target.value)}
+                placeholder="sk-xxxxx"
+              />
+              {isEditing && (
+                <p className="text-xs text-slate-500">
+                  Kosongkan jika tidak ingin mengubah API key
+                </p>
+              )}
+            </div>
+
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                type="button"
+                onClick={handleFetchModels}
+                disabled={isFetchingModels || !baseUrl || !apiKey}
+              >
+                {isFetchingModels ? "Memuat..." : "Fetch Model"}
+              </Button>
+              {availableModels.length > 0 && (
+                <span className="text-sm text-slate-500">
+                  {availableModels.length} model tersedia
+                </span>
+              )}
+            </div>
+
+            {availableModels.length > 0 && (
+              <div className="space-y-2">
+                <Label htmlFor="default_model">Model Default</Label>
+                <Select
+                  id="default_model"
+                  options={modelOptions}
+                  value={defaultModel}
+                  onChange={(e) => setDefaultModel(e.target.value)}
+                  placeholder="Pilih model default"
+                />
+              </div>
+            )}
+
+            <div className="flex items-center justify-end gap-2 pt-4">
+              <Button
+                variant="ghost"
+                type="button"
+                onClick={() => setIsDialogOpen(false)}
+              >
+                Batal
+              </Button>
+              <Button type="submit" disabled={isSaving}>
+                {isSaving ? "Menyimpan..." : isEditing ? "Simpan" : "Tambah"}
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
+    </div>
+  )
+}

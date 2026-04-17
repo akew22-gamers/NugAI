@@ -133,9 +133,9 @@ export function Step1Input({ initialData, onComplete }: Step1InputProps) {
   }
 
   return (
-    <div className="space-y-6">
-      <Card className="rounded-xl border border-zinc-200 bg-white shadow-sm">
-        <CardContent className="p-6 space-y-6">
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <Card className="rounded-xl border border-zinc-200 bg-white shadow-sm lg:col-span-1 h-fit">
+        <CardContent className="p-6 pt-8 flex flex-col justify-start">
           <div className="space-y-4">
             <div>
               <Label>Jenis Tugas</Label>
@@ -231,52 +231,56 @@ export function Step1Input({ initialData, onComplete }: Step1InputProps) {
         </CardContent>
       </Card>
 
-      <Card className="rounded-xl border border-zinc-200 bg-white shadow-sm">
-        <CardContent className="p-6 space-y-4">
-          <div className="flex items-center justify-between">
-            <Label>Soal/Tugas</Label>
-            <Button variant="outline" size="sm" onClick={handleAddQuestion} className="gap-2">
-              <Plus className="w-4 h-4" />
-              Tambah Soal
-            </Button>
-          </div>
-
-          {questions.map((question, index) => (
-            <div key={index} className="space-y-2">
-              <div className="flex items-center gap-2">
-                <span className="text-sm font-medium text-zinc-600">Soal {index + 1}</span>
-                {questions.length > 1 && (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-6 w-6"
-                    onClick={() => handleRemoveQuestion(index)}
-                  >
-                    <X className="w-4 h-4" />
-                  </Button>
-                )}
-              </div>
-              <Textarea
-                value={question}
-                onChange={(e) => handleQuestionChange(index, e.target.value)}
-                placeholder="Masukkan soal/tugas atau upload gambar untuk OCR"
-                rows={4}
-                className={errors.questions && index === 0 ? "border-red-500" : ""}
-              />
-              <OCRDropzone
-                onComplete={(text) => handleOCRComplete(text, index)}
-              />
+      <Card className="rounded-xl border border-zinc-200 bg-white shadow-sm lg:col-span-2 h-fit">
+        <CardContent className="p-6 pt-8">
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <Label>Soal/Tugas</Label>
+              <Button variant="outline" size="sm" onClick={handleAddQuestion} className="gap-2">
+                <Plus className="w-4 h-4" />
+                Tambah Soal
+              </Button>
             </div>
-          ))}
-          {errors.questions && (
-            <p className="text-sm text-red-600">{errors.questions}</p>
-          )}
+
+            {questions.map((question, index) => (
+              <div key={index} className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-medium text-zinc-600">Soal {index + 1}</span>
+                  {questions.length > 1 && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-6 w-6"
+                      onClick={() => handleRemoveQuestion(index)}
+                    >
+                      <X className="w-4 h-4" />
+                    </Button>
+                  )}
+                </div>
+                <Textarea
+                  value={question}
+                  onChange={(e) => handleQuestionChange(index, e.target.value)}
+                  placeholder="Masukkan soal/tugas atau upload gambar untuk OCR"
+                  rows={4}
+                  className={errors.questions && index === 0 ? "border-red-500" : ""}
+                />
+                <OCRDropzone
+                  onComplete={(text) => handleOCRComplete(text, index)}
+                />
+              </div>
+            ))}
+            {errors.questions && (
+              <p className="text-sm text-red-600">{errors.questions}</p>
+            )}
+          </div>
         </CardContent>
       </Card>
 
-      <Button onClick={handleSubmit} className="w-full">
-        Generate Jawaban
-      </Button>
+      <div className="lg:col-span-3">
+        <Button onClick={handleSubmit} className="w-full">
+          Generate Jawaban
+        </Button>
+      </div>
     </div>
   )
 }

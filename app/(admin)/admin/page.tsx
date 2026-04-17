@@ -1,11 +1,75 @@
 "use client"
 
-import { useSession } from "next-auth/react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import Link from "next/link"
 
+interface SystemHealth {
+  name: string
+  status: 'healthy' | 'warning' | 'error'
+  message: string
+}
+
+interface AnalyticsSummary {
+  totalUsers: number
+  activeUsersToday: number
+  tasksToday: number
+  totalCostLast30Days: number
+}
+
 export default function AdminDashboardPage() {
-  const { data: session } = useSession()
+  const [systems, setSystems] = useState<SystemHealth[]>([])
+  const [summary, setSummary] = useState<AnalyticsSummary | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+
+  useEffect(() => {
+    fetchData()
+  }, [])
+
+  const fetchData = async () => {
+    setIsLoading(true)
+    try {
+      const [healthRes, analyticsRes] = await Promise.all([
+        fetch("/api/admin/system-health"),
+        fetch("/api/admin/analytics"),
+      ])
+
+      if (healthRes.ok) {
+        const healthData = await healthRes.json()
+        setSystems(healthData.systems)
+      }
+
+      if (analyticsRes.ok) {
+        const analyticsData = await analyticsRes.json()
+        setSummary(analyticsData.summary)
+      }
+    } catch (error) {
+      console.error("Failed to fetch data:", error)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case 'healthy':
+        return <span className="text-sm font-medium text-green-600 bg-green-50 px-2 py-1 rounded">Sehat</span>
+      case 'warning':
+        return <span className="text-sm font-medium text-amber-600 bg-amber-50 px-2 py-1 rounded">Menunggu</span>
+      case 'error':
+        return <span className="text-sm font-medium text-red-600 bg-red-50 px-2 py-1 rounded">Error</span>
+      default:
+        return <span className="text-sm font-medium text-slate-600 bg-slate-50 px-2 py-1 rounded">Unknown</span>
+    }
+  }
+
+  const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
+      minimumFractionDigits: 2,
+    }).format(value)
+  }
 
   return (
     <div className="space-y-6">
@@ -21,17 +85,21 @@ export default function AdminDashboardPage() {
             <CardDescription>Siswa terdaftar</CardDescription>
           </CardHeader>
           <CardContent>
-            <p className="text-3xl font-bold text-slate-900">0</p>
+            <p className="text-3xl font-bold text-slate-900">
+              {isLoading ? "..." : summary?.totalUsers || 0}
+            </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader>
-            <CardTitle>Biaya API (Hari Ini)</CardTitle>
-            <CardDescription>DeepSeek + Search API</CardDescription>
+            <CardTitle>Biaya API (30 Hari)</CardTitle>
+            <CardDescription>LLM + Search API</CardDescription>
           </CardHeader>
           <CardContent>
-            <p className="text-3xl font-bold text-slate-900">$0.00</p>
+            <p className="text-3xl font-bold text-slate-900">
+              {isLoading ? "..." : formatCurrency(summary?.totalCostLast30Days || 0)}
+            </p>
           </CardContent>
         </Card>
 
@@ -41,7 +109,9 @@ export default function AdminDashboardPage() {
             <CardDescription>Jumlah hari ini</CardDescription>
           </CardHeader>
           <CardContent>
-            <p className="text-3xl font-bold text-slate-900">0</p>
+            <p className="text-3xl font-bold text-slate-900">
+              {isLoading ? "..." : summary?.tasksToday || 0}
+            </p>
           </CardContent>
         </Card>
       </div>
@@ -88,24 +158,18 @@ export default function AdminDashboardPage() {
             <CardDescription>Monitoring status API</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-slate-600">DeepSeek API</span>
-                <span className="text-sm font-medium text-amber-600 bg-amber-50 px-2 py-1 rounded">Menunggu</span>
+            {isLoading ? (
+              <p className="text-slate-500">Memuat...</p>
+            ) : (
+              <div className="space-y-3">
+                {systems.map((system) => (
+                  <div key={system.name} className="flex items-center justify-between">
+                    <span className="text-slate-600">{system.name}</span>
+                    {getStatusBadge(system.status)}
+                  </div>
+                ))}
               </div>
-              <div className="flex items-center justify-between">
-                <span className="text-slate-600">Tavily Search</span>
-                <span className="text-sm font-medium text-amber-600 bg-amber-50 px-2 py-1 rounded">Menunggu</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-slate-600">Exa Search</span>
-                <span className="text-sm font-medium text-amber-600 bg-amber-50 px-2 py-1 rounded">Menunggu</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-slate-600">Database</span>
-                <span className="text-sm font-medium text-green-600 bg-green-50 px-2 py-1 rounded">Sehat</span>
-              </div>
-            </div>
+            )}
           </CardContent>
         </Card>
       </div>
