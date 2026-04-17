@@ -10,8 +10,6 @@ import {
 import { registerFonts, getFontFamily } from './font-loader'
 import { PAGE_SIZE, PAGE_MARGIN } from './styles'
 
-registerFonts()
-
 interface ReferenceData {
   type: 'module' | 'journal' | 'book' | 'government' | 'web'
   title: string
@@ -290,6 +288,12 @@ function AssignmentTemplate({ data }: { data: PDFData }) {
 }
 
 export async function generatePDF(data: PDFData): Promise<Buffer> {
+  try {
+    registerFonts()
+  } catch (e) {
+    console.error('Font registration failed, using default:', e)
+  }
+  
   const document = data.taskType === 'DISCUSSION' 
     ? DiscussionTemplate({ data })
     : AssignmentTemplate({ data })

@@ -1,21 +1,25 @@
 import { Font } from '@react-pdf/renderer'
 
-const DEFAULT_FONT_BASE = '/fonts/'
-
-export function registerFonts(customFontUrl?: string): void {
-  const fontBase = customFontUrl || DEFAULT_FONT_BASE
-  
-  Font.register({
-    family: 'Arial',
-    fonts: [
-      { src: `${fontBase}LiberationSans-Regular.ttf` },
-      { src: `${fontBase}LiberationSans-Bold.ttf`, fontWeight: 'bold' },
-      { src: `${fontBase}LiberationSans-Italic.ttf`, fontStyle: 'italic' },
-      { src: `${fontBase}LiberationSans-BoldItalic.ttf`, fontWeight: 'bold', fontStyle: 'italic' },
-    ],
-  })
+export function registerFonts(): void {
+  try {
+    Font.register({
+      family: 'Roboto',
+      fonts: [
+        {
+          src: 'https://fonts.gstatic.com/s/roboto/v30/KFOmCnqEu92Fr1Me5WZLCzYlKw.woff2',
+          fontWeight: 400,
+        },
+        {
+          src: 'https://fonts.gstatic.com/s/roboto/v30/KFOlCnqEu92Fr1MmWUlfCRc4EsA.woff2',
+          fontWeight: 700,
+        },
+      ],
+    })
+  } catch (e) {
+    console.error('Font registration failed, will fallback:', e)
+  }
 }
 
 export function getFontFamily(): string {
-  return 'Arial'
+  return 'Roboto'
 }
