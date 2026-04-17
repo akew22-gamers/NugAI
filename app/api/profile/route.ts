@@ -14,21 +14,19 @@ const profileUpdateSchema = z.object({
   default_tone: z.string().optional(),
 })
 
-// GET /api/profile - Get current user profile
 export async function GET() {
   try {
     const session = await auth()
 
     if (!session?.user?.id) {
       return NextResponse.json(
-        { error: "Unauthorized. Silakan login terlebih dahulu." },
+        { error: "Unauthorized" },
         { status: 401 }
       )
     }
 
     const userId = session.user.id
 
-    // Get student profile
     const profile = await prisma.studentProfile.findUnique({
       where: { user_id: userId },
       select: {
@@ -49,10 +47,11 @@ export async function GET() {
     })
 
     if (!profile) {
-      return NextResponse.json(
-        { error: "Profil tidak ditemukan. Silakan buat profil terlebih dahulu." },
-        { status: 404 }
-      )
+      return NextResponse.json({
+        success: true,
+        data: null,
+        message: "Profil belum dibuat",
+      })
     }
 
     return NextResponse.json({
@@ -62,20 +61,19 @@ export async function GET() {
   } catch (error) {
     console.error("Error fetching profile:", error)
     return NextResponse.json(
-      { error: "Terjadi kesalahan saat mengambil profil." },
+      { error: "Internal server error" },
       { status: 500 }
     )
   }
 }
 
-// PATCH /api/profile - Update current user profile
 export async function PATCH(request: Request) {
   try {
     const session = await auth()
 
     if (!session?.user?.id) {
       return NextResponse.json(
-        { error: "Unauthorized. Silakan login terlebih dahulu." },
+        { error: "Unauthorized" },
         { status: 401 }
       )
     }
@@ -83,22 +81,12 @@ export async function PATCH(request: Request) {
     const userId = session.user.id
     const body = await request.json()
 
-    // Validate request body
     const validatedData = profileUpdateSchema.parse(body)
 
-    // Verify profile exists for this user (ownership check)
     const existingProfile = await prisma.studentProfile.findUnique({
       where: { user_id: userId },
     })
 
-    if (!existingProfile) {
-      return NextResponse.json(
-        { error: "Profil tidak ditemukan. Silakan buat profil terlebih dahulu." },
-        { status: 404 }
-      )
-    }
-
-    // Update profile
     const updateData = {
       full_name: validatedData.full_name,
       nim: validatedData.nim,
@@ -110,37 +98,63 @@ export async function PATCH(request: Request) {
       ...(validatedData.default_tone !== undefined && { default_tone: validatedData.default_tone }),
     }
 
-    const updatedProfile = await prisma.studentProfile.update({
-      where: { user_id: userId },
-      data: updateData as any,
-      select: {
-        id: true,
-        full_name: true,
-        nim: true,
-        university_name: true,
-        faculty: true,
-        study_program: true,
-        upbjj_branch: true,
-        default_min_words: true,
-        default_tone: true,
-        university_logo_url: true,
-        pdf_font_url: true,
-        updated_at: true,
-      },
-    })
+    let updatedProfile
+
+    if (!existingProfile) {
+      updatedProfile = await prisma.studentProfile.create({
+        data: {
+          user_id: userId,
+          ...updateData,
+          university_logo_url: "",
+        },
+        select: {
+          id: true,
+          full_name: true,
+          nim: true,
+          university_name: true,
+          faculty: true,
+          study_program: true,
+          upbjj_branch: true,
+          default_min_words: true,
+          default_tone: true,
+          university_logo_url: true,
+          pdf_font_url: true,
+          updated_at: true,
+        },
+      })
+    } else {
+      updatedProfile = await prisma.studentProfile.update({
+        where: { user_id: userId },
+        data: updateData,
+        select: {
+          id: true,
+          full_name: true,
+          nim: true,
+          university_name: true,
+          faculty: true,
+          study_program: true,
+          upbjj_branch: true,
+          default_min_words: true,
+          default_tone: true,
+          university_logo_url: true,
+          pdf_font_url: true,
+          updated_at: true,
+        },
+      })
+    }
 
     return NextResponse.json({
       success: true,
       data: updatedProfile,
-      message: "Profil berhasil diperbarui.",
+      message: "Profil berhasil diperbarui",
     })
   } catch (error) {
     if (error instanceof z.ZodError) {
-      const issues = (error as any).issues as Array<{ path: Array<string | number>; message: string }>
+      const issues = error.issues as Array<{ path: Array<string | number>; message: string }>
       return NextResponse.json(
         { 
-          error: "Validasi gagal.",
-          details: (issues as any).map((e: any) => ({
+          error: "Validasi gagal",
+          details: issues.map((e) => ({
             field: e.path.join("."),
             message: e.message,
           })),
@@ -151,7 +165,7 @@ export async function PATCH(request: Request) {
 
     console.error("Error updating profile:", error)
     return NextResponse.json(
-      { error: "Terjadi kesalahan saat memperbarui profil." },
+      { error: "Internal server error" },
       { status: 500 }
     )
   }

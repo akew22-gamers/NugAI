@@ -12,25 +12,13 @@ import { Eye, EyeOff } from "lucide-react"
 function LoginFormContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const { data: session, status } = useSession()
+  const { update } = useSession()
   const isAdminLogin = searchParams.get("admin") === "true"
 
   const [username, setUsername] = useState("")
   const [password, setPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
-
-  useEffect(() => {
-    if (status === "authenticated" && session?.user) {
-      const role = session.user.role
-      if (role === "ADMIN") {
-        router.push("/admin")
-      } else {
-        router.push("/dashboard")
-      }
-      router.refresh()
-    }
-  }, [status, session, router])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -57,9 +45,15 @@ function LoginFormContent() {
         return
       }
 
-      toast.success("Login berhasil")
+      toast.success("Login berhasil!")
+      
+      await update()
+      
+      const redirectPath = isAdminLogin ? "/admin" : "/dashboard"
+      router.push(redirectPath)
+      router.refresh()
     } catch {
-      toast.error("An error occurred")
+      toast.error("Terjadi kesalahan")
       setIsLoading(false)
     }
   }

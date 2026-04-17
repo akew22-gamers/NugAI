@@ -1,9 +1,9 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { useSession, signOut } from "next-auth/react"
+import { useSession } from "next-auth/react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 
@@ -13,7 +13,6 @@ interface NavItem {
   icon: React.ReactNode
 }
 
-// Student navigation items
 const studentNavItems: NavItem[] = [
   {
     label: "Dashboard",
@@ -24,10 +23,10 @@ const studentNavItems: NavItem[] = [
       </svg>
     ),
   },
-{
-     label: "Generator Tugas",
-     href: "/task/new",
-     icon: (
+  {
+    label: "Generator Tugas",
+    href: "/task/new",
+    icon: (
       <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
       </svg>
@@ -102,18 +101,6 @@ const adminNavItems: NavItem[] = [
   },
 ]
 
-const ChevronLeftIcon = (
-  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
-  </svg>
-)
-
-const ChevronRightIcon = (
-  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 5l7 7-7 7M5 5l7 7-7 7" />
-  </svg>
-)
-
 const CrownIcon = (
   <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 24 24">
     <path d="M5 16L3 5L8.5 10L12 4L15.5 10L21 5L19 16H5M19 19A1 1 0 0018 20H6A1 1 0 005 19V18H19V19Z" />
@@ -139,20 +126,26 @@ const LogoutIcon = (
 
 export function Sidebar() {
   const pathname = usePathname()
-  const { data: session } = useSession()
+  const { data: session, status, update } = useSession()
   const [isCollapsed, setIsCollapsed] = useState(false)
+
+  useEffect(() => {
+    if (status === "authenticated" && !session?.user?.id) {
+      update()
+    }
+  }, [status, session, update])
 
   const username = session?.user?.username ?? "User"
   const role = session?.user?.role ?? "USER"
   const subscriptionTier = session?.user?.subscriptionTier ?? "FREE"
   const isAdmin = role === "ADMIN"
   const isPremium = subscriptionTier === "PREMIUM"
-
-  // Use admin or student navigation based on role
   const navItems = isAdmin ? adminNavItems : studentNavItems
 
   const handleLogout = () => {
-    signOut({ callbackUrl: "/login" })
+    import("next-auth/react").then(({ signOut }) => {
+      signOut({ callbackUrl: "/login" })
+    })
   }
 
   const getInitials = (name: string) => {
@@ -160,7 +153,6 @@ export function Sidebar() {
   }
 
   const getIsActive = (href: string) => {
-    // For admin dashboard, exact match
     if (href === "/admin") {
       return pathname === "/admin"
     }
@@ -188,28 +180,7 @@ export function Sidebar() {
             <span className="font-bold text-slate-900 text-lg">NugAI</span>
           )}
         </Link>
-        {!isCollapsed && (
-          <button
-            onClick={() => setIsCollapsed(true)}
-            className="text-slate-400 hover:text-slate-600 transition"
-            aria-label="Kecilkan sidebar"
-          >
-            {ChevronLeftIcon}
-          </button>
-        )}
       </div>
-
-      {isCollapsed && (
-        <div className="p-2 border-b border-slate-200">
-          <button
-            onClick={() => setIsCollapsed(false)}
-            className="w-full flex items-center justify-center p-2 text-slate-400 hover:text-slate-600 transition"
-            aria-label="Perbesar sidebar"
-          >
-            {ChevronRightIcon}
-          </button>
-        </div>
-      )}
 
       <nav className="flex-1 p-4 space-y-1">
         {navItems.map((item) => {
