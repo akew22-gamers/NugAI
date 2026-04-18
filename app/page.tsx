@@ -321,7 +321,7 @@ export default function LandingPage() {
 
           <div className="text-center mt-12">
             <Link href="/login">
-              <Button size="lg" className="bg-indigo-600 hover:bg-indigo-700 gap-2">
+              <Button size="lg" className="bg-indigo-600 hover:bg-indigo-700 text-white gap-2">
                 Coba Sekarang
                 <ChevronRight className="w-5 h-5" />
               </Button>
