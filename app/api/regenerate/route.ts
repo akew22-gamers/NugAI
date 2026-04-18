@@ -79,20 +79,27 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Profile not found' }, { status: 404 })
     }
 
-    const systemPrompt = buildRegenerationSystemPrompt()
-    const userPrompt = buildRegenerationUserPrompt({
+    const regenerationContext = {
       question_text: taskItem.question_text,
       previous_answer: taskItem.answer_text || '',
       regeneration_instructions: body.instructions,
       task_type: taskSession.task_type,
       student_name: profile.full_name,
       student_nim: profile.nim,
-    })
+      min_words_target: taskSession.min_words_target,
+      course_name: taskSession.course_name_snapshot || undefined,
+      module_book_title: taskSession.module_book_title_snapshot || undefined,
+      tutor_name: taskSession.tutor_name_snapshot || undefined,
+      university_name: profile.university_name || undefined,
+    }
+
+    const systemPrompt = buildRegenerationSystemPrompt(regenerationContext)
+    const userPrompt = buildRegenerationUserPrompt(regenerationContext)
 
     const result = await generate({
       systemPrompt,
       userPrompt,
-      maxTokens: taskSession.min_words_target * 2,
+      maxTokens: Math.max(taskSession.min_words_target * 3, 4096),
       temperature: 0.7,
     })
 

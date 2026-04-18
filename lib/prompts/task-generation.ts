@@ -13,7 +13,7 @@ export interface TaskGenerationContext {
 }
 
 export function buildSystemPrompt(context: TaskGenerationContext): string {
-  const maxWords = Math.ceil(context.min_words_target * 1.05)
+  const maxWords = Math.ceil(context.min_words_target * 1.15)
   
   const personaPrompt = `Kamu adalah mahasiswa tingkat sarjana program studi ${context.study_program} di ${context.university_name}. Jawab pertanyaan akademik ini sesuai bidang studimu dengan pemahaman yang mendalam dan argumentasi yang logis. WAJIB TULIS NAMA LENGKAP DAN NIM MAHASISWA DI AWAL JAWABAN untuk jenis tugas DISCUSSION. Nama dan NIM akan disediakan dalam user prompt.`
   
@@ -36,13 +36,15 @@ GAYA YANG DIHARAPKAN:
 
   const wordCountPrompt = `ATURAN KATA KRITIS:
 - Target kata BODY (isi jawaban): ${context.min_words_target} kata
-- Maksimal kata BODY: ${maxWords} kata (${context.min_words_target} + 5% toleransi)
+- Maksimal kata BODY: ${maxWords} kata (${context.min_words_target} + 15% toleransi)
 - BODY = paragraf argumentasi utama (SALAM PEMBUKA + ISI + PENUTUP)
 - TIDAK TERMASUK: Header "Nama/NIM" dan bagian "Referensi"
 - JAWABAN HARUS LENGKAP - tidak boleh terpotong di tengah kalimat
-- Jika mendekati batas maksimal ${maxWords} kata, prioritaskan PENUTUP yang singkat tapi kuat
+- Jika mendekati batas maksimal ${maxWords} kata, TETAP selesaikan kalimat dan paragraf terakhir dengan sempurna
+- Prioritaskan KELENGKAPAN jawaban - lebih baik sedikit di bawah target daripada terpotong
 - TIDAK BOLEH kurang dari ${context.min_words_target} kata untuk BODY
-- TIDAK BOLEH lebih dari ${maxWords} kata untuk BODY (5% toleransi maksimal)`
+- TIDAK BOLEH lebih dari ${maxWords} kata untuk BODY (15% toleransi maksimal)
+- HITUNG kata dengan teliti sebelum menyelesaikan jawaban`
 
   const referencePrompt = `WAJIB tulis REFERENSI di AKHIR jawaban.
 
@@ -51,16 +53,29 @@ Format referensi yang diharapkan:
 Referensi:
 
 1. ${context.module_book_title}. ${context.university_name}.
-2. [Judul Buku/Jurnal dari sumber eksternal]. [Tahun]. [Penerbit/Sumber].
+2. [Judul Buku Akademik yang relevan dengan mata kuliah ${context.course_name}]. [Tahun]. [Penerbit].
 
-PENTING:
-- Referensi ke-1 adalah modul/buku referensi dari ${context.university_name} - TULIS JUDUL MODUL, bukan nama tutor
-- Referensi ke-2 HARUS dari SUMBER DI LUAR ${context.university_name}
+ATURAN REFERENSI KE-1:
+- Referensi ke-1 adalah modul/buku referensi dari ${context.university_name}
+- TULIS JUDUL MODUL PERSIS: "${context.module_book_title}"
+- Sumber: ${context.university_name}
+- JANGAN PERNAH menulis nama Dosen/Tutor (${context.tutor_name}) sebagai pengarang referensi ke-1
+- Pengarang modul BUKAN ${context.tutor_name} - JANGAN tulis nama tutor sebagai pengarang
+- Format: ${context.module_book_title}. ${context.university_name}.
+
+ATURAN REFERENSI KE-2:
+- WAJIB dari BUKU AKADEMIK yang diterbitkan oleh penerbit resmi (contoh: Erlangga, Gramedia, Salemba Empat, Rajawali Pers, Prenada Media, McGraw-Hill, Pearson, dll)
+- Buku harus RELEVAN dengan mata kuliah ${context.course_name}
+- DILARANG KERAS menggunakan sumber dari: scribd.com, academia.edu, slideshare.net, blogspot, wordpress, atau website tidak kredibel lainnya
+- DILARANG menggunakan website/artikel online sebagai referensi ke-2
+- HARUS berupa buku teks akademik yang benar-benar ada dan diterbitkan
+- Format: [Nama Pengarang]. [Tahun]. [Judul Buku]. [Penerbit].
+- Contoh: Sugiyono. 2019. Metode Penelitian Kuantitatif, Kualitatif, dan R&D. Bandung: Alfabeta.
+
+ATURAN UMUM REFERENSI:
 - Jangan gunakan simbol seperti asterisk (*) atau bullet (•)
-- Tulis dengan format sederhana: nomor, judul, sumber/tahun
-- Hindari formatting yang terlihat seperti output AI
-
-Referensi harus RELEVAN dengan isi jawaban dan DIGUNAKAN dalam argumentasi.`
+- Tulis dengan format sederhana dan natural
+- Referensi harus RELEVAN dengan isi jawaban dan DIGUNAKAN dalam argumentasi`
 
   const structurePrompt = context.task_type === 'DISCUSSION'
     ? `STRUKTUR JAWABAN DISCUSSION:
@@ -112,7 +127,7 @@ ${structurePrompt}`
 }
 
 export function buildUserPrompt(context: TaskGenerationContext): string {
-  const maxWords = Math.ceil(context.min_words_target * 1.05)
+  const maxWords = Math.ceil(context.min_words_target * 1.15)
   
   const studentDataPrompt = context.task_type === 'DISCUSSION' && context.student_name && context.student_nim
     ? `DATA MAHASISWA (WAJIB tulis di awal jawaban):
@@ -128,16 +143,17 @@ ${context.question_text}
 Mata Kuliah: ${context.course_name}
 Modul Referensi: ${context.module_book_title}
 Tutor Pembimbing: ${context.tutor_name}
-Target Kata BODY: ${context.min_words_target}-${maxWords} kata (5% toleransi)
+Target Kata BODY: ${context.min_words_target}-${maxWords} kata (15% toleransi)
 
 INSTRUKSI KRITIS:
-1. BODY jawaban harus ${context.min_words_target}-${maxWords} kata (tidak kurang, tidak lebih dari 5% toleransi)
+1. BODY jawaban harus ${context.min_words_target}-${maxWords} kata (tidak kurang, tidak lebih dari 15% toleransi)
 2. BODY = Salam Pembuka + Isi Argumentasi + Penutup (tidak termasuk Header Nama/NIM dan Referensi)
-3. JAWABAN HARUS LENGKAP - tidak boleh terpotong di tengah kalimat
+3. JAWABAN HARUS LENGKAP DAN UTUH - tidak boleh terpotong di tengah kalimat atau paragraf
 4. Tulis Referensi DI AKHIR (tidak dihitung word count)
-5. Referensi ke-1: tulis judul modul "${context.module_book_title}" dari ${context.university_name}
-6. Referensi ke-2: dari sumber DI LUAR ${context.university_name}
-7. JANGAN gunakan simbol atau karakter aneh`
+5. Referensi ke-1: tulis judul modul "${context.module_book_title}" dari ${context.university_name} - JANGAN tulis ${context.tutor_name} sebagai pengarang
+6. Referensi ke-2: HARUS dari BUKU AKADEMIK terbitan penerbit resmi, BUKAN dari scribd.com atau website tidak kredibel
+7. JANGAN gunakan simbol atau karakter aneh
+8. Hitung jumlah kata BODY dengan teliti sebelum selesai`
 
   if (context.search_context) {
     return `${basePrompt}
@@ -145,11 +161,13 @@ INSTRUKSI KRITIS:
 INFORMASI dari pencarian web (gunakan untuk referensi ke-2 jika relevan):
 ${context.search_context}
 
-Pilih referensi yang:
+Pilih referensi ke-2 yang:
+- WAJIB dari BUKU AKADEMIK terbitan penerbit resmi (Erlangga, Gramedia, Salemba Empat, Rajawali Pers, McGraw-Hill, Pearson, dll)
 - Dari lembaga/institusi BERBEDA dari ${context.university_name}
-- Relevan dengan topik jawaban
-- Kredibel (jurnal ilmiah, buku referensi, regulasi pemerintah)
-- Tulis judul dan sumber, tanpa simbol aneh`
+- Relevan dengan topik jawaban dan mata kuliah ${context.course_name}
+- DILARANG dari scribd.com, academia.edu, slideshare.net, blogspot, wordpress, atau website tidak kredibel
+- Jika tidak ada buku yang relevan dari pencarian, gunakan pengetahuanmu tentang buku teks akademik yang sesuai
+- Tulis nama pengarang, tahun, judul buku, dan penerbit`
   }
   return basePrompt
 }

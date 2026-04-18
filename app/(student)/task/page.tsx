@@ -153,30 +153,30 @@ export default function TaskHistoryPage() {
         <div className="space-y-3">
           {tasks.map((task) => (
             <Card key={task.id} className="hover:border-zinc-300 transition-colors">
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between h-full">
+              <CardContent className="p-0">
+                <div className="flex items-center justify-between px-4 py-3">
                   <Link
                     href={`/task/${task.id}`}
-                    className="flex items-center gap-3 flex-1 min-h-[60px]"
+                    className="flex items-center gap-3 flex-1"
                   >
                     <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-zinc-200 bg-white">
                       <CheckCircle2 className="h-5 w-5 text-emerald-600" />
                     </div>
-                    <div className="flex flex-col justify-center">
-                      <h3 className="font-medium text-slate-900 hover:text-indigo-600">
+                    <div className="flex flex-col justify-center min-h-0">
+                      <h3 className="font-medium text-slate-900 hover:text-indigo-600 leading-tight">
                         {task.course_name || "Tugas Tanpa Mata Kuliah"}
                       </h3>
-                      <p className="text-sm text-slate-500">
+                      <p className="text-sm text-slate-500 leading-tight mt-0.5">
                         {getTaskTypeLabel(task.task_type)} • {task.items_count} soal • {task.min_words_target} kata
                       </p>
                       {task.module_book_title && (
-                        <p className="text-xs text-slate-400">
+                        <p className="text-xs text-slate-400 leading-tight mt-0.5">
                           Modul: {task.module_book_title}
                         </p>
                       )}
                     </div>
                   </Link>
-                  <div className="flex items-center gap-3 shrink-0 self-center">
+                  <div className="flex items-center gap-3 shrink-0">
                     <p className="text-xs text-slate-400 text-right">
                       {formatDate(task.created_at)}
                     </p>
