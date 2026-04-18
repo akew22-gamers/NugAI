@@ -198,7 +198,7 @@ export default function LandingPage() {
                   </Button>
                 </Link>
                 <Link href="/login" className="flex-1">
-                  <Button size="sm" className="w-full bg-indigo-600 hover:bg-indigo-700">
+                  <Button size="sm" className="w-full bg-indigo-600 hover:bg-indigo-700 text-white">
                     Mulai Gratis
                   </Button>
                 </Link>
