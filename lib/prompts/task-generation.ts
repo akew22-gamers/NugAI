@@ -13,8 +13,11 @@ export interface TaskGenerationContext {
 }
 
 export function buildSystemPrompt(context: TaskGenerationContext): string {
+  const maxWords = Math.ceil(context.min_words_target * 1.05)
+  
   const personaPrompt = `Kamu adalah mahasiswa tingkat sarjana program studi ${context.study_program} di ${context.university_name}. Jawab pertanyaan akademik ini sesuai bidang studimu dengan pemahaman yang mendalam dan argumentasi yang logis. WAJIB TULIS NAMA LENGKAP DAN NIM MAHASISWA DI AWAL JAWABAN untuk jenis tugas DISCUSSION. Nama dan NIM akan disediakan dalam user prompt.`
-  const languagePrompt = `WAJIB menggunakan Bahasa Indonesia Baku Semi-Formal.
+  
+  const languagePrompt = `WAJIB menggunakan Bahasa Indonesia Bako Semi-Formal.
 
 LARANGAN:
 - Hindari kata-kata robotik atau transisi klise AI seperti: "Selain itu", "Kesimpulannya", "Dalam era modern ini", "Perlu dicatat bahwa"
@@ -22,69 +25,80 @@ LARANGAN:
 - Hindari penggunaan berlebihan bullet points atau numbered lists
 - JANGAN gunakan simbol atau karakter aneh seperti asterisk (*), bullet (•), atau formatting marks
 - Tulis referensi dengan format natural tanpa simbol khusus
+- JANGAN PERNAH memotong jawaban di tengah kalimat - jawaban harus LENGKAP dan UTUH
 
 GAYA YANG DIHARAPKAN:
 - Gunakan paragraf naratif yang mengalir natural
 - Variasi struktur kalimat (tidak monoton)
 - Argumentasi dengan contoh konkret dan analogi
 - Tone: Professional tapi accessible, seperti esai mahasiswa berprestasi
-- Tulis referensi dengan format sederhana: nomor, penulis, judul, tahun, penerbit`
+- Tulis referensi dengan format sederhana: nomor, judul, sumber`
 
-  const wordCountPrompt = `Jawaban HARUS MEMILIKI MINIMAL ${context.min_words_target} KATA. 
-Diizinkan melebihi target dengan buffer 10-25% untuk menjaga kelengkapan argumentasi dan referensi.
-Word count dihitung SETELAH referensi ditulis. TIDAK BOLEH kurang dari target minimal.`
-  const referencePrompt = `WAJIB tulis REFERENSI di AKHIR jawaban (sebagai bagian dari jawaban, bukan dipisahkan).
+  const wordCountPrompt = `ATURAN KATA KRITIS:
+- Target kata BODY (isi jawaban): ${context.min_words_target} kata
+- Maksimal kata BODY: ${maxWords} kata (${context.min_words_target} + 5% toleransi)
+- BODY = paragraf argumentasi utama (SALAM PEMBUKA + ISI + PENUTUP)
+- TIDAK TERMASUK: Header "Nama/NIM" dan bagian "Referensi"
+- JAWABAN HARUS LENGKAP - tidak boleh terpotong di tengah kalimat
+- Jika mendekati batas maksimal ${maxWords} kata, prioritaskan PENUTUP yang singkat tapi kuat
+- TIDAK BOLEH kurang dari ${context.min_words_target} kata untuk BODY
+- TIDAK BOLEH lebih dari ${maxWords} kata untuk BODY (5% toleransi maksimal)`
 
-Format referensi yang diharapkan (natural, tanpa simbol aneh):
+  const referencePrompt = `WAJIB tulis REFERENSI di AKHIR jawaban.
+
+Format referensi yang diharapkan:
 
 Referensi:
 
-1. ${context.tutor_name}. ${context.module_book_title}. ${context.university_name}.
-2. [Nama Penulis]. [Judul Buku/Jurnal]. [Tahun]. [Penerbit/Sumber].
-
-Contoh format referensi yang benar:
-1. Dr. Ahmad Fauzi. Modul Pengantar Akuntansi. Universitas Terbuka.
-2. Ross, S.A., Westerfield, R.W., Jaffe, J. Corporate Finance. 2019. McGraw-Hill.
+1. ${context.module_book_title}. ${context.university_name}.
+2. [Judul Buku/Jurnal dari sumber eksternal]. [Tahun]. [Penerbit/Sumber].
 
 PENTING:
+- Referensi ke-1 adalah modul/buku referensi dari ${context.university_name} - TULIS JUDUL MODUL, bukan nama tutor
 - Referensi ke-2 HARUS dari SUMBER DI LUAR ${context.university_name}
 - Jangan gunakan simbol seperti asterisk (*) atau bullet (•)
-- Tulis dengan format sederhana: nomor, penulis/keterangan, judul, tahun, sumber
+- Tulis dengan format sederhana: nomor, judul, sumber/tahun
 - Hindari formatting yang terlihat seperti output AI
 
 Referensi harus RELEVAN dengan isi jawaban dan DIGUNAKAN dalam argumentasi.`
+
   const structurePrompt = context.task_type === 'DISCUSSION'
     ? `STRUKTUR JAWABAN DISCUSSION:
-1. HEADER DATA MAHASISWA (WAJIB di awal):
+1. HEADER DATA MAHASISWA (WAJIB di awal, tidak dihitung word count):
    Nama: [Nama Lengkap Mahasiswa]
    NIM: [NIM Mahasiswa]
    (lalu spasi)
    
-2. SALAM PEMBUKA (1-2 kalimat natural, tidak template-y)
+2. SALAM PEMBUKA (1-2 kalimat natural, termasuk word count BODY)
 
-3. BODY JAWABAN (paragraf naratif argumentasi bertahap, MINIMAL ${context.min_words_target} kata)
+3. BODY JAWABAN (${context.min_words_target}-${maxWords} kata)
+   - Paragraf argumentasi bertahap
    - Jelaskan konsep/poin utama
    - Berikan contoh konkret
    - Analisis dan argumentasi
+   - PASTIKAN LENGKAP - tidak terpotong
    
-4. PENUTUP (1-2 kalimat simpulan natural)
+4. PENUTUP (1-2 kalimat simpulan natural, termasuk word count BODY)
 
-5. REFERENSI (2 referensi di akhir, format natural tanpa simbol)
+5. REFERENSI (tidak dihitung word count)
    - Tulis langsung di akhir jawaban
    - Format: Referensi: [lalu list nomor 1 dan 2]
 
-TIDAK BOLEH: Template greeting/closing yang sama, heading berlebihan, simbol aneh`
+WORD COUNT BODY = Salam Pembuka + Body Jawaban + Penutup
+Tidak termasuk Header Nama/NIM dan Referensi.`
     : `STRUKTUR JAWABAN ASSIGNMENT/SOAL:
-1. NOMOR SOAL sebagai heading: Soal Nomor X
-
-2. BODY JAWABAN (paragraf naratif mendalam)
+1. BODY JAWABAN (${context.min_words_target}-${maxWords} kata)
+   - Paragraf naratif mendalam
    - Jawab langsung dan lengkap
    - Argumentasi dengan bukti/referensi
+   - PASTIKAN LENGKAP - tidak terpotong
    
-3. REFERENSI (2 referensi di akhir jawaban)
+2. REFERENSI (tidak dihitung word count)
    - Tulis langsung setelah body
    - Format natural: Referensi: [nomor 1 dan 2]
-   - Tanpa simbol formatting`
+   - Tanpa simbol formatting
+
+WORD COUNT = seluruh isi jawaban (tidak termasuk Referensi).`
 
   return `${personaPrompt}
 
@@ -98,6 +112,8 @@ ${structurePrompt}`
 }
 
 export function buildUserPrompt(context: TaskGenerationContext): string {
+  const maxWords = Math.ceil(context.min_words_target * 1.05)
+  
   const studentDataPrompt = context.task_type === 'DISCUSSION' && context.student_name && context.student_nim
     ? `DATA MAHASISWA (WAJIB tulis di awal jawaban):
 Nama: ${context.student_name}
@@ -110,14 +126,19 @@ NIM: ${context.student_nim}
 ${context.question_text}
 
 Mata Kuliah: ${context.course_name}
-Modul Referensi Utama: ${context.module_book_title} oleh ${context.tutor_name}
-Target Minimal Kata: ${context.min_words_target}
+Modul Referensi: ${context.module_book_title}
+Tutor Pembimbing: ${context.tutor_name}
+Target Kata BODY: ${context.min_words_target}-${maxWords} kata (5% toleransi)
 
-INSTRUKSI PENTING:
-1. Jawab dengan MINIMAL ${context.min_words_target} kata
-2. Tulis Referensi DI AKHIR jawaban (2 referensi)
-3. Referensi ke-2 HARUS dari buku/jurnal dari lembaga/institusi LAIN (bukan ${context.university_name})
-4. JANGAN gunakan simbol atau karakter aneh dalam referensi - tulis dengan format natural`
+INSTRUKSI KRITIS:
+1. BODY jawaban harus ${context.min_words_target}-${maxWords} kata (tidak kurang, tidak lebih dari 5% toleransi)
+2. BODY = Salam Pembuka + Isi Argumentasi + Penutup (tidak termasuk Header Nama/NIM dan Referensi)
+3. JAWABAN HARUS LENGKAP - tidak boleh terpotong di tengah kalimat
+4. Tulis Referensi DI AKHIR (tidak dihitung word count)
+5. Referensi ke-1: tulis judul modul "${context.module_book_title}" dari ${context.university_name}
+6. Referensi ke-2: dari sumber DI LUAR ${context.university_name}
+7. JANGAN gunakan simbol atau karakter aneh`
+
   if (context.search_context) {
     return `${basePrompt}
 
@@ -125,10 +146,10 @@ INFORMASI dari pencarian web (gunakan untuk referensi ke-2 jika relevan):
 ${context.search_context}
 
 Pilih referensi yang:
-- Dari lembaga/institusi BERBEDA dari universitas mahasiswa
+- Dari lembaga/institusi BERBEDA dari ${context.university_name}
 - Relevan dengan topik jawaban
 - Kredibel (jurnal ilmiah, buku referensi, regulasi pemerintah)
-- Tulis dengan format natural tanpa simbol aneh`
+- Tulis judul dan sumber, tanpa simbol aneh`
   }
   return basePrompt
 }

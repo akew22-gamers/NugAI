@@ -154,15 +154,15 @@ export default function TaskHistoryPage() {
           {tasks.map((task) => (
             <Card key={task.id} className="hover:border-zinc-300 transition-colors">
               <CardContent className="p-4">
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between h-full">
                   <Link
                     href={`/task/${task.id}`}
-                    className="flex items-center gap-3 flex-1"
+                    className="flex items-center gap-3 flex-1 min-h-[60px]"
                   >
-                    <div className="flex h-10 w-10 items-center justify-center rounded-lg border border-zinc-200 bg-white">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-zinc-200 bg-white">
                       <CheckCircle2 className="h-5 w-5 text-emerald-600" />
                     </div>
-                    <div>
+                    <div className="flex flex-col justify-center">
                       <h3 className="font-medium text-slate-900 hover:text-indigo-600">
                         {task.course_name || "Tugas Tanpa Mata Kuliah"}
                       </h3>
@@ -170,14 +170,14 @@ export default function TaskHistoryPage() {
                         {getTaskTypeLabel(task.task_type)} • {task.items_count} soal • {task.min_words_target} kata
                       </p>
                       {task.module_book_title && (
-                        <p className="text-xs text-slate-400 mt-1">
+                        <p className="text-xs text-slate-400">
                           Modul: {task.module_book_title}
                         </p>
                       )}
                     </div>
                   </Link>
-                  <div className="flex items-center gap-3">
-                    <p className="text-xs text-slate-400">
+                  <div className="flex items-center gap-3 shrink-0 self-center">
+                    <p className="text-xs text-slate-400 text-right">
                       {formatDate(task.created_at)}
                     </p>
                     <Button
