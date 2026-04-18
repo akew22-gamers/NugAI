@@ -145,6 +145,9 @@ export function MobileNav() {
     if (href === "/admin") {
       return pathname === "/admin"
     }
+    if (href === "/task" || href === "/task/new") {
+      return pathname === href
+    }
     return pathname === href || (pathname?.startsWith(`${href}/`) ?? false)
   }
 

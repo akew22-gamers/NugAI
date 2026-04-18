@@ -3,6 +3,9 @@ export interface RegenerationContext {
   previous_answer: string
   regeneration_instructions?: string
   search_context?: string
+  task_type?: 'DISCUSSION' | 'ASSIGNMENT'
+  student_name?: string
+  student_nim?: string
 }
 
 export function buildRegenerationSystemPrompt(): string {
@@ -29,7 +32,15 @@ INSTRUKSI REGENERASI:
 }
 
 export function buildRegenerationUserPrompt(context: RegenerationContext): string {
-  const basePrompt = `PERTANYAAN AWAL:
+  const studentDataPrompt = context.task_type === 'DISCUSSION' && context.student_name && context.student_nim
+    ? `DATA MAHASISWA (WAJIB tulis di awal jawaban jika tidak ada):
+Nama: ${context.student_name}
+NIM: ${context.student_nim}
+
+`
+    : ''
+
+  const basePrompt = `${studentDataPrompt}PERTANYAAN AWAL:
 ${context.question_text}
 
 JAWABAN SEBELUMNYA:
@@ -41,7 +52,8 @@ ${context.previous_answer}`
 INSTRUKSI PERBAIKAN:
 ${context.regeneration_instructions}
 
-Perbaiki jawaban di atas sesuai instruksi. Jangan mengubah bagian yang sudah benar, hanya perbaiki sesuai feedback.`
+Perbaiki jawaban di atas sesuai instruksi. Jangan mengubah bagian yang sudah benar, hanya perbaiki sesuai feedback.
+${studentDataPrompt ? 'PASTIKAN data mahasiswa (Nama dan NIM) tetap ada di awal jawaban.' : ''}`
   }
 
   if (context.search_context) {
@@ -50,10 +62,12 @@ Perbaiki jawaban di atas sesuai instruksi. Jangan mengubah bagian yang sudah ben
 REFERensi TAMBAHAN:
 ${context.search_context}
 
-Perbaiki jawaban jika ada informasi baru yang relevan dari referensi di atas.`
+Perbaiki jawaban jika ada informasi baru yang relevan dari referensi di atas.
+${studentDataPrompt ? 'PASTIKAN data mahasiswa (Nama dan NIM) tetap ada di awal jawaban.' : ''}`
   }
 
   return `${basePrompt}
 
-Perbaiki jawaban untuk meningkatkan kualitas argumentasi dan kejelasan.`
+Perbaiki jawaban untuk meningkatkan kualitas argumentasi dan kejelasan.
+${studentDataPrompt ? 'PASTIKAN data mahasiswa (Nama dan NIM) tetap ada di awal jawaban.' : ''}`
 }

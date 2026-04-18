@@ -84,6 +84,9 @@ export async function POST(request: NextRequest) {
       question_text: taskItem.question_text,
       previous_answer: taskItem.answer_text || '',
       regeneration_instructions: body.instructions,
+      task_type: taskSession.task_type,
+      student_name: profile.full_name,
+      student_nim: profile.nim,
     })
 
     const result = await generate({
