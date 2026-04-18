@@ -16,6 +16,9 @@ interface Step3ResultProps {
   onReset: () => void
   isProcessing: boolean
   providerName?: string
+  regenerateCounts?: {[key: number]: number}
+  activeQuestion?: number
+  setActiveQuestion?: (index: number) => void
 }
 
 export function Step3Result({
@@ -25,11 +28,21 @@ export function Step3Result({
   onReset,
   isProcessing,
   providerName = "DeepSeek",
+  regenerateCounts = {},
+  activeQuestion,
+  setActiveQuestion,
 }: Step3ResultProps) {
-  const [activeQuestion, setActiveQuestion] = useState(0)
+  const [internalActiveQuestion, setInternalActiveQuestion] = useState(0)
   const [regenerateInstructions, setRegenerateInstructions] = useState("")
   const [showRegenerateInput, setShowRegenerateInput] = useState(false)
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null)
+
+  const questionIndex = setActiveQuestion ? activeQuestion : internalActiveQuestion
+  const setQuestionIndex = setActiveQuestion || setInternalActiveQuestion
+
+  const countWords = (text: string): number => {
+    return text.trim().split(/\s+/).filter((w) => w.length > 0).length
+  }
 
   const handleCopyAnswer = async (index: number) => {
     const answer = result.answers[index]
@@ -74,18 +87,15 @@ export function Step3Result({
   }
 
   const handleRegenerate = () => {
-    onRegenerate(activeQuestion, regenerateInstructions || undefined)
+    onRegenerate(questionIndex, regenerateInstructions || undefined)
     setRegenerateInstructions("")
     setShowRegenerateInput(false)
   }
 
-  const countWords = (text: string): number => {
-    return text.trim().split(/\s+/).filter((w) => w.length > 0).length
-  }
-
-  const currentAnswer = result.answers[activeQuestion] || ""
+  const currentAnswer = result.answers[questionIndex] || ""
   const wordCount = countWords(currentAnswer)
   const meetsTarget = wordCount >= formData.min_words_target
+  const regenCount = regenerateCounts[questionIndex] || 0
 
   return (
     <div className="space-y-6">
@@ -107,9 +117,9 @@ export function Step3Result({
               {formData.questions.map((_, index) => (
                 <Button
                   key={index}
-                  variant={activeQuestion === index ? "default" : "outline"}
+                  variant={questionIndex === index ? "default" : "outline"}
                   size="sm"
-                  onClick={() => setActiveQuestion(index)}
+                  onClick={() => setQuestionIndex(index)}
                 >
                   Soal {index + 1}
                 </Button>
@@ -124,30 +134,37 @@ export function Step3Result({
           <CardTitle className="flex items-center justify-between flex-wrap gap-2">
             <div className="flex items-center gap-2 flex-1 min-w-[200px]">
               <span>
-                Jawaban {formData.task_type === "ASSIGNMENT" ? `Soal ${activeQuestion + 1}` : "Diskusi"}
+                Jawaban {formData.task_type === "ASSIGNMENT" ? `Soal ${questionIndex + 1}` : "Diskusi"}
               </span>
               {providerName && (
                 <span className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-indigo-100 text-indigo-700">
                   {providerName}
                 </span>
               )}
+              {regenCount > 0 && (
+                <span className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-amber-100 text-amber-700">
+                  Regenerate: {regenCount}x
+                </span>
+              )}
             </div>
             <div className="flex items-center gap-2 flex-shrink-0">
+              {isProcessing && <Loader2 className="w-4 h-4 animate-spin text-zinc-600" />}
               <span className={`text-sm ${meetsTarget ? "text-emerald-600" : "text-amber-600"}`}>
                 {wordCount} kata {meetsTarget ? "✓" : `(min: ${formData.min_words_target})`}
               </span>
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => handleCopyAnswer(activeQuestion)}
+                onClick={() => handleCopyAnswer(questionIndex)}
+                disabled={isProcessing}
                 className="gap-1 h-7 px-2 text-xs"
               >
-                {copiedIndex === activeQuestion ? (
+                {copiedIndex === questionIndex ? (
                   <Check className="w-3.5 h-3.5 text-emerald-600" />
                 ) : (
                   <Copy className="w-3.5 h-3.5" />
                 )}
-                {copiedIndex === activeQuestion ? "Copied" : "Copy"}
+                {copiedIndex === questionIndex ? "Copied" : "Copy"}
               </Button>
             </div>
           </CardTitle>
@@ -189,6 +206,7 @@ export function Step3Result({
             <Button
               variant="outline"
               onClick={() => setShowRegenerateInput(true)}
+              disabled={isProcessing}
               className="gap-2"
             >
               <RefreshCw className="w-4 h-4" />

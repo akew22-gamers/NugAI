@@ -40,6 +40,8 @@ export default function TaskWizardPage() {
   })
   const [result, setResult] = useState<TaskResult | null>(null)
   const [isProcessing, setIsProcessing] = useState(false)
+  const [regenerateCounts, setRegenerateCounts] = useState<{[key: number]: number}>({})
+  const [activeQuestion, setActiveQuestion] = useState(0)
 
   const handleStep1Complete = (data: TaskFormData) => {
     setFormData(data)
@@ -99,6 +101,10 @@ export default function TaskWizardPage() {
           }
           : null
       )
+      setRegenerateCounts(prev => ({
+        ...prev,
+        [questionIndex]: (prev[questionIndex] || 0) + 1
+      }))
     } catch (error) {
       console.error("Regeneration failed:", error)
     } finally {
@@ -173,6 +179,9 @@ export default function TaskWizardPage() {
           onRegenerate={handleRegenerate}
           onReset={handleReset}
           isProcessing={isProcessing}
+          regenerateCounts={regenerateCounts}
+          activeQuestion={activeQuestion}
+          setActiveQuestion={setActiveQuestion}
         />
       )}
     </div>

@@ -165,7 +165,10 @@ export function Sidebar() {
     if (href === "/admin") {
       return pathname === "/admin"
     }
-    return pathname === href || (pathname?.startsWith(`${href}/`) ?? false)
+    if (href === "/task" || href === "/task/new") {
+      return pathname === href
+    }
+    return pathname === href
   }
 
   return (

@@ -52,11 +52,10 @@ const styles = StyleSheet.create({
   page: {
     fontFamily: getFontFamily(),
     fontSize: 12,
-    lineHeight: 1.5,
+    lineHeight: 1.8,
     padding: PAGE_MARGIN,
   },
   coverPage: {
-    fontFamily: getFontFamily(),
     padding: PAGE_MARGIN,
     justifyContent: 'center',
     alignItems: 'center',
@@ -105,7 +104,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     lineHeight: 1.8,
     textAlign: 'justify',
-    hyphens: 'auto',
   },
   referenceSection: {
     marginTop: 20,
