@@ -8,9 +8,7 @@ import {
   Search,
   Download,
   RefreshCw,
-  Users,
   Shield,
-  Zap,
   CheckCircle2,
   ChevronRight,
   Menu,
@@ -162,7 +160,7 @@ export default function LandingPage() {
                 </Button>
               </Link>
               <Link href="/login">
-                <Button size="sm" className="bg-indigo-600 hover:bg-indigo-700">
+                <Button size="sm" className="bg-indigo-600 hover:bg-indigo-700 text-white">
                   Mulai Gratis
                 </Button>
               </Link>
@@ -231,7 +229,7 @@ export default function LandingPage() {
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link href="/login">
-                <Button size="lg" className="bg-indigo-600 hover:bg-indigo-700 text-lg px-8 gap-2">
+                <Button size="lg" className="bg-indigo-600 hover:bg-indigo-700 text-white text-lg px-8 gap-2">
                   Mulai Gratis
                   <ChevronRight className="w-5 h-5" />
                 </Button>
