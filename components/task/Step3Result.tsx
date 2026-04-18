@@ -37,7 +37,7 @@ export function Step3Result({
   const [showRegenerateInput, setShowRegenerateInput] = useState(false)
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null)
 
-  const questionIndex = setActiveQuestion ? activeQuestion : internalActiveQuestion
+  const questionIndex = setActiveQuestion !== undefined ? activeQuestion ?? 0 : internalActiveQuestion
   const setQuestionIndex = setActiveQuestion || setInternalActiveQuestion
 
   const countWords = (text: string): number => {
