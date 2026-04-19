@@ -307,7 +307,7 @@ export default function LandingPage() {
               <Link href="/login">
                 <Button
                   size="sm"
-                  className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white hover:from-indigo-700 hover:to-purple-700 shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40 transition-all duration-300 hover:scale-105 font-semibold"
+                  className="!bg-gradient-to-r from-indigo-600 to-purple-600 text-white hover:from-indigo-700 hover:to-purple-700 shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40 transition-all duration-300 hover:scale-105 font-semibold"
                 >
                   <Rocket className="w-4 h-4 mr-1.5" />
                   Mulai Gratis
@@ -357,7 +357,7 @@ export default function LandingPage() {
               <Link href="/login" className="flex-1">
                 <Button
                   size="sm"
-                  className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white hover:from-indigo-700 hover:to-purple-700 font-medium shadow-lg shadow-indigo-500/25"
+                  className="w-full !bg-gradient-to-r from-indigo-600 to-purple-600 text-white hover:from-indigo-700 hover:to-purple-700 font-medium shadow-lg shadow-indigo-500/25"
                 >
                   Mulai
                 </Button>
@@ -412,7 +412,7 @@ export default function LandingPage() {
               <Link href="/login">
                 <Button
                   size="lg"
-                  className="group bg-gradient-to-r from-indigo-600 to-purple-600 text-white hover:from-indigo-700 hover:to-purple-700 text-lg px-8 shadow-xl shadow-indigo-500/25 hover:shadow-indigo-500/40 transition-all duration-300 hover:scale-105"
+                  className="group !bg-gradient-to-r from-indigo-600 to-purple-600 text-white hover:from-indigo-700 hover:to-purple-700 text-lg px-8 shadow-xl shadow-indigo-500/25 hover:shadow-indigo-500/40 transition-all duration-300 hover:scale-105"
                 >
                   Mulai Gratis
                   <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
@@ -540,7 +540,7 @@ export default function LandingPage() {
             <Link href="/login">
               <Button
                 size="lg"
-                className="group bg-white text-zinc-900 hover:bg-zinc-100 shadow-xl shadow-black/20 transition-all duration-300 hover:scale-105"
+                className="group !bg-white text-zinc-900 hover:bg-zinc-100 shadow-xl shadow-black/20 transition-all duration-300 hover:scale-105 font-semibold"
               >
                 Coba Sekarang
                 <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
@@ -622,8 +622,8 @@ export default function LandingPage() {
                     size="lg"
                     className={`w-full transition-all duration-300 hover:scale-105 ${
                       plan.highlight
-                        ? "bg-white text-zinc-900 hover:bg-zinc-100 shadow-lg"
-                        : "bg-gradient-to-r from-indigo-600 to-purple-600 text-white hover:from-indigo-700 hover:to-purple-700 shadow-lg shadow-indigo-500/25"
+                        ? "!bg-white text-zinc-900 hover:bg-zinc-100 shadow-lg"
+                        : "!bg-gradient-to-r from-indigo-600 to-purple-600 text-white hover:from-indigo-700 hover:to-purple-700 shadow-lg shadow-indigo-500/25"
                     }`}
                   >
                     {plan.cta}
@@ -697,7 +697,7 @@ export default function LandingPage() {
           <Link href="/login">
             <Button
               size="lg"
-              className="group bg-white text-zinc-900 hover:bg-zinc-100 text-lg px-10 shadow-2xl shadow-black/20 transition-all duration-300 hover:scale-105"
+              className="group !bg-white text-zinc-900 hover:bg-zinc-100 text-lg px-10 shadow-2xl shadow-black/20 transition-all duration-300 hover:scale-105 font-semibold"
             >
               Mulai Gratis
               <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
