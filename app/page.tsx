@@ -299,7 +299,7 @@ export default function LandingPage() {
                 <Button
                   variant="outline"
                   size="sm"
-                  className="border-zinc-200 text-zinc-700 hover:bg-zinc-50 hover:border-zinc-300 transition-all duration-300"
+                  className="border-zinc-200 text-zinc-900 hover:bg-zinc-50 hover:border-zinc-300 transition-all duration-300 font-semibold"
                 >
                   Masuk
                 </Button>
@@ -307,7 +307,7 @@ export default function LandingPage() {
               <Link href="/login">
                 <Button
                   size="sm"
-                  className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white hover:from-indigo-700 hover:to-purple-700 shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40 transition-all duration-300 hover:scale-105"
+                  className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white hover:from-indigo-700 hover:to-purple-700 shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40 transition-all duration-300 hover:scale-105 font-semibold"
                 >
                   <Rocket className="w-4 h-4 mr-1.5" />
                   Mulai Gratis
@@ -346,14 +346,18 @@ export default function LandingPage() {
             ))}
             <div className="flex gap-3 pt-3 border-t border-zinc-100">
               <Link href="/login" className="flex-1">
-                <Button variant="outline" size="sm" className="w-full">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full border-zinc-200 text-zinc-900 hover:bg-zinc-50 hover:border-zinc-300 font-medium"
+                >
                   Masuk
                 </Button>
               </Link>
               <Link href="/login" className="flex-1">
                 <Button
                   size="sm"
-                  className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white"
+                  className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white hover:from-indigo-700 hover:to-purple-700 font-medium shadow-lg shadow-indigo-500/25"
                 >
                   Mulai
                 </Button>
