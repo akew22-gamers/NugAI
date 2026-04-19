@@ -499,7 +499,8 @@ export default function LandingPage() {
               Simple Process
             </div>
             <h2 className="text-4xl sm:text-5xl font-bold text-white mb-6">
-              3 Langkah <span className="gradient-text">Mudah</span>
+              <span className="text-black">3 Langkah</span>{" "}
+              <span className="gradient-text">Mudah</span>
             </h2>
             <p className="text-lg text-zinc-400 max-w-2xl mx-auto">
               Generate jawaban tugas akademik dalam hitungan detik
