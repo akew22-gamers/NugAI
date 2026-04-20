@@ -67,10 +67,10 @@ ATURAN REFERENSI KE-2:
 - WAJIB dari BUKU AKADEMIK yang diterbitkan oleh penerbit resmi (contoh: Erlangga, Gramedia, Salemba Empat, Rajawali Pers, Prenada Media, McGraw-Hill, Pearson, dll)
 - Buku harus RELEVAN dengan mata kuliah ${context.course_name}
 - DILARANG KERAS menggunakan sumber dari: scribd.com, academia.edu, slideshare.net, blogspot, wordpress, atau website tidak kredibel lainnya
-- DILARANG menggunakan website/artikel online sebagai referensi ke-2
-- HARUS berupa buku teks akademik yang benar-benar ada dan diterbitkan
-- Format: [Nama Pengarang]. [Tahun]. [Judul Buku]. [Penerbit].
-- Contoh: Sugiyono. 2019. Metode Penelitian Kuantitatif, Kualitatif, dan R&D. Bandung: Alfabeta.
+- Referensi ke-2 HARUS berupa BUKU AKADEMIK, JURNAL, atau ARTIKEL ILMIAH dari sumber yang kredibel
+- Jika menggunakan website/artikel online, pastikan berasal dari universitas, pemerintah, atau lembaga resmi
+- Format Buku: [Nama Pengarang]. [Tahun]. [Judul Buku]. [Penerbit].
+- Format Jurnal/Web: [Nama Pengarang]. [Tahun]. [Judul Artikel]. [Nama Jurnal/Situs]. [URL]
 
 ATURAN UMUM REFERENSI:
 - Jangan gunakan simbol seperti asterisk (*) atau bullet (•)
@@ -102,7 +102,7 @@ BAGIAN 5 — REFERENSI (tidak dihitung word count BODY):
 Referensi:
 [baris kosong]
 1. ${context.module_book_title}. ${context.university_name}.
-2. [Nama Pengarang]. [Tahun]. [Judul Buku Akademik]. [Penerbit].
+2. [Nama Pengarang]. [Tahun]. [Judul Referensi Akademik]. [Penerbit/Jurnal/Situs].
 
 CATATAN PENTING:
 - Word Count BODY = Salam Pembuka + Paragraf Body + Penutup (TIDAK termasuk Header dan Referensi)
@@ -161,7 +161,7 @@ INSTRUKSI KRITIS:
 3. JAWABAN HARUS LENGKAP DAN UTUH - tidak boleh terpotong di tengah kalimat atau paragraf
 4. Tulis Referensi DI AKHIR (tidak dihitung word count)
 5. Referensi ke-1: tulis judul modul "${context.module_book_title}" dari ${context.university_name} - JANGAN tulis ${context.tutor_name} sebagai pengarang
-6. Referensi ke-2: HARUS dari BUKU AKADEMIK terbitan penerbit resmi, BUKAN dari scribd.com atau website tidak kredibel
+6. Referensi ke-2: HARUS dari BUKU/JURNAL AKADEMIK atau SUMBER WEB KREDIBEL, BUKAN dari scribd.com atau website abal-abal
 7. JANGAN gunakan simbol atau karakter aneh
 8. Hitung jumlah kata BODY dengan teliti sebelum selesai`
 
@@ -172,12 +172,12 @@ INFORMASI dari pencarian web (gunakan untuk referensi ke-2 jika relevan):
 ${context.search_context}
 
 Pilih referensi ke-2 yang:
-- WAJIB dari BUKU AKADEMIK terbitan penerbit resmi (Erlangga, Gramedia, Salemba Empat, Rajawali Pers, McGraw-Hill, Pearson, dll)
+- WAJIB dari BUKU AKADEMIK, JURNAL, atau SUMBER WEB KREDIBEL yang ada di hasil pencarian di atas
 - Dari lembaga/institusi BERBEDA dari ${context.university_name}
 - Relevan dengan topik jawaban dan mata kuliah ${context.course_name}
 - DILARANG dari scribd.com, academia.edu, slideshare.net, blogspot, wordpress, atau website tidak kredibel
-- Jika tidak ada buku yang relevan dari pencarian, gunakan pengetahuanmu tentang buku teks akademik yang sesuai
-- Tulis nama pengarang, tahun, judul buku, dan penerbit`
+- Jika menggunakan hasil pencarian, tulis pengarang (jika ada), tahun, judul, dan penerbit/sumber
+- Jika tidak ada hasil pencarian yang relevan, gunakan pengetahuanmu tentang buku teks akademik yang sesuai`
   }
   return basePrompt
 }

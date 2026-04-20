@@ -103,15 +103,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Profile tidak ditemukan. Silakan lengkapi profile di /settings' }, { status: 404 })
     }
 
-    const searchQuery = `${body.course_name} ${body.module_book_title}`
-    const searchResults = await combinedSearch({
-      query: searchQuery,
-      maxResults: 5,
-    })
-    const searchContext = formatSearchResultsForPrompt(searchResults.results)
-
     const answers: string[] = []
+    const allQuestionReferences: any[][] = []
     let totalTokens = 0
+    let totalTavilyCalls = 0
+    let totalExaCalls = 0
     let usedProviderName: string | null = null
     let usedProviderType: string | null = null
     let usedModel: string | null = null
@@ -122,6 +118,18 @@ export async function POST(request: NextRequest) {
     // Proses pertanyaan secara sequential — DeepSeek dan banyak provider lain
     // memiliki rate limit ketat yang menyebabkan error 429 jika dikirim paralel.
     for (const question of body.questions) {
+      // 1. Search specific to this question
+      const searchQuery = `${body.course_name} ${body.module_book_title} ${question}`
+      const searchResults = await combinedSearch({
+        query: searchQuery,
+        maxResults: 3, // Reduce maxResults since we do it per question
+      })
+      const searchContext = formatSearchResultsForPrompt(searchResults.results)
+      
+      totalTavilyCalls += searchResults.tavilyResults
+      totalExaCalls += searchResults.exaResults
+      allQuestionReferences.push(searchResults.results.slice(0, 2))
+
       const systemPrompt = buildSystemPrompt({
         study_program: profile.study_program,
         university_name: profile.university_name,
@@ -183,8 +191,8 @@ export async function POST(request: NextRequest) {
             question_text: question,
             answer_text: answers[index],
             status: 'COMPLETED',
-            references_used: searchResults.results.length > 0
-              ? JSON.parse(JSON.stringify({ references: searchResults.results.slice(0, 2) }))
+            references_used: allQuestionReferences[index].length > 0
+              ? JSON.parse(JSON.stringify({ references: allQuestionReferences[index] }))
               : undefined,
           })),
         },
@@ -207,8 +215,8 @@ export async function POST(request: NextRequest) {
           user_id: session.user.id,
           session_id: taskSession.id,
           llm_tokens_used: totalTokens,
-          tavily_calls: searchResults.tavilyResults,
-          exa_calls: searchResults.exaResults,
+          tavily_calls: totalTavilyCalls,
+          exa_calls: totalExaCalls,
           ai_provider_name: usedProviderName,
           ai_provider_type: usedProviderType,
           date: new Date(),
@@ -219,12 +227,14 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       sessionId: taskSession.id,
       answers,
-      references: searchResults.results.slice(0, 2).map((r) => ({
-        type: r.type || 'web',
-        title: r.title,
-        url: r.url,
-        author: r.metadata?.author as string | undefined,
-      })),
+      references: allQuestionReferences.length > 0 && allQuestionReferences[0].length > 0 
+        ? allQuestionReferences[0].map((r: any) => ({
+            type: r.type || 'web',
+            title: r.title,
+            url: r.url,
+            author: r.metadata?.author as string | undefined,
+          }))
+        : [],
       providerName: usedProviderName,
       providerType: usedProviderType,
     })

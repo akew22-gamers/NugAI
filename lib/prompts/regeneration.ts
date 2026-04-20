@@ -56,10 +56,9 @@ ATURAN REFERENSI:
 - Referensi ke-1: tulis judul modul${context.module_book_title ? ` "${context.module_book_title}"` : ''} dari ${context.university_name || 'universitas terkait'}
 - JANGAN PERNAH menulis nama Dosen/Tutor${context.tutor_name ? ` (${context.tutor_name})` : ''} sebagai pengarang referensi ke-1
 - Pengarang modul BUKAN dosen/tutor yang mengajar - JANGAN tulis nama tutor sebagai pengarang
-- Referensi ke-2 WAJIB dari BUKU AKADEMIK terbitan penerbit resmi (Erlangga, Gramedia, Salemba Empat, Rajawali Pers, Prenada Media, McGraw-Hill, Pearson, dll)
+- Referensi ke-2 WAJIB dari BUKU AKADEMIK, JURNAL, atau SUMBER WEB KREDIBEL
 - DILARANG KERAS menggunakan sumber dari: scribd.com, academia.edu, slideshare.net, blogspot, wordpress, atau website tidak kredibel
-- DILARANG menggunakan website/artikel online sebagai referensi ke-2
-- HARUS berupa buku teks akademik yang benar-benar ada dan diterbitkan
+- Jika menggunakan website/artikel online, pastikan berasal dari universitas, pemerintah, atau lembaga resmi
 - Format Referensi: tulis "Referensi:" di baris tersendiri, lalu baris kosong, lalu nomor 1 dan 2${discussionFormatNote}
 
 INSTRUKSI REGENERASI:
@@ -90,7 +89,7 @@ JAWABAN SEBELUMNYA:
 ${context.previous_answer}
 
 ATURAN KATA: BODY jawaban harus ${minWords}-${maxWords} kata (15% toleransi). JAWABAN HARUS LENGKAP DAN UTUH - tidak boleh terpotong.
-ATURAN REFERENSI: Referensi ke-1 BUKAN ditulis oleh tutor/dosen${context.tutor_name ? ` (${context.tutor_name})` : ''}, tapi tulis judul modul dan sumber universitas. Referensi ke-2 HARUS dari buku akademik terbitan penerbit resmi, BUKAN dari scribd.com atau website tidak kredibel.`
+ATURAN REFERENSI: Referensi ke-1 BUKAN ditulis oleh tutor/dosen${context.tutor_name ? ` (${context.tutor_name})` : ''}, tapi tulis judul modul dan sumber universitas. Referensi ke-2 HARUS dari buku akademik, jurnal, atau sumber web kredibel, BUKAN dari scribd.com atau website abal-abal.`
 
   if (context.regeneration_instructions) {
     return `${basePrompt}
