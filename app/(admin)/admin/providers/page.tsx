@@ -221,7 +221,7 @@ export default function AdminProvidersPage() {
         })
 
         if (response.ok) {
-          fetchProviders()
+          await fetchProviders()
           toast.success("Provider berhasil dinonaktifkan")
         } else {
           const error = await response.json()
@@ -229,13 +229,16 @@ export default function AdminProvidersPage() {
         }
       } else {
         const response = await fetch("/api/admin/providers", {
-          method: "PUT",
+          method: "PATCH",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ id: provider.id }),
+          body: JSON.stringify({ 
+            id: provider.id,
+            is_active: true 
+          }),
         })
 
         if (response.ok) {
-          fetchProviders()
+          await fetchProviders()
           toast.success("Provider berhasil diaktifkan")
         } else {
           const error = await response.json()
@@ -331,78 +334,101 @@ export default function AdminProvidersPage() {
         </Card>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {providers.map((provider) => (
-            <Card
-              key={provider.id}
-              className={cn(
-                "transition-all duration-200",
-                provider.is_active ? "border-green-500 border-2 shadow-lg shadow-green-500/10" : ""
-              )}
-            >
-              <CardHeader className="pb-3">
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <CardTitle className="text-lg flex items-center gap-2">
-                      {provider.provider_name}
-                      {provider.is_active && (
-                        <span className="text-xs font-medium text-green-600 bg-green-50 px-2 py-1 rounded">
-                          AKTIF
-                        </span>
-                      )}
-                    </CardTitle>
-                    <CardDescription className="mt-1">
-                      {provider.provider_type}
-                    </CardDescription>
+          {(() => {
+            const sortedProviders = [...providers].sort((a, b) => {
+              if (a.is_active && !b.is_active) return -1
+              if (!a.is_active && b.is_active) return 1
+              return 0
+            })
+            
+            return sortedProviders.map((provider) => (
+              <Card
+                key={provider.id}
+                className={cn(
+                  "transition-all duration-200",
+                  provider.is_active 
+                    ? "border-green-500 border-2 bg-gradient-to-br from-green-50 to-emerald-50 shadow-lg shadow-green-500/20" 
+                    : "hover:shadow-md"
+                )}
+              >
+                <CardHeader className="pb-3">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <CardTitle className="text-lg flex items-center gap-2">
+                        {provider.provider_name}
+                        {provider.is_active && (
+                          <span className="text-xs font-bold text-white bg-green-600 px-2 py-1 rounded-full">
+                            AKTIF
+                          </span>
+                        )}
+                      </CardTitle>
+                      <CardDescription className="mt-1 flex items-center gap-2">
+                        {provider.provider_type}
+                        {provider.is_active && (
+                          <span className="text-xs text-green-700 font-medium">
+                            • Primary Provider
+                          </span>
+                        )}
+                      </CardDescription>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Switch
+                        checked={provider.is_active}
+                        onCheckedChange={() => handleToggleActive(provider)}
+                      />
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Switch
-                      checked={provider.is_active}
-                      onCheckedChange={() => handleToggleActive(provider)}
-                    />
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  <div className="text-sm">
-                    <span className="text-slate-500">Base URL:</span>
-                    <span className="ml-2 text-slate-700 block break-all">{provider.base_url}</span>
-                  </div>
-                  <div className="text-sm">
-                    <span className="text-slate-500">Default Model:</span>
-                    <span className="ml-2 text-slate-700">
-                      {provider.default_model || "Tidak ada"}
-                    </span>
-                  </div>
-                  {provider.last_model_fetch && (
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
                     <div className="text-sm">
-                      <span className="text-slate-500">Model Fetch:</span>
+                      <span className="text-slate-500">Base URL:</span>
+                      <span className="ml-2 text-slate-700 block break-all">{provider.base_url}</span>
+                    </div>
+                    <div className="text-sm">
+                      <span className="text-slate-500">Default Model:</span>
                       <span className="ml-2 text-slate-700">
-                        {new Date(provider.last_model_fetch).toLocaleDateString("id-ID")}
+                        {provider.default_model || "Tidak ada"}
                       </span>
                     </div>
-                  )}
-                  <div className="flex items-center gap-2 pt-3 border-t border-slate-100">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleEdit(provider)}
-                    >
-                      Edit
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                      onClick={() => handleDelete(provider.id)}
-                    >
-                      Hapus
-                    </Button>
+                    {provider.last_model_fetch && (
+                      <div className="text-sm">
+                        <span className="text-slate-500">Model Fetch:</span>
+                        <span className="ml-2 text-slate-700">
+                          {new Date(provider.last_model_fetch).toLocaleDateString("id-ID")}
+                        </span>
+                      </div>
+                    )}
+                    <div className="flex items-center gap-2 pt-3 border-t border-slate-200">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleEdit(provider)}
+                      >
+                        Edit
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                        onClick={() => handleDelete(provider.id)}
+                      >
+                        Hapus
+                      </Button>
+                    </div>
+                    
+                    {provider.is_active && (
+                      <div className="mt-3 p-3 rounded-lg bg-blue-50 border border-blue-100">
+                        <p className="text-xs text-blue-700">
+                          <span className="font-semibold">Info:</span> Provider ini digunakan sebagai primary untuk failover.
+                        </p>
+                      </div>
+                    )}
                   </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+                </CardContent>
+              </Card>
+            ))
+          })()}
         </div>
       )}
 

@@ -103,8 +103,9 @@ export async function PATCH(request: NextRequest) {
     if (is_active === false) {
       const allProviders = await getAllAIProviders()
       const activeProviders = allProviders.filter(p => p.is_active)
+      const activeProvidersWithoutCurrent = activeProviders.filter(p => p.id !== id)
       
-      if (activeProviders.length <= 1 && activeProviders[0]?.id === id) {
+      if (is_active === false && activeProvidersWithoutCurrent.length === 0) {
         return NextResponse.json(
           { error: 'Minimal harus ada 1 provider aktif' },
           { status: 400 }
