@@ -64,10 +64,10 @@ ATURAN REFERENSI KE-1:
 - Format: ${context.module_book_title}. ${context.university_name}.
 
 ATURAN REFERENSI KE-2:
-- WAJIB dari BUKU AKADEMIK yang diterbitkan oleh penerbit resmi (contoh: Erlangga, Gramedia, Salemba Empat, Rajawali Pers, Prenada Media, McGraw-Hill, Pearson, dll)
-- Buku harus RELEVAN dengan mata kuliah ${context.course_name}
+- WAJIB dari BUKU AKADEMIK, JURNAL, atau ARTIKEL ILMIAH dari sumber yang kredibel
+- DILARANG KERAS mengarang/memanipulasi (halusinasi) judul buku, pengarang, atau tahun terbit. Referensi HARUS NYATA, ADA, dan JELAS datanya.
+- Buku/Jurnal harus RELEVAN dengan mata kuliah ${context.course_name}
 - DILARANG KERAS menggunakan sumber dari: scribd.com, academia.edu, slideshare.net, blogspot, wordpress, atau website tidak kredibel lainnya
-- Referensi ke-2 HARUS berupa BUKU AKADEMIK, JURNAL, atau ARTIKEL ILMIAH dari sumber yang kredibel
 - Jika menggunakan website/artikel online, pastikan berasal dari universitas, pemerintah, atau lembaga resmi
 - Format Buku: [Nama Pengarang]. [Tahun]. [Judul Buku]. [Penerbit].
 - Format Jurnal/Web: [Nama Pengarang]. [Tahun]. [Judul Artikel]. [Nama Jurnal/Situs]. [URL]
@@ -76,6 +76,21 @@ ATURAN UMUM REFERENSI:
 - Jangan gunakan simbol seperti asterisk (*) atau bullet (•)
 - Tulis dengan format sederhana dan natural
 - Referensi harus RELEVAN dengan isi jawaban dan DIGUNAKAN dalam argumentasi`
+
+  const hourStr = new Date().toLocaleString('en-US', { timeZone: 'Asia/Jakarta', hour: 'numeric', hour12: false });
+  const hourNum = parseInt(hourStr, 10);
+  let timeGreeting = 'Selamat pagi';
+  if (hourNum >= 10 && hourNum < 15) timeGreeting = 'Selamat siang';
+  else if (hourNum >= 15 && hourNum < 18) timeGreeting = 'Selamat sore';
+  else if (hourNum >= 18 || hourNum < 4) timeGreeting = 'Selamat malam';
+
+  const randomGreetings = [
+    `"${timeGreeting}, izin ikut berpartisipasi dalam diskusi ini."`,
+    `"Assalamualaikum Wr. Wb., izin menanggapi topik diskusi ini."`,
+    `"${timeGreeting} tutor dan rekan-rekan mahasiswa, izin menyampaikan pendapat."`,
+    `"Assalamualaikum Wr. Wb. dan ${timeGreeting.toLowerCase()}, izin berdiskusi."`
+  ];
+  const dynamicGreeting = randomGreetings[Math.floor(Math.random() * randomGreetings.length)];
 
   const structurePrompt = context.task_type === 'DISCUSSION'
     ? `FORMAT BAKU JAWABAN DISCUSSION — WAJIB IKUTI PERSIS:
@@ -86,7 +101,7 @@ NIM   : [NIM Mahasiswa]
 [baris kosong]
 
 BAGIAN 2 — SALAM PEMBUKA (1 kalimat singkat dan sederhana, termasuk word count BODY):
-Contoh: "Selamat pagi, izin ikut berpartisipasi dalam diskusi ini."
+Contoh dan Variasi: Gunakan ${dynamicGreeting} (Sesuaikan dengan waktu/konteks yang natural).
 
 BAGIAN 3 — BODY JAWABAN (${context.min_words_target}–${maxWords} kata total BODY):
 - Fleksibel 1-5 paragraf sesuai kebutuhan penjelasan materi
