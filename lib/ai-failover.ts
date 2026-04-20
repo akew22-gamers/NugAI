@@ -33,11 +33,27 @@ export async function executeWithFailover<T>(
 
   const providers = await prisma.aIProvider.findMany({
     where: { is_active: true },
+    select: {
+      id: true,
+      provider_name: true,
+      provider_type: true,
+      base_url: true,
+      default_model: true,
+      api_key: true,
+      is_active: true,
+    },
     orderBy: { created_at: 'asc' },
   })
 
+  console.log(`[AI Failover] Found ${providers.length} active provider(s):`)
+  providers.forEach((p, idx) => {
+    console.log(`  [${idx + 1}] ${p.provider_name} (${p.provider_type}) - Active: ${p.is_active}`)
+  })
+
   if (providers.length === 0) {
-    throw new Error('No active AI provider configured')
+    const errorMsg = 'No active AI provider configured. Please activate a provider in Admin panel.'
+    console.error(errorMsg)
+    throw new Error(errorMsg)
   }
 
   const errors: Error[] = []
