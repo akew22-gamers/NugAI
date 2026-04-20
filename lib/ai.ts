@@ -1,6 +1,6 @@
 import { createOpenAI } from '@ai-sdk/openai'
 import { streamText, generateText } from 'ai'
-import { getActiveProviderWithKey } from '@/lib/provider'
+import { executeWithFailover, getActiveProvidersOrdered } from '@/lib/ai-failover'
 
 export interface StreamOptions {
   systemPrompt: string
@@ -18,72 +18,120 @@ export interface GenerationResult {
   }
 }
 
-export async function getAIModel() {
-  const providerData = await getActiveProviderWithKey()
-
-  if (!providerData) {
-    throw new Error('No active AI provider configured. Please configure a provider in Admin settings.')
-  }
-
+async function createProviderClient(config: {
+  baseURL: string
+  apiKey: string
+  model: string
+}) {
   const provider = createOpenAI({
-    baseURL: providerData.config.base_url,
-    apiKey: providerData.decryptedKey,
+    baseURL: config.baseURL,
+    apiKey: config.apiKey,
   })
-
-  return provider(providerData.config.default_model)
+  return provider(config.model)
 }
 
-export async function getProviderInfo() {
-  const providerData = await getActiveProviderWithKey()
-
-  if (!providerData) {
+export async function getAIModel() {
+  const providerData = await getActiveProvidersOrdered()
+  
+  if (providerData.length === 0) {
     throw new Error('No active AI provider configured')
   }
 
-  return {
-    providerName: providerData.config.provider_name,
-    providerType: providerData.config.provider_type,
-    model: providerData.config.default_model,
+  const primaryProvider = providerData[0]
+  
+  const { getActiveProviderWithKey } = await import('./provider')
+  const activeProvider = await getActiveProviderWithKey()
+  
+  if (!activeProvider) {
+    throw new Error('Primary provider not found')
   }
+
+  const model = createOpenAI({
+    baseURL: activeProvider.config.base_url,
+    apiKey: activeProvider.decryptedKey,
+  })
+
+  return model(activeProvider.config.default_model)
 }
 
-export async function streamGenerate(options: StreamOptions) {
-  const model = await getAIModel()
+export async function generate(options: StreamOptions): Promise<GenerationResult> {
+  const result = await executeWithFailover(
+    async (providerConfig) => {
+      const model = await createProviderClient({
+        baseURL: providerConfig.base_url,
+        apiKey: providerConfig.api_key,
+        model: providerConfig.default_model,
+      })
 
-  const result = streamText({
-    model,
-    system: options.systemPrompt,
-    prompt: options.userPrompt,
-    maxOutputTokens: options.maxTokens || 4096,
-    temperature: options.temperature || 0.7,
-  })
+      const generationResult = await generateText({
+        model,
+        system: options.systemPrompt,
+        prompt: options.userPrompt,
+        maxOutputTokens: options.maxTokens || 4096,
+        temperature: options.temperature || 0.7,
+      })
+
+      return {
+        text: generationResult.text,
+        usage: generationResult.usage ? {
+          inputTokens: generationResult.usage.inputTokens ?? 0,
+          outputTokens: generationResult.usage.outputTokens ?? 0,
+          totalTokens: (generationResult.usage.inputTokens ?? 0) + (generationResult.usage.outputTokens ?? 0),
+        } : undefined,
+      }
+    },
+    { retryDelay: 1000 }
+  )
 
   return result
 }
 
-export async function generate(options: StreamOptions): Promise<GenerationResult> {
-  const model = await getAIModel()
+export async function streamGenerate(options: StreamOptions) {
+  const result = await executeWithFailover(
+    async (providerConfig) => {
+      const modelProvider = createOpenAI({
+        baseURL: providerConfig.base_url,
+        apiKey: providerConfig.api_key,
+      })
+      const model = modelProvider(providerConfig.default_model)
 
-  const result = await generateText({
-    model,
-    system: options.systemPrompt,
-    prompt: options.userPrompt,
-    maxOutputTokens: options.maxTokens || 4096,
-    temperature: options.temperature || 0.7,
-  })
+      return streamText({
+        model,
+        system: options.systemPrompt,
+        prompt: options.userPrompt,
+        maxOutputTokens: options.maxTokens || 4096,
+        temperature: options.temperature || 0.7,
+      })
+    },
+    { retryDelay: 1000 }
+  )
 
+  return result
+}
+
+export async function getProviderInfo() {
+  const providers = await getActiveProvidersOrdered()
+  
+  if (providers.length === 0) {
+    throw new Error('No active AI provider configured')
+  }
+
+  const primaryProvider = providers[0]
+  
   return {
-    text: result.text,
-    usage: result.usage ? {
-      inputTokens: result.usage.inputTokens ?? 0,
-      outputTokens: result.usage.outputTokens ?? 0,
-      totalTokens: (result.usage.inputTokens ?? 0) + (result.usage.outputTokens ?? 0),
-    } : undefined,
+    providerName: primaryProvider.name,
+    providerType: primaryProvider.type,
+    model: 'Primary provider',
+    availableProviders: providers.map(p => ({
+      name: p.name,
+      type: p.type,
+      isPrimary: p.isPrimary,
+    })),
   }
 }
 
 export function isProviderConfigured(): Promise<boolean> {
-  return getActiveProviderWithKey()
-    .then((data) => data !== null)
+  return getActiveProvidersOrdered()
+    .then((providers) => providers.length > 0)
     .catch(() => false)
 }

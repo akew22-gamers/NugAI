@@ -141,8 +141,13 @@ model TaskSession {
   course_id         String?    // Nullable if manual input
   task_type         TaskType
   min_words_target  Int
-  regenerate_count  Int        @default(0) // Total regenerates for this session
+  regenerate_count  Int        @default(0)
   created_at        DateTime   @default(now())
+
+  // AI Provider tracking
+  ai_provider_name  String?    @db.VarChar(100)
+  ai_provider_type  String?    @db.VarChar(50)
+  ai_model          String?    @db.VarChar(200)
 
   // Snapshot fields for course data (preserve for PDF generation if course deleted)
   course_name_snapshot        String?  @db.VarChar(100)
@@ -196,6 +201,10 @@ model DailyUsageLog {
   estimated_cost      Decimal? @db.Decimal(10, 4) // USD
   date                DateTime @db.Date
   created_at          DateTime @default(now())
+
+  // AI Provider tracking
+  ai_provider_name    String?  @db.VarChar(100)
+  ai_provider_type    String?  @db.VarChar(50)
 
   // Relations
   user                User        @relation(fields: [user_id], references: [id], onDelete: Cascade)

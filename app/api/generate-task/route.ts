@@ -110,6 +110,9 @@ export async function POST(request: NextRequest) {
 
     const answers: string[] = []
     let totalTokens = 0
+    let usedProviderName: string | null = null
+    let usedProviderType: string | null = null
+    let usedModel: string | null = null
 
     for (const question of body.questions) {
       const systemPrompt = buildSystemPrompt({
@@ -147,6 +150,13 @@ export async function POST(request: NextRequest) {
 
       answers.push(result.text)
       totalTokens += result.usage?.totalTokens || 0
+      
+      const castResult = result as any
+      if ('providerName' in result && castResult.providerName) {
+        usedProviderName = castResult.providerName || null
+        usedProviderType = castResult.providerType || null
+        usedModel = castResult.model || null
+      }
     }
 
     const taskSession = await prisma.taskSession.create({
@@ -158,6 +168,9 @@ export async function POST(request: NextRequest) {
         course_name_snapshot: body.course_name,
         module_book_title_snapshot: body.module_book_title,
         tutor_name_snapshot: body.tutor_name,
+        ai_provider_name: usedProviderName,
+        ai_provider_type: usedProviderType,
+        ai_model: usedModel,
         task_items: {
           create: body.questions.map((question, index) => ({
             question_text: question,
@@ -189,6 +202,8 @@ export async function POST(request: NextRequest) {
           llm_tokens_used: totalTokens,
           tavily_calls: searchResults.tavilyResults,
           exa_calls: searchResults.exaResults,
+          ai_provider_name: usedProviderName,
+          ai_provider_type: usedProviderType,
           date: new Date(),
         },
       }),
