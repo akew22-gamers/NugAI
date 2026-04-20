@@ -44,6 +44,11 @@ export async function executeWithFailover<T>(
 
   for (const provider of providers) {
     try {
+      console.log(`Attempting provider: ${provider.provider_name} (${provider.provider_type})`)
+      console.log(`Base URL: ${provider.base_url}`)
+      console.log(`Model: ${provider.default_model}`)
+      console.log(`Active: ${provider.is_active}`)
+      
       const decryptedKey = decryptApiKey(provider.api_key)
 
       if (!provider.base_url || !provider.default_model || !decryptedKey) {
@@ -52,6 +57,8 @@ export async function executeWithFailover<T>(
         errors.push(new Error(errorMsg))
         continue
       }
+
+      console.log(`Provider ${provider.provider_name} config valid, attempting generation...`)
 
       const providerConfig = {
         provider_id: provider.id,
@@ -64,6 +71,8 @@ export async function executeWithFailover<T>(
 
       const result = await operation(providerConfig)
 
+      console.log(`✅ Provider ${provider.provider_name} succeeded!`)
+
       return {
         ...(result as any),
         providerName: provider.provider_name,
@@ -73,8 +82,9 @@ export async function executeWithFailover<T>(
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error'
       console.error(
-        `Provider ${provider.provider_name} (${provider.provider_type}) failed: ${errorMessage}`
+        `❌ Provider ${provider.provider_name} (${provider.provider_type}) failed: ${errorMessage}`
       )
+      console.error('Error stack:', error instanceof Error ? error.stack : 'No stack')
       errors.push(error instanceof Error ? error : new Error(errorMessage))
 
       if (providers.indexOf(provider) < providers.length - 1) {
