@@ -51,6 +51,7 @@ export async function executeWithFailover<T>(
   console.log(`[AI Failover] Found ${providers.length} active provider(s):`)
   providers.forEach((p, idx) => {
     console.log(`  [${idx + 1}] ${p.provider_name} (${p.provider_type}) - ID: ${p.id} - Active: ${p.is_active}`)
+    console.log(`      Model: ${p.default_model}`)
   })
 
   if (providers.length === 0) {
@@ -63,14 +64,31 @@ export async function executeWithFailover<T>(
 
   for (const provider of providers) {
     try {
+      let modelToUse = provider.default_model
+      
+      if (!modelToUse || modelToUse.trim() === '') {
+        if (provider.provider_type === 'DEEPSEEK') {
+          modelToUse = 'deepseek-chat'
+          console.log(`[AI Failover] ⚠️  Using fallback model for DeepSeek: ${modelToUse}`)
+        } else if (provider.provider_type === 'OPENAI') {
+          modelToUse = 'gpt-4o-mini'
+          console.log(`[AI Failover] ⚠️  Using fallback model for OpenAI: ${modelToUse}`)
+        } else if (provider.provider_type === 'GROQ') {
+          modelToUse = 'llama-3.3-70b-versatile'
+          console.log(`[AI Failover] ⚠️  Using fallback model for Groq: ${modelToUse}`)
+        } else {
+          modelToUse = provider.default_model
+        }
+      }
+
       console.log(`[AI Failover] ➡️  Attempting: ${provider.provider_name} (${provider.provider_type}) [ID: ${provider.id}]`)
       console.log(`[AI Failover] Base URL: ${provider.base_url}`)
-      console.log(`[AI Failover] Model: ${provider.default_model}`)
+      console.log(`[AI Failover] Using Model: ${modelToUse}`)
       
       const decryptedKey = decryptApiKey(provider.api_key)
       console.log(`[AI Failover] API Key length: ${decryptedKey.length} chars`)
 
-      if (!provider.base_url || !provider.default_model || !decryptedKey) {
+      if (!provider.base_url || !modelToUse || !decryptedKey) {
         const errorMsg = `Provider ${provider.provider_name} missing required configuration`
         console.error(`[AI Failover] ❌ ${errorMsg}`)
         errorNames.push(`${provider.provider_name}: missing config`)
@@ -83,19 +101,19 @@ export async function executeWithFailover<T>(
         provider_type: provider.provider_type,
         base_url: provider.base_url,
         api_key: decryptedKey,
-        default_model: provider.default_model,
+        default_model: modelToUse,
       }
 
       const result = await operation(providerConfig)
 
-      console.log(`[AI Failover] ✅ SUCCESS with ${provider.provider_name} (${provider.provider_type})`)
+      console.log(`[AI Failover] ✅ SUCCESS with ${provider.provider_name} (${provider.provider_type}) using model: ${modelToUse}`)
       console.log(`[AI Failover] === End of Request ===`)
 
       return {
         ...(result as any),
         providerName: provider.provider_name,
         providerType: provider.provider_type,
-        model: provider.default_model,
+        model: modelToUse,
       }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error'
