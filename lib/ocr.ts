@@ -19,6 +19,9 @@ export async function processImageOCR(imageData: string | Blob | File): Promise<
     }
 
     worker = await Tesseract.createWorker('ind+eng', 1, {
+      workerPath: 'https://cdn.jsdelivr.net/npm/tesseract.js@7.0.0/dist/worker.min.js',
+      langPath: 'https://tessdata.projectnaptha.com/4.0.0',
+      corePath: 'https://cdn.jsdelivr.net/npm/tesseract.js-core@7.0.0/tesseract-core.wasm.js',
       logger: (m) => {
         if (m.status === 'recognizing text') {
           console.log(`OCR Progress: ${Math.round((m.progress || 0) * 100)}%`);
