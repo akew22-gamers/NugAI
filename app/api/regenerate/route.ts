@@ -56,7 +56,7 @@ export async function POST(request: NextRequest) {
       where: { id: session.user.id },
       select: {
         subscription_tier: true,
-        daily_usage_count: true,
+        daily_regenerate_count: true,
         last_usage_date: true,
       },
     })
@@ -68,10 +68,14 @@ export async function POST(request: NextRequest) {
     if (user.last_usage_date?.toISOString().split('T')[0] !== today) {
       await prisma.user.update({
         where: { id: session.user.id },
-        data: { daily_usage_count: 0, last_usage_date: today },
+        data: {
+          daily_usage_count: 0,
+          daily_regenerate_count: 0,
+          last_usage_date: today,
+        },
       })
-    } else if (user.subscription_tier === 'FREE' && user.daily_usage_count >= 5) {
-      return NextResponse.json({ error: 'Daily quota exceeded' }, { status: 403 })
+    } else if (user.subscription_tier === 'FREE' && user.daily_regenerate_count >= 5) {
+      return NextResponse.json({ error: 'Kuota harian regenerate habis (maks 5). Upgrade ke Premium untuk akses unlimited.' }, { status: 403 })
     }
 
     const profile = taskSession.user.student_profile
@@ -113,7 +117,7 @@ export async function POST(request: NextRequest) {
       }),
       prisma.user.update({
         where: { id: session.user.id },
-        data: { daily_usage_count: { increment: 1 } },
+        data: { daily_regenerate_count: { increment: 1 } },
       }),
     ])
 

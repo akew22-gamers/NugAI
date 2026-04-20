@@ -432,7 +432,10 @@ export default function AdminProvidersPage() {
         </div>
       )}
 
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+      <Dialog open={isDialogOpen} onOpenChange={(open) => {
+        setIsDialogOpen(open)
+        if (!open) resetForm()
+      }}>
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
             <DialogTitle>
@@ -477,11 +480,16 @@ export default function AdminProvidersPage() {
                 value={baseUrl}
                 onChange={(e) => setBaseUrl(e.target.value)}
                 placeholder="https://api.provider.com/v1"
-                disabled={providerType !== "CUSTOM"}
+                disabled={!isEditing && providerType !== "CUSTOM"}
               />
-              {providerType !== "CUSTOM" && (
+              {!isEditing && providerType !== "CUSTOM" && (
                 <p className="text-xs text-slate-500">
                   Base URL otomatis untuk provider preset
+                </p>
+              )}
+              {isEditing && (
+                <p className="text-xs text-slate-500">
+                  URL yang tersimpan untuk provider ini
                 </p>
               )}
             </div>
@@ -493,11 +501,36 @@ export default function AdminProvidersPage() {
                 type="password"
                 value={apiKey}
                 onChange={(e) => setApiKey(e.target.value)}
-                placeholder="sk-xxxxx"
+                placeholder={isEditing ? "Kosongkan jika tidak diubah" : "sk-xxxxx"}
               />
               {isEditing && (
                 <p className="text-xs text-slate-500">
                   Kosongkan jika tidak ingin mengubah API key
+                </p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="default_model">Model Default</Label>
+              {availableModels.length > 0 ? (
+                <Select
+                  id="default_model"
+                  options={modelOptions}
+                  value={defaultModel}
+                  onChange={(e) => setDefaultModel(e.target.value)}
+                  placeholder="Pilih model default"
+                />
+              ) : (
+                <Input
+                  id="default_model"
+                  value={defaultModel}
+                  onChange={(e) => setDefaultModel(e.target.value)}
+                  placeholder="Contoh: deepseek-chat, llama-3.3-70b-versatile"
+                />
+              )}
+              {isEditing && defaultModel && (
+                <p className="text-xs text-slate-500">
+                  Model saat ini: <span className="font-medium text-slate-700">{defaultModel}</span>
                 </p>
               )}
             </div>
@@ -517,19 +550,6 @@ export default function AdminProvidersPage() {
                 </span>
               )}
             </div>
-
-            {availableModels.length > 0 && (
-              <div className="space-y-2">
-                <Label htmlFor="default_model">Model Default</Label>
-                <Select
-                  id="default_model"
-                  options={modelOptions}
-                  value={defaultModel}
-                  onChange={(e) => setDefaultModel(e.target.value)}
-                  placeholder="Pilih model default"
-                />
-              </div>
-            )}
 
             <div className="flex items-center justify-end gap-2 pt-4">
               <Button

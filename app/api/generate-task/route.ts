@@ -26,6 +26,7 @@ async function checkQuota(userId: string): Promise<{ canProceed: boolean; error?
     select: {
       subscription_tier: true,
       daily_usage_count: true,
+      daily_regenerate_count: true,
       last_usage_date: true,
     },
   })
@@ -41,6 +42,7 @@ async function checkQuota(userId: string): Promise<{ canProceed: boolean; error?
       where: { id: userId },
       data: {
         daily_usage_count: 0,
+        daily_regenerate_count: 0,
         last_usage_date: today,
       },
     })
@@ -52,7 +54,7 @@ async function checkQuota(userId: string): Promise<{ canProceed: boolean; error?
   }
 
   if (user.daily_usage_count >= 5) {
-    return { canProceed: false, error: 'Daily quota exceeded. Upgrade to Premium for unlimited access.' }
+    return { canProceed: false, error: 'Kuota harian generate tugas habis (maks 5). Upgrade ke Premium untuk akses unlimited.' }
   }
 
   return { canProceed: true }

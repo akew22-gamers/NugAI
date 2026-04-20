@@ -36,6 +36,7 @@ export async function POST(request: Request) {
       },
       data: {
         daily_usage_count: 0,
+        daily_regenerate_count: 0,
         last_usage_date: null,
       },
     })

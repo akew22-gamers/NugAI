@@ -18,6 +18,7 @@ export async function GET() {
       select: {
         subscription_tier: true,
         daily_usage_count: true,
+        daily_regenerate_count: true,
         last_usage_date: true,
       },
     })
@@ -33,6 +34,7 @@ export async function GET() {
     today.setHours(0, 0, 0, 0)
 
     let dailyUsageCount = user.daily_usage_count
+    let dailyRegenerateCount = user.daily_regenerate_count
 
     if (user.last_usage_date) {
       const lastUsageDate = new Date(user.last_usage_date)
@@ -40,12 +42,14 @@ export async function GET() {
       
       if (lastUsageDate.getTime() < today.getTime()) {
         dailyUsageCount = 0
+        dailyRegenerateCount = 0
       }
     }
 
     const isPremium = user.subscription_tier === "PREMIUM"
     const limit = isPremium ? null : 5
     const remaining = isPremium ? null : Math.max(0, 5 - dailyUsageCount)
+    const regenerateRemaining = isPremium ? null : Math.max(0, 5 - dailyRegenerateCount)
 
     const now = new Date()
     const tomorrow = new Date(now)
@@ -56,6 +60,7 @@ export async function GET() {
     return NextResponse.json({
       tier: user.subscription_tier,
       remaining,
+      regenerateRemaining,
       limit,
       resetAt,
     })
