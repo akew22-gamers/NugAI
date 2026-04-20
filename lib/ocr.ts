@@ -6,22 +6,46 @@ export interface OCRResult {
 }
 
 export async function processImageOCR(imageData: string | Blob | File): Promise<OCRResult> {
+  let objectUrl: string | null = null;
+  let worker: any = null;
+
   try {
-    const result = await Tesseract.recognize(imageData, 'ind+eng', {
+    const Tesseract = (await import('tesseract.js')).default;
+    
+    let imageSource = imageData;
+    if (typeof window !== 'undefined' && typeof imageData !== 'string') {
+      objectUrl = URL.createObjectURL(imageData);
+      imageSource = objectUrl;
+    }
+
+    worker = await Tesseract.createWorker('ind+eng', 1, {
       logger: (m) => {
         if (m.status === 'recognizing text') {
-          console.log(`OCR Progress: ${Math.round(m.progress * 100)}%`)
+          console.log(`OCR Progress: ${Math.round((m.progress || 0) * 100)}%`);
         }
       },
-    })
+    });
+
+    const result = await worker.recognize(imageSource);
 
     return {
       text: result.data.text.trim(),
       confidence: result.data.confidence,
-    }
+    };
   } catch (error) {
-    console.error('OCR processing failed:', error)
-    throw new Error('OCR processing failed. Please try again or input text manually.')
+    console.error('OCR processing failed:', error);
+    throw new Error('OCR processing failed. Please try again or input text manually.');
+  } finally {
+    if (worker) {
+      try {
+        await worker.terminate();
+      } catch (e) {
+        console.error('Failed to terminate worker', e);
+      }
+    }
+    if (objectUrl && typeof window !== 'undefined') {
+      URL.revokeObjectURL(objectUrl);
+    }
   }
 }
 
