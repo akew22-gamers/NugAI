@@ -218,6 +218,8 @@ export async function POST(request: NextRequest) {
         url: r.url,
         author: r.metadata?.author as string | undefined,
       })),
+      providerName: usedProviderName,
+      providerType: usedProviderType,
     })
   } catch (error) {
     console.error('Task generation failed:', error)

@@ -25,6 +25,7 @@ export interface TaskResult {
     url?: string
     author?: string
   }>
+  providerName?: string
 }
 
 export default function TaskWizardPage() {
@@ -42,6 +43,7 @@ export default function TaskWizardPage() {
   const [isProcessing, setIsProcessing] = useState(false)
   const [regenerateCounts, setRegenerateCounts] = useState<{[key: number]: number}>({})
   const [activeQuestion, setActiveQuestion] = useState(0)
+  const [providerName, setProviderName] = useState<string>("")
 
   const handleStep1Complete = (data: TaskFormData) => {
     setFormData(data)
@@ -64,6 +66,9 @@ export default function TaskWizardPage() {
 
       const resultData = await response.json()
       setResult(resultData)
+      if (resultData.providerName) {
+        setProviderName(resultData.providerName)
+      }
       setStep(3)
     } catch (error) {
       console.error("Generation failed:", error)
@@ -179,6 +184,7 @@ export default function TaskWizardPage() {
           onRegenerate={handleRegenerate}
           onReset={handleReset}
           isProcessing={isProcessing}
+          providerName={providerName}
           regenerateCounts={regenerateCounts}
           activeQuestion={activeQuestion}
           setActiveQuestion={setActiveQuestion}
