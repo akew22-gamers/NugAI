@@ -468,8 +468,7 @@ export default function LandingPage() {
             </p>
           </div>
 
-           <div className="hidden lg:block absolute top-12 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-indigo-200 to-transparent" />
-
+            <div className="hidden lg:block absolute top-12 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-indigo-200 to-transparent" />
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 lg:gap-12">
               {steps.map((step, index) => (
                 <div key={index} className="relative text-center animate-fade-in-up" style={{ animationDelay: `${index * 200}ms` }}>
@@ -486,8 +485,7 @@ export default function LandingPage() {
                 </div>
               ))}
             </div>
-          </div>
-
+          
           <div className="text-center mt-16 animate-fade-in-up" style={{ animationDelay: '800ms' }}>
             <Link href="/login">
               <Button
