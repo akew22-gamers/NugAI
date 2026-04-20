@@ -29,8 +29,11 @@ export async function executeWithFailover<T>(
   }) => Promise<T>,
   options: FailoverConfig = {}
 ): Promise<T & ProviderResult> {
-  const { maxRetries = 3, retryDelay = 1000 } = options
+  const { maxRetries = 3, retryDelay = 500 } = options
 
+  const now = new Date().toISOString()
+  console.log(`[AI Failover] === ${now} ===`)
+  
   const providers = await prisma.aIProvider.findMany({
     where: { is_active: true },
     select: {
@@ -47,34 +50,32 @@ export async function executeWithFailover<T>(
 
   console.log(`[AI Failover] Found ${providers.length} active provider(s):`)
   providers.forEach((p, idx) => {
-    console.log(`  [${idx + 1}] ${p.provider_name} (${p.provider_type}) - Active: ${p.is_active}`)
+    console.log(`  [${idx + 1}] ${p.provider_name} (${p.provider_type}) - ID: ${p.id} - Active: ${p.is_active}`)
   })
 
   if (providers.length === 0) {
     const errorMsg = 'No active AI provider configured. Please activate a provider in Admin panel.'
-    console.error(errorMsg)
+    console.error(`[AI Failover] ❌ ${errorMsg}`)
     throw new Error(errorMsg)
   }
 
-  const errors: Error[] = []
+  const errorNames: string[] = []
 
   for (const provider of providers) {
     try {
-      console.log(`Attempting provider: ${provider.provider_name} (${provider.provider_type})`)
-      console.log(`Base URL: ${provider.base_url}`)
-      console.log(`Model: ${provider.default_model}`)
-      console.log(`Active: ${provider.is_active}`)
+      console.log(`[AI Failover] ➡️  Attempting: ${provider.provider_name} (${provider.provider_type}) [ID: ${provider.id}]`)
+      console.log(`[AI Failover] Base URL: ${provider.base_url}`)
+      console.log(`[AI Failover] Model: ${provider.default_model}`)
       
       const decryptedKey = decryptApiKey(provider.api_key)
+      console.log(`[AI Failover] API Key length: ${decryptedKey.length} chars`)
 
       if (!provider.base_url || !provider.default_model || !decryptedKey) {
         const errorMsg = `Provider ${provider.provider_name} missing required configuration`
-        console.error(errorMsg)
-        errors.push(new Error(errorMsg))
+        console.error(`[AI Failover] ❌ ${errorMsg}`)
+        errorNames.push(`${provider.provider_name}: missing config`)
         continue
       }
-
-      console.log(`Provider ${provider.provider_name} config valid, attempting generation...`)
 
       const providerConfig = {
         provider_id: provider.id,
@@ -87,7 +88,8 @@ export async function executeWithFailover<T>(
 
       const result = await operation(providerConfig)
 
-      console.log(`✅ Provider ${provider.provider_name} succeeded!`)
+      console.log(`[AI Failover] ✅ SUCCESS with ${provider.provider_name} (${provider.provider_type})`)
+      console.log(`[AI Failover] === End of Request ===`)
 
       return {
         ...(result as any),
@@ -97,14 +99,14 @@ export async function executeWithFailover<T>(
       }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error'
-      console.error(
-        `❌ Provider ${provider.provider_name} (${provider.provider_type}) failed: ${errorMessage}`
-      )
-      console.error('Error stack:', error instanceof Error ? error.stack : 'No stack')
-      errors.push(error instanceof Error ? error : new Error(errorMessage))
+      console.error(`[AI Failover] ❌ ${provider.provider_name} failed: ${errorMessage}`)
+      if (error instanceof Error) {
+        console.error(`[AI Failover] Stack: ${error.stack}`)
+      }
+      errorNames.push(`${provider.provider_name}: ${errorMessage}`)
 
       if (providers.indexOf(provider) < providers.length - 1) {
-        console.log(`Trying next provider in ${retryDelay}ms...`)
+        console.log(`[AI Failover] ⏱️  Retrying next provider in ${retryDelay}ms...`)
         await new Promise((resolve) =>
           setTimeout(resolve, retryDelay)
         )
@@ -112,10 +114,11 @@ export async function executeWithFailover<T>(
     }
   }
 
-  const allErrors = errors.map((e) => e.message).join(', ')
-  console.error(`All ${providers.length} providers failed: ${allErrors}`)
+  const allErrors = errorNames.join(', ')
+  console.error(`[AI Failover] ❌ All providers failed: ${allErrors}`)
+  console.error(`[AI Failover] === End of Request ===`)
   throw new Error(
-    `All ${providers.length} providers failed. Errors: ${allErrors}`
+    `All ${providers.length} providers failed: ${allErrors}`
   )
 }
 
