@@ -91,7 +91,7 @@ export async function PATCH(request: NextRequest) {
 
   try {
     const body = await request.json()
-    const { id, ...updates } = body
+    const { id, is_active, ...updates } = body
 
     if (!id) {
       return NextResponse.json(
@@ -100,7 +100,19 @@ export async function PATCH(request: NextRequest) {
       )
     }
 
-    const input: UpdateAIProviderInput = updates
+    if (is_active === false) {
+      const allProviders = await getAllAIProviders()
+      const activeProviders = allProviders.filter(p => p.is_active)
+      
+      if (activeProviders.length <= 1 && activeProviders[0]?.id === id) {
+        return NextResponse.json(
+          { error: 'Minimal harus ada 1 provider aktif' },
+          { status: 400 }
+        )
+      }
+    }
+
+    const input: UpdateAIProviderInput = { is_active, ...updates }
     const provider = await updateAIProvider(id, input)
     return NextResponse.json({ provider })
   } catch (error) {

@@ -204,11 +204,20 @@ export default function AdminProvidersPage() {
   const handleToggleActive = async (provider: Provider) => {
     try {
       if (provider.is_active) {
-        // Deactivate - just update is_active to false
-        const response = await fetch(`/api/admin/providers?id=${provider.id}`, {
+        const otherActiveProvider = providers.find(p => p.is_active && p.id !== provider.id)
+        
+        if (!otherActiveProvider) {
+          toast.error("Minimal harus ada 1 provider aktif")
+          return
+        }
+        
+        const response = await fetch("/api/admin/providers", {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ is_active: false }),
+          body: JSON.stringify({ 
+            id: provider.id,
+            is_active: false 
+          }),
         })
 
         if (response.ok) {
@@ -219,7 +228,6 @@ export default function AdminProvidersPage() {
           toast.error(error.error || "Gagal menonaktifkan provider")
         }
       } else {
-        // Activate - use PUT endpoint to set as active provider
         const response = await fetch("/api/admin/providers", {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
