@@ -85,13 +85,13 @@ Nama  : [Nama Lengkap Mahasiswa]
 NIM   : [NIM Mahasiswa]
 [baris kosong]
 
-BAGIAN 2 — SALAM PEMBUKA (1 kalimat, termasuk word count BODY):
-Contoh: "Dalam forum diskusi ini, saya akan membahas [topik] dengan mengacu pada konsep-konsep yang relevan."
+BAGIAN 2 — SALAM PEMBUKA (1 kalimat singkat dan sederhana, termasuk word count BODY):
+Contoh: "Selamat pagi, izin ikut berpartisipasi dalam diskusi ini."
 
 BAGIAN 3 — BODY JAWABAN (${context.min_words_target}–${maxWords} kata total BODY):
-- Tulis dalam paragraf naratif yang mengalir, minimal 3 paragraf
-- Paragraf 1: Pengantar dan penjelasan konsep utama
-- Paragraf 2+: Elaborasi, contoh konkret, dan analisis mendalam
+- Fleksibel 1-5 paragraf sesuai kebutuhan penjelasan materi
+- FOKUS UTAMA: penuhi batas minimal kata (${context.min_words_target} kata) dengan argumentasi berbobot
+- Berisi pengantar, elaborasi, contoh konkret, dan analisis mendalam
 - Gunakan transisi antar paragraf yang natural
 
 BAGIAN 4 — PENUTUP (1 kalimat simpulan, termasuk word count BODY):

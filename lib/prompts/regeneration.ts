@@ -20,7 +20,7 @@ export function buildRegenerationSystemPrompt(context: RegenerationContext): str
   const discussionFormatNote = context.task_type === 'DISCUSSION'
     ? `\n\nFORMAT BAKU JAWABAN DISCUSSION — WAJIB PERTAHANKAN:
 Header  : Nama  : [Nama] / NIM   : [NIM] (tidak dihitung word count)
-Isi     : Salam pembuka (1 kalimat) + Body (min 3 paragraf naratif) + Penutup (1 kalimat)
+Isi     : Salam pembuka sederhana ("Selamat pagi, izin...") + Body fleksibel (1-5 paragraf, penuhi target kata) + Penutup (1 kalimat)
 Penutup : Referensi: (baris baru) 1. [Modul] 2. [Buku Akademik]
 Pastikan header Nama dan NIM tetap ada di awal dengan format "Nama  : " dan "NIM   : "`
     : ''
