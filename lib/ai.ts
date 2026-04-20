@@ -19,75 +19,99 @@ export interface GenerationResult {
   }
 }
 
+// Models that do NOT support temperature parameter
+const MODELS_WITHOUT_TEMPERATURE = ['deepseek-reasoner', 'deepseek-r1']
+
+// DeepSeek reasoning models — too slow for task generation, redirect to chat
+const DEEPSEEK_REASONING_MODELS = ['deepseek-reasoner', 'deepseek-r1']
+
 /**
- * Create the appropriate language model based on provider type.
- * 
- * - DEEPSEEK: Uses @ai-sdk/deepseek (dedicated SDK with correct /chat/completions endpoint)
+ * Create the appropriate language model + generation options based on provider type.
+ *
+ * - DEEPSEEK: Uses @ai-sdk/deepseek. Auto-redirects reasoning models (deepseek-reasoner)
+ *   to deepseek-chat since reasoner is far too slow for task generation and doesn't
+ *   support temperature.
  * - OPENAI: Uses @ai-sdk/openai default (Responses API)
- * - Others (GROQ, TOGETHER, CUSTOM): Uses @ai-sdk/openai .chat() method 
- *   to target /chat/completions instead of /responses
+ * - Others (GROQ, TOGETHER, CUSTOM): Uses @ai-sdk/openai .chat()
  */
 function createModelForProvider(providerConfig: {
   provider_type: string
   base_url: string
   api_key: string
   default_model: string
-}): LanguageModel {
+}): { model: LanguageModel; supportsTemperature: boolean } {
   if (providerConfig.provider_type === 'DEEPSEEK') {
-    // Use the dedicated DeepSeek SDK — it uses the correct base URL 
-    // (https://api.deepseek.com) and /chat/completions endpoint.
-    // Strip /v1 suffix if present (legacy DB entries may have it)
     let deepseekBaseUrl = providerConfig.base_url || undefined
     if (deepseekBaseUrl?.endsWith('/v1')) {
       deepseekBaseUrl = deepseekBaseUrl.slice(0, -3)
     }
+
+    // Redirect reasoning model to deepseek-chat — reasoner is for complex
+    // multi-step reasoning tasks, not for this use case. It takes 60-180s
+    // per request and doesn't support temperature, causing errors.
+    let modelId = providerConfig.default_model
+    if (DEEPSEEK_REASONING_MODELS.includes(modelId)) {
+      console.warn(
+        `[AI] ⚠️  DeepSeek model "${modelId}" is a reasoning model (slow, no temperature support). ` +
+        `Auto-switching to "deepseek-chat" for task generation.`
+      )
+      modelId = 'deepseek-chat'
+    }
+
     const deepseekProvider = createDeepSeek({
       baseURL: deepseekBaseUrl,
       apiKey: providerConfig.api_key,
     })
-    return deepseekProvider(providerConfig.default_model)
+    const supportsTemperature = !MODELS_WITHOUT_TEMPERATURE.includes(modelId)
+    return { model: deepseekProvider(modelId), supportsTemperature }
   }
 
   if (providerConfig.provider_type === 'OPENAI') {
-    // OpenAI supports the Responses API, use the default provider()
     const openaiProvider = createOpenAI({
       baseURL: providerConfig.base_url,
       apiKey: providerConfig.api_key,
     })
-    return openaiProvider(providerConfig.default_model)
+    return { model: openaiProvider(providerConfig.default_model), supportsTemperature: true }
   }
 
-  // For GROQ, TOGETHER, CUSTOM, and other OpenAI-compatible providers:
-  // Use .chat() to explicitly target /chat/completions endpoint
-  // instead of the default /responses endpoint (which only OpenAI supports)
+  // GROQ, TOGETHER, CUSTOM — use .chat() for /chat/completions endpoint
   const openaiCompatProvider = createOpenAI({
     baseURL: providerConfig.base_url,
     apiKey: providerConfig.api_key,
   })
-  return openaiCompatProvider.chat(providerConfig.default_model)
+  return { model: openaiCompatProvider.chat(providerConfig.default_model), supportsTemperature: true }
 }
 
 export async function generate(options: StreamOptions): Promise<GenerationResult & { providerName?: string; providerType?: string; model?: string }> {
   try {
     const result = await executeWithFailover(
       async (providerConfig) => {
-        const model = createModelForProvider(providerConfig)
+        const { model, supportsTemperature } = createModelForProvider(providerConfig)
 
-        const generationResult = await generateText({
-          model,
-          system: options.systemPrompt,
-          prompt: options.userPrompt,
-          maxOutputTokens: options.maxTokens || 4096,
-          temperature: options.temperature || 0.7,
-        })
+        // AbortController with 90s timeout — prevents silent Vercel function hangs
+        const controller = new AbortController()
+        const timeoutId = setTimeout(() => controller.abort(), 90_000)
 
-        return {
-          text: generationResult.text,
-          usage: generationResult.usage ? {
-            inputTokens: generationResult.usage.inputTokens ?? 0,
-            outputTokens: generationResult.usage.outputTokens ?? 0,
-            totalTokens: (generationResult.usage.inputTokens ?? 0) + (generationResult.usage.outputTokens ?? 0),
-          } : undefined,
+        try {
+          const generationResult = await generateText({
+            model,
+            system: options.systemPrompt,
+            prompt: options.userPrompt,
+            maxOutputTokens: options.maxTokens || 4096,
+            ...(supportsTemperature ? { temperature: options.temperature ?? 0.7 } : {}),
+            abortSignal: controller.signal,
+          })
+
+          return {
+            text: generationResult.text,
+            usage: generationResult.usage ? {
+              inputTokens: generationResult.usage.inputTokens ?? 0,
+              outputTokens: generationResult.usage.outputTokens ?? 0,
+              totalTokens: (generationResult.usage.inputTokens ?? 0) + (generationResult.usage.outputTokens ?? 0),
+            } : undefined,
+          }
+        } finally {
+          clearTimeout(timeoutId)
         }
       },
       { retryDelay: 500 }
@@ -104,14 +128,14 @@ export async function generate(options: StreamOptions): Promise<GenerationResult
 export async function streamGenerate(options: StreamOptions) {
   const result = await executeWithFailover(
     async (providerConfig) => {
-      const model = createModelForProvider(providerConfig)
+      const { model, supportsTemperature } = createModelForProvider(providerConfig)
 
       return streamText({
         model,
         system: options.systemPrompt,
         prompt: options.userPrompt,
         maxOutputTokens: options.maxTokens || 4096,
-        temperature: options.temperature || 0.7,
+        ...(supportsTemperature ? { temperature: options.temperature ?? 0.7 } : {}),
       })
     },
     { retryDelay: 500 }

@@ -3,6 +3,9 @@
   "functions": {
     "app/api/generate-task/route.ts": {
       "maxDuration": 120
+    },
+    "app/api/regenerate/route.ts": {
+      "maxDuration": 120
     }
   },
   "crons": [

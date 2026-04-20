@@ -116,48 +116,45 @@ export async function POST(request: NextRequest) {
     let usedProviderType: string | null = null
     let usedModel: string | null = null
 
-    // Hitung maxTokens yang cukup: ~2 token per kata + buffer 20%, minimal 2048
+    // Hitung maxTokens yang cukup: ~2.5 token per kata + buffer, minimal 2048
     const maxTokens = Math.min(Math.max(Math.ceil(body.min_words_target * 2.5), 2048), 4096)
 
-    // Proses semua pertanyaan secara paralel untuk mengurangi total waktu tunggu
-    const generationResults = await Promise.all(
-      body.questions.map(async (question) => {
-        const systemPrompt = buildSystemPrompt({
-          study_program: profile.study_program,
-          university_name: profile.university_name,
-          course_name: body.course_name,
-          module_book_title: body.module_book_title,
-          tutor_name: body.tutor_name,
-          min_words_target: body.min_words_target,
-          task_type: body.task_type,
-          question_text: question,
-          search_context: searchContext,
-        })
-
-        const userPrompt = buildUserPrompt({
-          study_program: profile.study_program,
-          university_name: profile.university_name,
-          course_name: body.course_name,
-          module_book_title: body.module_book_title,
-          tutor_name: body.tutor_name,
-          min_words_target: body.min_words_target,
-          task_type: body.task_type,
-          question_text: question,
-          search_context: searchContext,
-          student_name: profile.full_name,
-          student_nim: profile.nim,
-        })
-
-        return generate({
-          systemPrompt,
-          userPrompt,
-          maxTokens,
-          temperature: 0.7,
-        })
+    // Proses pertanyaan secara sequential — DeepSeek dan banyak provider lain
+    // memiliki rate limit ketat yang menyebabkan error 429 jika dikirim paralel.
+    for (const question of body.questions) {
+      const systemPrompt = buildSystemPrompt({
+        study_program: profile.study_program,
+        university_name: profile.university_name,
+        course_name: body.course_name,
+        module_book_title: body.module_book_title,
+        tutor_name: body.tutor_name,
+        min_words_target: body.min_words_target,
+        task_type: body.task_type,
+        question_text: question,
+        search_context: searchContext,
       })
-    )
 
-    for (const result of generationResults) {
+      const userPrompt = buildUserPrompt({
+        study_program: profile.study_program,
+        university_name: profile.university_name,
+        course_name: body.course_name,
+        module_book_title: body.module_book_title,
+        tutor_name: body.tutor_name,
+        min_words_target: body.min_words_target,
+        task_type: body.task_type,
+        question_text: question,
+        search_context: searchContext,
+        student_name: profile.full_name,
+        student_nim: profile.nim,
+      })
+
+      const result = await generate({
+        systemPrompt,
+        userPrompt,
+        maxTokens,
+        temperature: 0.7,
+      })
+
       answers.push(result.text)
       totalTokens += result.usage?.totalTokens || 0
 
