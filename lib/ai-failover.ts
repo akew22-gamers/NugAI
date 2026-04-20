@@ -66,19 +66,13 @@ export async function executeWithFailover<T>(
     try {
       let modelToUse = provider.default_model
       
-      if (!modelToUse || modelToUse.trim() === '') {
-        if (provider.provider_type === 'DEEPSEEK') {
-          modelToUse = 'deepseek-chat'
-          console.log(`[AI Failover] ⚠️  Using fallback model for DeepSeek: ${modelToUse}`)
-        } else if (provider.provider_type === 'OPENAI') {
-          modelToUse = 'gpt-4o-mini'
-          console.log(`[AI Failover] ⚠️  Using fallback model for OpenAI: ${modelToUse}`)
-        } else if (provider.provider_type === 'GROQ') {
-          modelToUse = 'llama-3.3-70b-versatile'
-          console.log(`[AI Failover] ⚠️  Using fallback model for Groq: ${modelToUse}`)
-        } else {
-          modelToUse = provider.default_model
-        }
+      if (provider.provider_type === 'DEEPSEEK') {
+        modelToUse = 'deepseek-chat'
+        console.log(`[AI Failover] 🔧 Forcing DeepSeek model: ${modelToUse}`)
+      } else if (provider.provider_type === 'OPENAI') {
+        modelToUse = modelToUse || 'gpt-4o-mini'
+      } else if (provider.provider_type === 'GROQ') {
+        modelToUse = modelToUse || 'llama-3.3-70b-versatile'
       }
 
       console.log(`[AI Failover] ➡️  Attempting: ${provider.provider_name} (${provider.provider_type}) [ID: ${provider.id}]`)
