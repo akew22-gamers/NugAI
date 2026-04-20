@@ -46,6 +46,13 @@ export async function executeWithFailover<T>(
     try {
       const decryptedKey = decryptApiKey(provider.api_key)
 
+      if (!provider.base_url || !provider.default_model || !decryptedKey) {
+        const errorMsg = `Provider ${provider.provider_name} missing required configuration`
+        console.error(errorMsg)
+        errors.push(new Error(errorMsg))
+        continue
+      }
+
       const providerConfig = {
         provider_id: provider.id,
         provider_name: provider.provider_name,
@@ -64,13 +71,14 @@ export async function executeWithFailover<T>(
         model: provider.default_model,
       }
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error'
       console.error(
-        `Provider ${provider.provider_name} failed:`,
-        error instanceof Error ? error.message : error
+        `Provider ${provider.provider_name} (${provider.provider_type}) failed: ${errorMessage}`
       )
-      errors.push(error instanceof Error ? error : new Error('Unknown error'))
+      errors.push(error instanceof Error ? error : new Error(errorMessage))
 
       if (providers.indexOf(provider) < providers.length - 1) {
+        console.log(`Trying next provider in ${retryDelay}ms...`)
         await new Promise((resolve) =>
           setTimeout(resolve, retryDelay)
         )
@@ -78,8 +86,10 @@ export async function executeWithFailover<T>(
     }
   }
 
+  const allErrors = errors.map((e) => e.message).join(', ')
+  console.error(`All ${providers.length} providers failed: ${allErrors}`)
   throw new Error(
-    `All ${providers.length} providers failed. Errors: ${errors.map((e) => e.message).join(', ')}`
+    `All ${providers.length} providers failed. Errors: ${allErrors}`
   )
 }
 

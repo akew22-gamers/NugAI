@@ -18,72 +18,42 @@ export interface GenerationResult {
   }
 }
 
-async function createProviderClient(config: {
-  baseURL: string
-  apiKey: string
-  model: string
-}) {
-  const provider = createOpenAI({
-    baseURL: config.baseURL,
-    apiKey: config.apiKey,
-  })
-  return provider(config.model)
-}
+export async function generate(options: StreamOptions): Promise<GenerationResult & { providerName?: string; providerType?: string; model?: string }> {
+  try {
+    const result = await executeWithFailover(
+      async (providerConfig) => {
+        const modelProvider = createOpenAI({
+          baseURL: providerConfig.base_url,
+          apiKey: providerConfig.api_key,
+        })
+        const model = modelProvider(providerConfig.default_model)
 
-export async function getAIModel() {
-  const providerData = await getActiveProvidersOrdered()
-  
-  if (providerData.length === 0) {
-    throw new Error('No active AI provider configured')
+        const generationResult = await generateText({
+          model,
+          system: options.systemPrompt,
+          prompt: options.userPrompt,
+          maxOutputTokens: options.maxTokens || 4096,
+          temperature: options.temperature || 0.7,
+        })
+
+        return {
+          text: generationResult.text,
+          usage: generationResult.usage ? {
+            inputTokens: generationResult.usage.inputTokens ?? 0,
+            outputTokens: generationResult.usage.outputTokens ?? 0,
+            totalTokens: (generationResult.usage.inputTokens ?? 0) + (generationResult.usage.outputTokens ?? 0),
+          } : undefined,
+        }
+      },
+      { retryDelay: 500 }
+    )
+
+    return result
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+    console.error('AI generation error:', errorMessage)
+    throw error
   }
-
-  const primaryProvider = providerData[0]
-  
-  const { getActiveProviderWithKey } = await import('./provider')
-  const activeProvider = await getActiveProviderWithKey()
-  
-  if (!activeProvider) {
-    throw new Error('Primary provider not found')
-  }
-
-  const model = createOpenAI({
-    baseURL: activeProvider.config.base_url,
-    apiKey: activeProvider.decryptedKey,
-  })
-
-  return model(activeProvider.config.default_model)
-}
-
-export async function generate(options: StreamOptions): Promise<GenerationResult> {
-  const result = await executeWithFailover(
-    async (providerConfig) => {
-      const model = await createProviderClient({
-        baseURL: providerConfig.base_url,
-        apiKey: providerConfig.api_key,
-        model: providerConfig.default_model,
-      })
-
-      const generationResult = await generateText({
-        model,
-        system: options.systemPrompt,
-        prompt: options.userPrompt,
-        maxOutputTokens: options.maxTokens || 4096,
-        temperature: options.temperature || 0.7,
-      })
-
-      return {
-        text: generationResult.text,
-        usage: generationResult.usage ? {
-          inputTokens: generationResult.usage.inputTokens ?? 0,
-          outputTokens: generationResult.usage.outputTokens ?? 0,
-          totalTokens: (generationResult.usage.inputTokens ?? 0) + (generationResult.usage.outputTokens ?? 0),
-        } : undefined,
-      }
-    },
-    { retryDelay: 1000 }
-  )
-
-  return result
 }
 
 export async function streamGenerate(options: StreamOptions) {
@@ -103,7 +73,7 @@ export async function streamGenerate(options: StreamOptions) {
         temperature: options.temperature || 0.7,
       })
     },
-    { retryDelay: 1000 }
+    { retryDelay: 500 }
   )
 
   return result
