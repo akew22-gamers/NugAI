@@ -1,0 +1,92 @@
+- generic [ref=e1]:
+  - generic [ref=e28]:
+    - complementary [ref=e29]:
+      - generic [ref=e30]:
+        - link "N NugAI" [ref=e31] [cursor=pointer]:
+          - /url: /dashboard
+          - generic [ref=e33]: "N"
+          - generic [ref=e34]: NugAI
+        - button "Collapse sidebar" [ref=e35]:
+          - img [ref=e36]
+      - navigation [ref=e38]:
+        - link "Dashboard" [ref=e39] [cursor=pointer]:
+          - /url: /dashboard
+          - img [ref=e41]
+          - generic [ref=e43]: Dashboard
+        - link "Task Generator" [ref=e44] [cursor=pointer]:
+          - /url: /task
+          - img [ref=e46]
+          - generic [ref=e48]: Task Generator
+        - link "Courses" [ref=e49] [cursor=pointer]:
+          - /url: /courses
+          - img [ref=e51]
+          - generic [ref=e53]: Courses
+        - link "Settings" [active] [ref=e54] [cursor=pointer]:
+          - /url: /settings
+          - img [ref=e56]
+          - generic [ref=e59]: Settings
+      - generic [ref=e60]:
+        - generic [ref=e61]:
+          - generic [ref=e63]: S
+          - generic [ref=e64]:
+            - paragraph [ref=e65]: student
+            - generic [ref=e67]: FREE
+        - button "Logout" [ref=e68]:
+          - img [ref=e70]
+          - generic [ref=e72]: Logout
+    - main [ref=e73]:
+      - generic [ref=e152]:
+        - generic [ref=e153]:
+          - heading "Settings" [level=1] [ref=e154]
+          - paragraph [ref=e155]: Manage your profile and security preferences
+        - generic [ref=e156]:
+          - generic [ref=e157]:
+            - generic [ref=e158]:
+              - heading "Profile Information" [level=2] [ref=e159]
+              - paragraph [ref=e160]: Update your personal information and academic details
+            - generic [ref=e161]:
+              - generic [ref=e162]:
+                - generic [ref=e163]:
+                  - text: Full Name
+                  - textbox "Full Name" [ref=e164]:
+                    - /placeholder: Enter your full name
+                - generic [ref=e165]:
+                  - text: Student ID
+                  - textbox "Student ID" [ref=e166]:
+                    - /placeholder: Enter your student ID
+                - generic [ref=e167]:
+                  - text: University
+                  - textbox "University" [ref=e168]:
+                    - /placeholder: Enter your university name
+                - generic [ref=e169]:
+                  - text: Major
+                  - textbox "Major" [ref=e170]:
+                    - /placeholder: Enter your major or field of study
+              - button "Save Profile" [ref=e171]
+          - generic [ref=e172]:
+            - generic [ref=e173]:
+              - heading "Security" [level=2] [ref=e174]
+              - paragraph [ref=e175]: Change your password to keep your account secure
+            - generic [ref=e176]:
+              - generic [ref=e177]:
+                - generic [ref=e178]:
+                  - text: Current Password
+                  - textbox "Current Password" [ref=e179]:
+                    - /placeholder: Enter your current password
+                - generic [ref=e180]:
+                  - text: New Password
+                  - textbox "New Password" [ref=e181]:
+                    - /placeholder: Enter your new password (min 8 characters)
+                - generic [ref=e182]:
+                  - text: Confirm New Password
+                  - textbox "Confirm New Password" [ref=e183]:
+                    - /placeholder: Confirm your new password
+              - button "Change Password" [ref=e184]
+  - region "Notifications alt+T":
+    - list:
+      - listitem [ref=e185]:
+        - img [ref=e187]
+        - generic [ref=e190]: Failed to load profile data
+  - button "Open Next.js Dev Tools" [ref=e23] [cursor=pointer]:
+    - img [ref=e24]
+  - alert [ref=e27]

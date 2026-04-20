@@ -1,0 +1,100 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e154]:
+    - complementary [ref=e155]:
+      - generic [ref=e156]:
+        - link "N NugAI" [ref=e157] [cursor=pointer]:
+          - /url: /admin
+          - generic [ref=e159]: "N"
+          - generic [ref=e160]: NugAI
+        - button "Collapse sidebar" [ref=e161]:
+          - img [ref=e162]
+      - navigation [ref=e164]:
+        - link "Dashboard" [ref=e165] [cursor=pointer]:
+          - /url: /admin
+          - img [ref=e167]
+          - generic [ref=e169]: Dashboard
+        - link "Users" [ref=e170] [cursor=pointer]:
+          - /url: /admin/users
+          - img [ref=e172]
+          - generic [ref=e174]: Users
+        - link "Analytics" [ref=e175] [cursor=pointer]:
+          - /url: /admin/analytics
+          - img [ref=e177]
+          - generic [ref=e179]: Analytics
+        - link "Settings" [ref=e180] [cursor=pointer]:
+          - /url: /admin/settings
+          - img [ref=e182]
+          - generic [ref=e185]: Settings
+      - generic [ref=e186]:
+        - generic [ref=e187]:
+          - generic [ref=e189]: A
+          - generic [ref=e190]:
+            - paragraph [ref=e191]: admin
+            - generic [ref=e192]:
+              - img [ref=e194]
+              - generic [ref=e196]: ADMIN
+        - button "Logout" [ref=e197]:
+          - img [ref=e199]
+          - generic [ref=e201]: Logout
+    - main [ref=e202]:
+      - generic [ref=e204]:
+        - generic [ref=e205]:
+          - heading "Admin Dashboard" [level=1] [ref=e206]
+          - paragraph [ref=e207]: Manage users, monitor API costs, and system health
+        - generic [ref=e208]:
+          - generic [ref=e209]:
+            - generic [ref=e210]:
+              - heading "Total Users" [level=3] [ref=e211]
+              - paragraph [ref=e212]: Registered students
+            - paragraph [ref=e214]: "0"
+          - generic [ref=e215]:
+            - generic [ref=e216]:
+              - heading "API Costs (Today)" [level=3] [ref=e217]
+              - paragraph [ref=e218]: DeepSeek + Search APIs
+            - paragraph [ref=e220]: $0.00
+          - generic [ref=e221]:
+            - generic [ref=e222]:
+              - heading "Tasks Generated" [level=3] [ref=e223]
+              - paragraph [ref=e224]: Today's count
+            - paragraph [ref=e226]: "0"
+        - generic [ref=e227]:
+          - generic [ref=e228]:
+            - generic [ref=e229]:
+              - heading "Quick Actions" [level=3] [ref=e230]
+              - paragraph [ref=e231]: Manage your platform
+            - generic [ref=e232]:
+              - link "Create New User Add student accounts" [ref=e233] [cursor=pointer]:
+                - /url: /admin/users
+                - generic [ref=e235]:
+                  - img [ref=e236]
+                  - generic [ref=e238]:
+                    - paragraph [ref=e239]: Create New User
+                    - paragraph [ref=e240]: Add student accounts
+              - link "View Analytics Monitor usage & costs" [ref=e241] [cursor=pointer]:
+                - /url: /admin/analytics
+                - generic [ref=e243]:
+                  - img [ref=e244]
+                  - generic [ref=e246]:
+                    - paragraph [ref=e247]: View Analytics
+                    - paragraph [ref=e248]: Monitor usage & costs
+          - generic [ref=e249]:
+            - generic [ref=e250]:
+              - heading "System Health" [level=3] [ref=e251]
+              - paragraph [ref=e252]: API status monitoring
+            - generic [ref=e254]:
+              - generic [ref=e255]:
+                - generic [ref=e256]: DeepSeek API
+                - generic [ref=e257]: Pending
+              - generic [ref=e258]:
+                - generic [ref=e259]: Tavily Search
+                - generic [ref=e260]: Pending
+              - generic [ref=e261]:
+                - generic [ref=e262]: Exa Search
+                - generic [ref=e263]: Pending
+              - generic [ref=e264]:
+                - generic [ref=e265]: Database
+                - generic [ref=e266]: Healthy
+  - region "Notifications alt+T"
+  - button "Open Next.js Dev Tools" [ref=e23] [cursor=pointer]:
+    - img [ref=e24]
+  - alert [ref=e27]

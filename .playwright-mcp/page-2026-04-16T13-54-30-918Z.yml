@@ -1,0 +1,97 @@
+- generic [ref=e1]:
+  - generic [ref=e28]:
+    - complementary [ref=e29]:
+      - generic [ref=e30]:
+        - link "N NugAI" [ref=e31] [cursor=pointer]:
+          - /url: /dashboard
+          - generic [ref=e33]: "N"
+          - generic [ref=e34]: NugAI
+        - button "Collapse sidebar" [ref=e35]:
+          - img [ref=e36]
+      - navigation [ref=e38]:
+        - link "Dashboard" [ref=e39] [cursor=pointer]:
+          - /url: /dashboard
+          - img [ref=e41]
+          - generic [ref=e43]: Dashboard
+        - link "Task Generator" [ref=e44] [cursor=pointer]:
+          - /url: /task
+          - img [ref=e46]
+          - generic [ref=e48]: Task Generator
+        - link "Courses" [ref=e49] [cursor=pointer]:
+          - /url: /courses
+          - img [ref=e51]
+          - generic [ref=e53]: Courses
+        - link "Settings" [active] [ref=e54] [cursor=pointer]:
+          - /url: /settings
+          - img [ref=e56]
+          - generic [ref=e59]: Settings
+      - generic [ref=e60]:
+        - generic [ref=e61]:
+          - generic [ref=e63]: S
+          - generic [ref=e64]:
+            - paragraph [ref=e65]: Student
+            - generic [ref=e66]:
+              - img [ref=e68]
+              - generic [ref=e70]: PREMIUM
+        - button "Logout" [ref=e71]:
+          - img [ref=e73]
+          - generic [ref=e75]: Logout
+    - main [ref=e76]:
+      - generic [ref=e168]:
+        - generic [ref=e169]:
+          - heading "Settings" [level=1] [ref=e170]
+          - paragraph [ref=e171]: Manage your profile and security preferences
+        - generic [ref=e172]:
+          - generic [ref=e173]:
+            - generic [ref=e174]:
+              - heading "Profile Information" [level=2] [ref=e175]
+              - paragraph [ref=e176]: Update your personal information and academic details
+            - generic [ref=e177]:
+              - generic [ref=e178]:
+                - generic [ref=e179]:
+                  - text: Full Name
+                  - textbox "Full Name" [ref=e180]:
+                    - /placeholder: Enter your full name
+                - generic [ref=e181]:
+                  - text: Student ID
+                  - textbox "Student ID" [ref=e182]:
+                    - /placeholder: Enter your student ID
+                - generic [ref=e183]:
+                  - text: University
+                  - textbox "University" [ref=e184]:
+                    - /placeholder: Enter your university name
+                - generic [ref=e185]:
+                  - text: Major
+                  - textbox "Major" [ref=e186]:
+                    - /placeholder: Enter your major or field of study
+              - button "Save Profile" [ref=e187]
+          - generic [ref=e188]:
+            - generic [ref=e189]:
+              - heading "Security" [level=2] [ref=e190]
+              - paragraph [ref=e191]: Change your password to keep your account secure
+            - generic [ref=e192]:
+              - generic [ref=e193]:
+                - generic [ref=e194]:
+                  - text: Current Password
+                  - textbox "Current Password" [ref=e195]:
+                    - /placeholder: Enter your current password
+                - generic [ref=e196]:
+                  - text: New Password
+                  - textbox "New Password" [ref=e197]:
+                    - /placeholder: Enter your new password (min 8 characters)
+                - generic [ref=e198]:
+                  - text: Confirm New Password
+                  - textbox "Confirm New Password" [ref=e199]:
+                    - /placeholder: Confirm your new password
+              - button "Change Password" [ref=e200]
+  - region "Notifications alt+T":
+    - list:
+      - listitem [ref=e201]:
+        - img [ref=e203]
+        - generic [ref=e206]: Failed to load profile data
+      - listitem [ref=e207]:
+        - img [ref=e209]
+        - generic [ref=e212]: Failed to load profile data
+  - button "Open Next.js Dev Tools" [ref=e24] [cursor=pointer]:
+    - img [ref=e25]
+  - alert [ref=e18]

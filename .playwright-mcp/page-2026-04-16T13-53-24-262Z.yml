@@ -1,0 +1,107 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e28]:
+    - complementary [ref=e29]:
+      - generic [ref=e30]:
+        - link "N NugAI" [ref=e31] [cursor=pointer]:
+          - /url: /dashboard
+          - generic [ref=e33]: "N"
+          - generic [ref=e34]: NugAI
+        - button "Collapse sidebar" [ref=e35]:
+          - img [ref=e36]
+      - navigation [ref=e38]:
+        - link "Dashboard" [ref=e39] [cursor=pointer]:
+          - /url: /dashboard
+          - img [ref=e41]
+          - generic [ref=e43]: Dashboard
+        - link "Task Generator" [ref=e44] [cursor=pointer]:
+          - /url: /task
+          - img [ref=e46]
+          - generic [ref=e48]: Task Generator
+        - link "Courses" [ref=e49] [cursor=pointer]:
+          - /url: /courses
+          - img [ref=e51]
+          - generic [ref=e53]: Courses
+        - link "Settings" [ref=e54] [cursor=pointer]:
+          - /url: /settings
+          - img [ref=e56]
+          - generic [ref=e59]: Settings
+      - generic [ref=e60]:
+        - generic [ref=e61]:
+          - generic [ref=e63]: S
+          - generic [ref=e64]:
+            - paragraph [ref=e65]: Student
+            - generic [ref=e66]:
+              - img [ref=e68]
+              - generic [ref=e70]: PREMIUM
+        - button "Logout" [ref=e71]:
+          - img [ref=e73]
+          - generic [ref=e75]: Logout
+    - main [ref=e76]:
+      - generic [ref=e78]:
+        - generic [ref=e79]:
+          - generic [ref=e80]:
+            - heading "Selamat datang, Pengguna" [level=1] [ref=e81]
+            - generic [ref=e82]: PREMIUM
+          - paragraph [ref=e83]: Kelola tugas dan kuota pembelajaran AI Anda di satu tempat
+        - generic [ref=e84]:
+          - generic [ref=e85]:
+            - generic [ref=e86]:
+              - generic [ref=e87]:
+                - img [ref=e89]
+                - generic [ref=e91]:
+                  - heading "Kuota AI" [level=3] [ref=e92]
+                  - paragraph [ref=e93]: Paket Free
+              - generic [ref=e94]: Habis
+            - generic [ref=e97]:
+              - text: "0"
+              - generic [ref=e98]: / 5
+              - text: tersisa
+            - generic [ref=e100]:
+              - img [ref=e101]
+              - generic [ref=e104]: Reset pukul -
+          - generic [ref=e105]:
+            - generic [ref=e106]:
+              - heading "Aksi Cepat" [level=3] [ref=e107]
+              - paragraph [ref=e108]: Mulai dengan cepat
+            - generic [ref=e109]:
+              - link "Buat Tugas AI Generate tugas dengan AI" [ref=e110] [cursor=pointer]:
+                - /url: /task/new
+                - button "Buat Tugas AI Generate tugas dengan AI" [ref=e111]:
+                  - img [ref=e113]
+                  - generic [ref=e116]:
+                    - generic [ref=e117]: Buat Tugas AI
+                    - text: Generate tugas dengan AI
+                  - img [ref=e118]
+              - link "Kelola Mata Kuliah Atur mata kuliah Anda" [ref=e120] [cursor=pointer]:
+                - /url: /courses
+                - button "Kelola Mata Kuliah Atur mata kuliah Anda" [ref=e121]:
+                  - img [ref=e123]
+                  - generic [ref=e125]:
+                    - generic [ref=e126]: Kelola Mata Kuliah
+                    - text: Atur mata kuliah Anda
+                  - img [ref=e127]
+        - generic [ref=e129]:
+          - generic [ref=e130]:
+            - generic [ref=e131]:
+              - heading "Tugas Terakhir" [level=3] [ref=e132]
+              - paragraph [ref=e133]: 5 tugas terakhir yang dibuat
+            - link "Lihat semua" [ref=e134] [cursor=pointer]:
+              - /url: /task
+              - text: Lihat semua
+              - img [ref=e135]
+          - generic [ref=e138]:
+            - img [ref=e139]
+            - heading "Belum ada tugas" [level=4] [ref=e142]
+            - paragraph [ref=e143]: Mulai buat tugas pertama Anda dengan AI
+            - link "Buat Tugas Baru" [ref=e144] [cursor=pointer]:
+              - /url: /task/new
+              - img [ref=e145]
+              - text: Buat Tugas Baru
+  - region "Notifications alt+T":
+    - list:
+      - listitem [ref=e148]:
+        - img [ref=e150]
+        - generic [ref=e153]: Login successful
+  - button "Open Next.js Dev Tools" [ref=e24] [cursor=pointer]:
+    - img [ref=e25]
+  - alert [ref=e18]

@@ -1,0 +1,22 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e4]:
+    - generic [ref=e5]:
+      - heading "NugAI" [level=1] [ref=e6]
+      - paragraph [ref=e7]: Asisten Akademik Berbasis AI
+    - generic [ref=e8]:
+      - generic [ref=e9]:
+        - text: Username
+        - textbox "Username" [ref=e10]:
+          - /placeholder: Masukkan username
+      - generic [ref=e11]:
+        - text: Password
+        - textbox "Password" [ref=e12]:
+          - /placeholder: Masukkan password
+      - button "Login" [ref=e13]
+    - link "Akses Admin" [ref=e15] [cursor=pointer]:
+      - /url: /login?admin=true
+    - paragraph [ref=e17]: EAS Creative Studio 2026
+  - region "Notifications alt+T"
+  - button "Open Next.js Dev Tools" [ref=e23] [cursor=pointer]:
+    - img [ref=e24]
+  - alert [ref=e27]

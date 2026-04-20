@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select } from "@/components/ui/select"
+import { Switch } from "@/components/ui/switch"
 import {
   Card,
   CardContent,
@@ -21,6 +22,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { AIProviderType } from "@prisma/client"
+import { cn } from "@/lib/utils"
 
 interface Provider {
   id: string
@@ -199,24 +201,42 @@ export default function AdminProvidersPage() {
     }
   }
 
-  const handleSetActive = async (id: string) => {
+  const handleToggleActive = async (provider: Provider) => {
     try {
-      const response = await fetch("/api/admin/providers", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id }),
-      })
+      if (provider.is_active) {
+        // Deactivate - just update is_active to false
+        const response = await fetch(`/api/admin/providers?id=${provider.id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ is_active: false }),
+        })
 
-      if (response.ok) {
-        fetchProviders()
-        toast.success("Provider berhasil diaktifkan")
+        if (response.ok) {
+          fetchProviders()
+          toast.success("Provider berhasil dinonaktifkan")
+        } else {
+          const error = await response.json()
+          toast.error(error.error || "Gagal menonaktifkan provider")
+        }
       } else {
-        const error = await response.json()
-        toast.error(error.error || "Gagal mengaktifkan provider")
+        // Activate - use PUT endpoint to set as active provider
+        const response = await fetch("/api/admin/providers", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ id: provider.id }),
+        })
+
+        if (response.ok) {
+          fetchProviders()
+          toast.success("Provider berhasil diaktifkan")
+        } else {
+          const error = await response.json()
+          toast.error(error.error || "Gagal mengaktifkan provider")
+        }
       }
     } catch (error) {
-      console.error("Failed to set active provider:", error)
-      toast.error("Gagal mengaktifkan provider")
+      console.error("Failed to toggle provider:", error)
+      toast.error("Gagal mengubah status provider")
     }
   }
 
@@ -302,34 +322,43 @@ export default function AdminProvidersPage() {
           </CardContent>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {providers.map((provider) => (
             <Card
               key={provider.id}
-              className={
-                provider.is_active ? "border-green-500 border-2" : ""
-              }
+              className={cn(
+                "transition-all duration-200",
+                provider.is_active ? "border-green-500 border-2 shadow-lg shadow-green-500/10" : ""
+              )}
             >
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-lg">
-                    {provider.provider_name}
-                  </CardTitle>
-                  {provider.is_active && (
-                    <span className="text-xs font-medium text-green-600 bg-green-50 px-2 py-1 rounded">
-                      AKTIF
-                    </span>
-                  )}
+              <CardHeader className="pb-3">
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      {provider.provider_name}
+                      {provider.is_active && (
+                        <span className="text-xs font-medium text-green-600 bg-green-50 px-2 py-1 rounded">
+                          AKTIF
+                        </span>
+                      )}
+                    </CardTitle>
+                    <CardDescription className="mt-1">
+                      {provider.provider_type}
+                    </CardDescription>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Switch
+                      checked={provider.is_active}
+                      onCheckedChange={() => handleToggleActive(provider)}
+                    />
+                  </div>
                 </div>
-                <CardDescription>
-                  {provider.provider_type}
-                </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
                   <div className="text-sm">
                     <span className="text-slate-500">Base URL:</span>
-                    <span className="ml-2 text-slate-700">{provider.base_url}</span>
+                    <span className="ml-2 text-slate-700 block break-all">{provider.base_url}</span>
                   </div>
                   <div className="text-sm">
                     <span className="text-slate-500">Default Model:</span>
@@ -345,16 +374,7 @@ export default function AdminProvidersPage() {
                       </span>
                     </div>
                   )}
-                  <div className="flex items-center gap-2 pt-3">
-                    {!provider.is_active && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleSetActive(provider.id)}
-                      >
-                        Aktifkan
-                      </Button>
-                    )}
+                  <div className="flex items-center gap-2 pt-3 border-t border-slate-100">
                     <Button
                       variant="ghost"
                       size="sm"

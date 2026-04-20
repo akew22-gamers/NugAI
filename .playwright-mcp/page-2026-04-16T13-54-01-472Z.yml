@@ -1,0 +1,55 @@
+- generic [ref=e1]:
+  - generic [ref=e28]:
+    - complementary [ref=e29]:
+      - generic [ref=e30]:
+        - link "N NugAI" [ref=e31] [cursor=pointer]:
+          - /url: /dashboard
+          - generic [ref=e33]: "N"
+          - generic [ref=e34]: NugAI
+        - button "Collapse sidebar" [ref=e35]:
+          - img [ref=e36]
+      - navigation [ref=e38]:
+        - link "Dashboard" [ref=e39] [cursor=pointer]:
+          - /url: /dashboard
+          - img [ref=e41]
+          - generic [ref=e43]: Dashboard
+        - link "Task Generator" [ref=e44] [cursor=pointer]:
+          - /url: /task
+          - img [ref=e46]
+          - generic [ref=e48]: Task Generator
+        - link "Courses" [active] [ref=e49] [cursor=pointer]:
+          - /url: /courses
+          - img [ref=e51]
+          - generic [ref=e53]: Courses
+        - link "Settings" [ref=e54] [cursor=pointer]:
+          - /url: /settings
+          - img [ref=e56]
+          - generic [ref=e59]: Settings
+      - generic [ref=e60]:
+        - generic [ref=e61]:
+          - generic [ref=e63]: S
+          - generic [ref=e64]:
+            - paragraph [ref=e65]: Student
+            - generic [ref=e66]:
+              - img [ref=e68]
+              - generic [ref=e70]: PREMIUM
+        - button "Logout" [ref=e71]:
+          - img [ref=e73]
+          - generic [ref=e75]: Logout
+    - main [ref=e76]:
+      - generic [ref=e154]:
+        - generic [ref=e155]:
+          - generic [ref=e156]:
+            - heading "Courses" [level=1] [ref=e157]
+            - paragraph [ref=e158]: Kelola mata kuliah yang sedang Anda ambil
+          - button "Tambah Course" [ref=e159]:
+            - img [ref=e160]
+            - text: Tambah Course
+        - generic [ref=e161]:
+          - img [ref=e163]
+          - heading "Belum ada course" [level=3] [ref=e165]
+          - paragraph [ref=e166]: Tambah course pertama Anda untuk mulai membuat tugas.
+  - region "Notifications alt+T"
+  - button "Open Next.js Dev Tools" [ref=e24] [cursor=pointer]:
+    - img [ref=e25]
+  - alert [ref=e18]

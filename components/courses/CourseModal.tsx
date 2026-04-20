@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -30,15 +30,32 @@ export function CourseModal({
   className,
 }: CourseModalProps) {
   const [formData, setFormData] = useState<CourseFormData>({
-    course_name: course?.course_name || "",
-    module_book_title: course?.module_book_title || "",
-    tutor_name: course?.tutor_name || "",
+    course_name: "",
+    module_book_title: "",
+    tutor_name: "",
   })
 
   const [errors, setErrors] = useState<Partial<Record<keyof CourseFormData, string>>>({})
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   const isEditing = !!course
+
+  useEffect(() => {
+    if (course) {
+      setFormData({
+        course_name: course.course_name,
+        module_book_title: course.module_book_title,
+        tutor_name: course.tutor_name,
+      })
+    } else if (isOpen) {
+      setFormData({
+        course_name: "",
+        module_book_title: "",
+        tutor_name: "",
+      })
+      setErrors({})
+    }
+  }, [course, isOpen])
 
   const validate = (): boolean => {
     const newErrors: Partial<Record<keyof CourseFormData, string>> = {}
