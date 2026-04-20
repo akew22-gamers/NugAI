@@ -53,7 +53,7 @@ const PROVIDER_OPTIONS = [
 ]
 
 const PRESET_BASE_URLS: Record<string, string> = {
-  DEEPSEEK: "https://api.deepseek.com/v1",
+  DEEPSEEK: "https://api.deepseek.com",
   OPENAI: "https://api.openai.com/v1",
   GROQ: "https://api.groq.com/openai/v1",
   TOGETHER: "https://api.together.xyz/v1",

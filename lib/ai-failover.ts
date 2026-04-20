@@ -67,8 +67,10 @@ export async function executeWithFailover<T>(
       let modelToUse = provider.default_model
       
       if (provider.provider_type === 'DEEPSEEK') {
-        modelToUse = 'deepseek-chat'
-        console.log(`[AI Failover] 🔧 Forcing DeepSeek model: ${modelToUse}`)
+        modelToUse = modelToUse || 'deepseek-chat'
+        if (modelToUse !== provider.default_model) {
+          console.log(`[AI Failover] 🔧 Using DeepSeek fallback model: ${modelToUse}`)
+        }
       } else if (provider.provider_type === 'OPENAI') {
         modelToUse = modelToUse || 'gpt-4o-mini'
       } else if (provider.provider_type === 'GROQ') {

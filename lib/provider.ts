@@ -33,7 +33,7 @@ export interface UpdateAIProviderInput {
 }
 
 export const PRESET_PROVIDERS: Record<AIProviderType, { name: string; base_url: string }> = {
-  DEEPSEEK: { name: 'DeepSeek', base_url: 'https://api.deepseek.com/v1' },
+  DEEPSEEK: { name: 'DeepSeek', base_url: 'https://api.deepseek.com' },
   OPENAI: { name: 'OpenAI', base_url: 'https://api.openai.com/v1' },
   GROQ: { name: 'Groq', base_url: 'https://api.groq.com/openai/v1' },
   TOGETHER: { name: 'Together AI', base_url: 'https://api.together.xyz/v1' },
