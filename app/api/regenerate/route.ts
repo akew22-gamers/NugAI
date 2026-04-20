@@ -99,7 +99,7 @@ export async function POST(request: NextRequest) {
     const result = await generate({
       systemPrompt,
       userPrompt,
-      maxTokens: Math.max(taskSession.min_words_target * 3, 4096),
+      maxTokens: Math.min(Math.max(Math.ceil(taskSession.min_words_target * 2.5), 2048), 4096),
       temperature: 0.7,
     })
 

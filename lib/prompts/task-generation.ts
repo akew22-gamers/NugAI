@@ -78,42 +78,52 @@ ATURAN UMUM REFERENSI:
 - Referensi harus RELEVAN dengan isi jawaban dan DIGUNAKAN dalam argumentasi`
 
   const structurePrompt = context.task_type === 'DISCUSSION'
-    ? `STRUKTUR JAWABAN DISCUSSION:
-1. HEADER DATA MAHASISWA (WAJIB di awal, tidak dihitung word count):
-   Nama: [Nama Lengkap Mahasiswa]
-   NIM: [NIM Mahasiswa]
-   (lalu spasi)
-   
-2. SALAM PEMBUKA (1-2 kalimat natural, termasuk word count BODY)
+    ? `FORMAT BAKU JAWABAN DISCUSSION — WAJIB IKUTI PERSIS:
 
-3. BODY JAWABAN (${context.min_words_target}-${maxWords} kata)
-   - Paragraf argumentasi bertahap
-   - Jelaskan konsep/poin utama
-   - Berikan contoh konkret
-   - Analisis dan argumentasi
-   - PASTIKAN LENGKAP - tidak terpotong
-   
-4. PENUTUP (1-2 kalimat simpulan natural, termasuk word count BODY)
+BAGIAN 1 — HEADER (tidak dihitung word count BODY):
+Nama  : [Nama Lengkap Mahasiswa]
+NIM   : [NIM Mahasiswa]
+[baris kosong]
 
-5. REFERENSI (tidak dihitung word count)
-   - Tulis langsung di akhir jawaban
-   - Format: Referensi: [lalu list nomor 1 dan 2]
+BAGIAN 2 — SALAM PEMBUKA (1 kalimat, termasuk word count BODY):
+Contoh: "Dalam forum diskusi ini, saya akan membahas [topik] dengan mengacu pada konsep-konsep yang relevan."
 
-WORD COUNT BODY = Salam Pembuka + Body Jawaban + Penutup
-Tidak termasuk Header Nama/NIM dan Referensi.`
-    : `STRUKTUR JAWABAN ASSIGNMENT/SOAL:
-1. BODY JAWABAN (${context.min_words_target}-${maxWords} kata)
-   - Paragraf naratif mendalam
-   - Jawab langsung dan lengkap
-   - Argumentasi dengan bukti/referensi
-   - PASTIKAN LENGKAP - tidak terpotong
-   
-2. REFERENSI (tidak dihitung word count)
-   - Tulis langsung setelah body
-   - Format natural: Referensi: [nomor 1 dan 2]
-   - Tanpa simbol formatting
+BAGIAN 3 — BODY JAWABAN (${context.min_words_target}–${maxWords} kata total BODY):
+- Tulis dalam paragraf naratif yang mengalir, minimal 3 paragraf
+- Paragraf 1: Pengantar dan penjelasan konsep utama
+- Paragraf 2+: Elaborasi, contoh konkret, dan analisis mendalam
+- Gunakan transisi antar paragraf yang natural
 
-WORD COUNT = seluruh isi jawaban (tidak termasuk Referensi).`
+BAGIAN 4 — PENUTUP (1 kalimat simpulan, termasuk word count BODY):
+Contoh: "Dengan demikian, pemahaman tentang [topik] menjadi kunci dalam [konteks yang relevan]."
+
+BAGIAN 5 — REFERENSI (tidak dihitung word count BODY):
+[baris kosong]
+Referensi:
+[baris kosong]
+1. ${context.module_book_title}. ${context.university_name}.
+2. [Nama Pengarang]. [Tahun]. [Judul Buku Akademik]. [Penerbit].
+
+CATATAN PENTING:
+- Word Count BODY = Salam Pembuka + Paragraf Body + Penutup (TIDAK termasuk Header dan Referensi)
+- Header ditulis PERSIS seperti di atas: "Nama  : " dan "NIM   : " (dengan spasi sebelum tanda titik dua)
+- Referensi ditulis PERSIS dengan label "Referensi:" di baris tersendiri, lalu baris kosong, lalu nomor 1 dan 2
+- JANGAN menambahkan bagian atau label lain selain yang disebutkan di atas`
+    : `FORMAT BAKU JAWABAN ASSIGNMENT/SOAL:
+
+BAGIAN 1 — BODY JAWABAN (${context.min_words_target}–${maxWords} kata):
+- Jawab langsung dan lengkap dalam paragraf naratif
+- Minimal 2 paragraf argumentasi dengan bukti dan contoh konkret
+- PASTIKAN LENGKAP — tidak terpotong di tengah kalimat
+
+BAGIAN 2 — REFERENSI (tidak dihitung word count):
+[baris kosong]
+Referensi:
+[baris kosong]
+1. ${context.module_book_title}. ${context.university_name}.
+2. [Nama Pengarang]. [Tahun]. [Judul Buku Akademik]. [Penerbit].
+
+CATATAN: Word Count = seluruh isi jawaban (TIDAK termasuk bagian Referensi).`
 
   return `${personaPrompt}
 

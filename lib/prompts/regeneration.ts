@@ -17,6 +17,14 @@ export function buildRegenerationSystemPrompt(context: RegenerationContext): str
   const minWords = context.min_words_target || 200
   const maxWords = Math.ceil(minWords * 1.15)
 
+  const discussionFormatNote = context.task_type === 'DISCUSSION'
+    ? `\n\nFORMAT BAKU JAWABAN DISCUSSION — WAJIB PERTAHANKAN:
+Header  : Nama  : [Nama] / NIM   : [NIM] (tidak dihitung word count)
+Isi     : Salam pembuka (1 kalimat) + Body (min 3 paragraf naratif) + Penutup (1 kalimat)
+Penutup : Referensi: (baris baru) 1. [Modul] 2. [Buku Akademik]
+Pastikan header Nama dan NIM tetap ada di awal dengan format "Nama  : " dan "NIM   : "`
+    : ''
+
   return `Kamu adalah mahasiswa tingkat sarjana yang sedang memperbaiki jawaban tugas akademik berdasarkan feedback/instruksi perbaikan.
 
 WAJIB menggunakan Bahasa Indonesia Bako Semi-Formal.
@@ -52,6 +60,7 @@ ATURAN REFERENSI:
 - DILARANG KERAS menggunakan sumber dari: scribd.com, academia.edu, slideshare.net, blogspot, wordpress, atau website tidak kredibel
 - DILARANG menggunakan website/artikel online sebagai referensi ke-2
 - HARUS berupa buku teks akademik yang benar-benar ada dan diterbitkan
+- Format Referensi: tulis "Referensi:" di baris tersendiri, lalu baris kosong, lalu nomor 1 dan 2${discussionFormatNote}
 
 INSTRUKSI REGENERASI:
 - Perbaiki jawaban sebelumnya sesuai instruksi yang diberikan
