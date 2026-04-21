@@ -376,23 +376,7 @@ export default function AdminProvidersPage() {
                         )}
                       </CardDescription>
                     </div>
-            <div className="space-y-2">
-              <Label htmlFor="priority">Priority</Label>
-              <Input
-                id="priority"
-                type="number"
-                value={priority}
-                onChange={(e) => setPriority(parseInt(e.target.value) || 0)}
-                min={0}
-                max={100}
-                placeholder="0-100 (semakin tinggi = semakin prioritas)"
-              />
-              <p className="text-xs text-slate-500">
-                Provider dengan priority tertinggi akan digunakan pertama
-              </p>
-            </div>
-
-            <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2">
                       <Switch
                         checked={provider.is_active}
                         onCheckedChange={() => handleToggleActive(provider)}

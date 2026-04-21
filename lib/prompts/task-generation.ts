@@ -95,12 +95,13 @@ ATURAN UMUM REFERENSI:
   ];
   const dynamicGreeting = randomGreetings[Math.floor(Math.random() * randomGreetings.length)];
 
-  const multiQuestionInstruction = context.task_type === 'ASSIGNMENT' && context.total_questions && context.total_questions > 1
-    ? `\n\nINSTRUKSI PENANDA SOAL:\n- Ini adalah Soal ${(context.question_index ?? 0) + 1} dari ${context.total_questions} soal\n- WAJIB tulis "Jawaban Soal ${(context.question_index ?? 0) + 1}:" di baris pertama jawaban\n- Setelah label tersebut, langsung tulis jawaban\n`
+  const questionNum = (context.question_index ?? 0) + 1
+  const multiQuestionInstruction = context.total_questions && context.total_questions > 1
+    ? `\n\nINSTRUKSI PENANDA SOAL:\n- Ini adalah Soal ${questionNum} dari ${context.total_questions} soal\n- WAJIB tulis "${questionNum}." di baris pertama jawaban sebagai penanda nomor soal\n- Setelah penanda nomor, langsung tulis jawaban\n`
     : ''
 
   const structurePrompt = context.task_type === 'DISCUSSION'
-    ? `FORMAT BAKU JAWABAN DISCUSSION — WAJIB IKUTI PERSIS:
+    ? `FORMAT BAKU JAWABAN DISCUSSION — WAJIB IKUTI PERSIS:${multiQuestionInstruction}
 
 BAGIAN 1 — HEADER (tidak dihitung word count BODY):
 Nama  : [Nama Lengkap Mahasiswa]
@@ -173,7 +174,7 @@ NIM: ${context.student_nim}
     ? `Konteks/Deskripsi Soal:\n${context.task_description}\n\n`
     : ''
 
-  const questionLabel = context.task_type === 'ASSIGNMENT' && context.total_questions && context.total_questions > 1
+  const questionLabel = context.total_questions && context.total_questions > 1
     ? `Pertanyaan Soal ${(context.question_index ?? 0) + 1} dari ${context.total_questions}:\n`
     : 'Pertanyaan/Tugas:\n'
 
