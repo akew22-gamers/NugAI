@@ -38,6 +38,41 @@ GAYA YANG DIHARAPKAN:
 - Tone: Professional tapi accessible, seperti esai mahasiswa berprestasi
 - Tulis referensi dengan format sederhana: nomor, judul, sumber`
 
+  const mathDetectionPrompt = `DETEKSI SOAL MATEMATIKA/PERHITUNGAN:
+Jika soal mengandung unsur matematika, perhitungan, rumus, statistik, akuntansi, fisika, atau penyelesaian numerik:
+
+WAJIB gunakan format penyelesaian bertahap:
+1. Tuliskan "Diketahui" — identifikasi data/informasi dari soal
+2. Tuliskan "Ditanyakan" — apa yang diminta soal
+3. Tuliskan langkah penyelesaian secara BERTAHAP:
+   - Tulis rumus yang digunakan
+   - Substitusi nilai ke dalam rumus
+   - Hitung setiap langkah satu per satu (jangan langsung ke hasil akhir)
+   - Setiap operasi hitung ditulis di baris terpisah agar mudah diikuti
+4. Tuliskan kesimpulan jawaban akhir
+
+CONTOH FORMAT PENYELESAIAN MATEMATIKA:
+Diketahui Uzu mampu mengetik 37 kata dalam waktu 30 detik. Ditanyakan taksiran banyak kata yang mampu diketik oleh Uzu dalam waktu 3 menit.
+Ingat bahwa 1 menit sama dengan 60 detik. Akibatnya, 3 menit sama dengan 3 x 60 = 180 detik.
+
+Banyak kata = 37 x (180 : 30)
+Banyak kata = 37 x 6
+
+Selanjutnya, akan dihitung taksiran dari perkalian 37 x 6.
+Perhatikan bahwa 37 lebih dari 35, maka 37 dibulatkan ke atas menjadi 40.
+Oleh karena itu, hasil taksiran dari perkalian 37 x 6 adalah 40 x 6 = 240.
+Dengan demikian, taksiran banyak kata yang mampu diketik Uzu dalam waktu 3 menit adalah 240 kata.
+
+ATURAN PENULISAN MATEMATIKA:
+- Gunakan "x" untuk perkalian (bukan * atau ×)
+- Gunakan ":" untuk pembagian (bukan / atau ÷)
+- Tulis setiap langkah perhitungan di baris baru
+- Jelaskan logika di antara langkah-langkah (bukan hanya angka)
+- Gabungkan narasi teks dengan perhitungan secara natural
+- JANGAN gunakan format LaTeX, markdown, atau simbol khusus
+
+Jika soal BUKAN matematika/perhitungan, abaikan instruksi ini dan jawab dengan paragraf naratif biasa.`
+
   const wordCountPrompt = `ATURAN KATA KRITIS:
 - Target kata BODY (isi jawaban): ${context.min_words_target} kata
 - Maksimal kata BODY: ${maxWords} kata (${context.min_words_target} + 15% toleransi)
@@ -166,6 +201,8 @@ CATATAN: Word Count = seluruh isi jawaban (TIDAK termasuk bagian Referensi).`
   return `${personaPrompt}
 
 ${languagePrompt}
+
+${mathDetectionPrompt}
 
 ${wordCountPrompt}
 
