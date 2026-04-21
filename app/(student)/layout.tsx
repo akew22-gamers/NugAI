@@ -7,11 +7,11 @@ export default function StudentLayout({
   children: React.ReactNode
 }) {
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-zinc-950">
       <Sidebar />
       <MobileNav />
-      <main className="lg:ml-64 min-h-screen">
-        <div className="p-4 lg:p-8">
+      <main className="lg:ml-64 min-h-screen bg-zinc-950">
+        <div className="p-4 lg:p-8 pt-4 lg:pt-8">
           {children}
         </div>
       </main>

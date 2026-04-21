@@ -151,28 +151,46 @@ export function MobileNav() {
     return pathname === href || (pathname?.startsWith(`${href}/`) ?? false)
   }
 
-  const headerBg = isAdmin 
-    ? "bg-gradient-to-r from-red-50 to-orange-50"
-    : "bg-white"
-
   const logoBg = isAdmin
-    ? "bg-gradient-to-br from-red-500 to-orange-600"
-    : "bg-gradient-to-br from-indigo-500 to-purple-600"
+    ? "bg-gradient-to-br from-red-500 to-orange-600 shadow-red-500/30"
+    : "bg-gradient-to-br from-indigo-500 to-purple-600 shadow-indigo-500/30"
 
   return (
     <>
-      <header className={cn("lg:hidden fixed top-0 left-0 right-0 z-50 border-b border-slate-200", headerBg)}>
+      <style jsx global>{`
+        @keyframes slideDown {
+          from { opacity: 0; transform: translateY(-8px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        .mobile-nav-enter {
+          animation: slideDown 0.2s ease-out forwards;
+        }
+      `}</style>
+
+      <header className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-zinc-900/95 backdrop-blur-xl border-b border-white/10">
         <div className="flex items-center justify-between px-4 py-3">
           <Link href={isAdmin ? "/admin" : "/dashboard"} className="flex items-center gap-2">
-            <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center", logoBg)}>
+            <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center shadow-lg", logoBg)}>
               <span className="text-white font-bold text-sm">N</span>
             </div>
-            <span className="font-bold text-slate-900">NugAI</span>
+            <span className="font-bold">
+              <span className="text-white">Nug</span>
+              <span
+                className="bg-clip-text text-transparent"
+                style={{
+                  backgroundImage: isAdmin
+                    ? "linear-gradient(135deg, #ef4444 0%, #f97316 50%, #f59e0b 100%)"
+                    : "linear-gradient(135deg, #6366f1 0%, #a855f7 50%, #ec4899 100%)",
+                }}
+              >
+                AI
+              </span>
+            </span>
           </Link>
 
           <button
             onClick={() => setIsOpen(!isOpen)}
-            className="p-2 text-slate-600 hover:text-slate-900 transition"
+            className="p-2 text-zinc-300 hover:text-white transition"
             aria-label={isOpen ? "Close menu" : "Open menu"}
           >
             {isOpen ? (
@@ -191,11 +209,18 @@ export function MobileNav() {
       {isOpen && (
         <>
           <div
-            className="lg:hidden fixed inset-0 bg-black/20 z-40"
+            className="lg:hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-40"
             onClick={() => setIsOpen(false)}
           />
-          <nav className="lg:hidden fixed inset-x-0 top-[57px] z-50 bg-white border-b border-slate-200 shadow-lg">
-            <div className="p-4 space-y-1">
+          <nav className="lg:hidden fixed inset-x-0 top-[57px] z-50 bg-zinc-900/98 backdrop-blur-xl border-b border-white/10 shadow-2xl shadow-black/40 mobile-nav-enter relative overflow-hidden">
+            <div className={cn(
+              "absolute top-0 right-0 w-40 h-40 rounded-full blur-3xl pointer-events-none opacity-50",
+              isAdmin
+                ? "bg-gradient-to-br from-red-500/10 to-orange-500/10"
+                : "bg-gradient-to-br from-indigo-500/10 to-purple-500/10"
+            )} />
+
+            <div className="relative z-10 p-4 space-y-1">
               {navItems.map((item) => {
                 const isActive = getIsActive(item.href)
 
@@ -205,20 +230,20 @@ export function MobileNav() {
                     href={item.href}
                     onClick={() => setIsOpen(false)}
                     className={cn(
-                      "flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200",
+                      "flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200",
                       isActive
                         ? isAdmin 
-                          ? "bg-red-50 text-red-600 font-medium"
-                          : "bg-indigo-50 text-indigo-600 font-medium"
-                        : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+                          ? "bg-gradient-to-r from-red-500/20 to-orange-500/20 border border-red-500/30 text-white font-medium"
+                          : "bg-gradient-to-r from-indigo-500/20 to-purple-500/20 border border-indigo-500/30 text-white font-medium"
+                        : "text-zinc-400 hover:text-white hover:bg-white/5 border border-transparent"
                     )}
                   >
                     <span
                       className={cn(
                         "shrink-0",
                         isActive 
-                          ? isAdmin ? "text-red-600" : "text-indigo-600"
-                          : "text-slate-400"
+                          ? isAdmin ? "text-red-400" : "text-indigo-400"
+                          : "text-zinc-500"
                       )}
                     >
                       {item.icon}
@@ -229,37 +254,37 @@ export function MobileNav() {
               })}
             </div>
 
-            <div className="p-4 border-t border-slate-200 space-y-3">
-              <div className="flex items-center gap-3 p-3 rounded-xl bg-slate-50 border border-slate-200">
+            <div className="relative z-10 p-4 border-t border-white/10 space-y-3">
+              <div className="flex items-center gap-3 p-3 rounded-2xl bg-white/5 border border-white/10">
                 <div className={cn(
-                  "w-10 h-10 rounded-full flex items-center justify-center shrink-0",
+                  "w-10 h-10 rounded-full flex items-center justify-center shrink-0 shadow-lg",
                   isAdmin
-                    ? "bg-gradient-to-br from-red-600 to-orange-600"
-                    : "bg-gradient-to-br from-slate-700 to-slate-900"
+                    ? "bg-gradient-to-br from-red-500 to-orange-600 shadow-red-500/20"
+                    : "bg-gradient-to-br from-indigo-500 to-purple-600 shadow-indigo-500/20"
                 )}>
                   <span className="text-white font-semibold text-sm">
                     {getInitials(username)}
                   </span>
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-slate-900 truncate">{username}</p>
+                  <p className="text-sm font-semibold text-white truncate">{username}</p>
                   <div className="flex items-center gap-1.5">
                     {isAdmin ? (
                       <>
-                        <span className="text-red-500">{ShieldIcon}</span>
-                        <span className="text-xs font-medium text-red-600 bg-red-50 px-1.5 py-0.5 rounded">
+                        <span className="text-red-400">{ShieldIcon}</span>
+                        <span className="text-xs font-medium text-red-300 bg-red-500/15 border border-red-500/20 px-1.5 py-0.5 rounded-md">
                           ADMIN
                         </span>
                       </>
                     ) : isPremium ? (
                       <>
-                        <span className="text-amber-500">{CrownIcon}</span>
-                        <span className="text-xs font-medium text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded">
+                        <span className="text-amber-400">{CrownIcon}</span>
+                        <span className="text-xs font-medium text-amber-300 bg-amber-500/15 border border-amber-500/20 px-1.5 py-0.5 rounded-md">
                           PREMIUM
                         </span>
                       </>
                     ) : (
-                      <span className="text-xs text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded">
+                      <span className="text-xs text-zinc-400 bg-white/5 border border-white/10 px-1.5 py-0.5 rounded-md">
                         FREE
                       </span>
                     )}
@@ -270,7 +295,7 @@ export function MobileNav() {
               <Button
                 variant="ghost"
                 onClick={handleLogout}
-                className="w-full justify-start text-slate-600 hover:text-red-600 hover:bg-red-50 transition-colors"
+                className="w-full justify-start text-zinc-400 hover:text-red-400 hover:bg-red-500/10 transition-colors"
               >
                 <span className="shrink-0 mr-3">{LogoutIcon}</span>
                 <span>Logout</span>

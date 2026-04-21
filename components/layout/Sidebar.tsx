@@ -174,27 +174,52 @@ export function Sidebar() {
   return (
     <aside
       className={cn(
-        "hidden lg:flex flex-col fixed top-0 left-0 h-screen bg-slate-50 border-r border-slate-200 transition-all duration-300 z-40",
+        "hidden lg:flex flex-col fixed top-0 left-0 h-screen bg-zinc-900/95 backdrop-blur-xl border-r border-white/10 transition-all duration-300 z-40 relative overflow-hidden",
         isCollapsed ? "w-20" : "w-64"
       )}
     >
-      <div className="flex items-center justify-between p-6 border-b border-slate-200">
+      <div className={cn(
+        "absolute top-0 left-0 w-32 h-32 rounded-full blur-3xl pointer-events-none",
+        isAdmin
+          ? "bg-gradient-to-br from-red-500/10 to-orange-500/10"
+          : "bg-gradient-to-br from-indigo-500/10 to-purple-500/10"
+      )} />
+      <div className={cn(
+        "absolute bottom-20 right-0 w-24 h-24 rounded-full blur-3xl pointer-events-none",
+        isAdmin
+          ? "bg-gradient-to-br from-orange-500/8 to-amber-500/8"
+          : "bg-gradient-to-br from-purple-500/8 to-pink-500/8"
+      )} />
+
+      <div className="relative z-10 flex items-center justify-between p-6 border-b border-white/10">
         <Link href={isAdmin ? "/admin" : "/dashboard"} className="flex items-center gap-3">
           <div className={cn(
-            "w-10 h-10 rounded-xl flex items-center justify-center shrink-0",
+            "w-10 h-10 rounded-xl flex items-center justify-center shrink-0 shadow-lg",
             isAdmin 
-              ? "bg-gradient-to-br from-red-500 to-orange-600"
-              : "bg-gradient-to-br from-indigo-500 to-purple-600"
+              ? "bg-gradient-to-br from-red-500 to-orange-600 shadow-red-500/30"
+              : "bg-gradient-to-br from-indigo-500 to-purple-600 shadow-indigo-500/30"
           )}>
             <span className="text-white font-bold text-lg">N</span>
           </div>
           {!isCollapsed && (
-            <span className="font-bold text-slate-900 text-lg">NugAI</span>
+            <span className="font-bold text-lg">
+              <span className="text-white">Nug</span>
+              <span
+                className="bg-clip-text text-transparent"
+                style={{
+                  backgroundImage: isAdmin
+                    ? "linear-gradient(135deg, #ef4444 0%, #f97316 50%, #f59e0b 100%)"
+                    : "linear-gradient(135deg, #6366f1 0%, #a855f7 50%, #ec4899 100%)",
+                }}
+              >
+                AI
+              </span>
+            </span>
           )}
         </Link>
       </div>
 
-      <nav className="flex-1 p-4 space-y-1">
+      <nav className="relative z-10 flex-1 p-4 space-y-1">
         {navItems.map((item) => {
           const isActive = getIsActive(item.href)
 
@@ -203,20 +228,20 @@ export function Sidebar() {
               key={item.href}
               href={item.href}
               className={cn(
-                "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group",
+                "flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group",
                 isActive
                   ? isAdmin 
-                    ? "bg-red-50 text-red-600 font-medium"
-                    : "bg-indigo-50 text-indigo-600 font-medium"
-                  : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+                    ? "bg-gradient-to-r from-red-500/20 to-orange-500/20 border border-red-500/30 text-white font-medium shadow-lg shadow-red-500/5"
+                    : "bg-gradient-to-r from-indigo-500/20 to-purple-500/20 border border-indigo-500/30 text-white font-medium shadow-lg shadow-indigo-500/5"
+                  : "text-zinc-400 hover:text-white hover:bg-white/5 border border-transparent"
               )}
             >
               <span
                 className={cn(
                   "shrink-0 transition-colors",
                   isActive 
-                    ? isAdmin ? "text-red-600" : "text-indigo-600"
-                    : "text-slate-400 group-hover:text-slate-600"
+                    ? isAdmin ? "text-red-400" : "text-indigo-400"
+                    : "text-zinc-500 group-hover:text-zinc-300"
                 )}
               >
                 {item.icon}
@@ -227,18 +252,18 @@ export function Sidebar() {
         })}
       </nav>
 
-      <div className="p-4 border-t border-slate-200 space-y-3">
+      <div className="relative z-10 p-4 border-t border-white/10 space-y-3">
         <div
           className={cn(
-            "flex items-center gap-3 p-3 rounded-xl bg-white border border-slate-200",
+            "flex items-center gap-3 p-3 rounded-2xl bg-white/5 border border-white/10",
             isCollapsed && "justify-center"
           )}
         >
           <div className={cn(
-            "w-10 h-10 rounded-full flex items-center justify-center shrink-0",
+            "w-10 h-10 rounded-full flex items-center justify-center shrink-0 shadow-lg",
             isAdmin
-              ? "bg-gradient-to-br from-red-600 to-orange-600"
-              : "bg-gradient-to-br from-slate-700 to-slate-900"
+              ? "bg-gradient-to-br from-red-500 to-orange-600 shadow-red-500/20"
+              : "bg-gradient-to-br from-indigo-500 to-purple-600 shadow-indigo-500/20"
           )}>
             <span className="text-white font-semibold text-sm">
               {getInitials(username)}
@@ -246,24 +271,24 @@ export function Sidebar() {
           </div>
           {!isCollapsed && (
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-slate-900 truncate">{username}</p>
+              <p className="text-sm font-semibold text-white truncate">{username}</p>
               <div className="flex items-center gap-1.5">
                 {isAdmin ? (
                   <>
-                    <span className="text-red-500">{ShieldIcon}</span>
-                    <span className="text-xs font-medium text-red-600 bg-red-50 px-1.5 py-0.5 rounded">
+                    <span className="text-red-400">{ShieldIcon}</span>
+                    <span className="text-xs font-medium text-red-300 bg-red-500/15 border border-red-500/20 px-1.5 py-0.5 rounded-md">
                       ADMIN
                     </span>
                   </>
                 ) : isPremium ? (
                   <>
-                    <span className="text-amber-500">{CrownIcon}</span>
-                    <span className="text-xs font-medium text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded">
+                    <span className="text-amber-400">{CrownIcon}</span>
+                    <span className="text-xs font-medium text-amber-300 bg-amber-500/15 border border-amber-500/20 px-1.5 py-0.5 rounded-md">
                       PREMIUM
                     </span>
                   </>
                 ) : (
-                  <span className="text-xs text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded">
+                  <span className="text-xs text-zinc-400 bg-white/5 border border-white/10 px-1.5 py-0.5 rounded-md">
                     FREE
                   </span>
                 )}
@@ -277,7 +302,7 @@ export function Sidebar() {
           size={isCollapsed ? "icon" : "default"}
           onClick={handleLogout}
           className={cn(
-            "w-full text-slate-600 hover:text-red-600 hover:bg-red-50 transition-colors",
+            "w-full text-zinc-400 hover:text-red-400 hover:bg-red-500/10 transition-colors",
             isCollapsed && "h-10 w-10"
           )}
         >

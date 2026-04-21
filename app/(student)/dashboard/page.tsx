@@ -63,7 +63,7 @@ export default function DashboardPage() {
     return (
       <div className="flex h-full items-center justify-center">
         <div className="text-center">
-          <div className="h-8 w-8 animate-spin rounded-full border-2 border-zinc-200 border-t-zinc-900 mx-auto" />
+          <div className="h-8 w-8 animate-spin rounded-full border-2 border-zinc-700 border-t-indigo-500 mx-auto" />
           <p className="mt-2 text-sm text-zinc-500">Memuat dashboard...</p>
         </div>
       </div>
@@ -87,34 +87,44 @@ export default function DashboardPage() {
   const subscriptionTier = session?.user?.subscriptionTier || "FREE"
 
   return (
-    <div className="space-y-8">
-      <section className="space-y-2">
-        <div className="flex items-center gap-3">
-          <h1 className="text-3xl font-bold tracking-tight text-zinc-900">
-            Selamat datang, {userName}
-          </h1>
-          <span
-            className={cn(
-              "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium",
-              subscriptionTier === "PREMIUM"
-                ? "bg-amber-100 text-amber-800"
-                : "bg-zinc-100 text-zinc-800"
-            )}
-          >
-            {subscriptionTier === "PREMIUM" ? "PREMIUM" : "FREE"}
-          </span>
+    <>
+      <style jsx global>{`
+        .gradient-text {
+          background: linear-gradient(135deg, #6366f1 0%, #a855f7 50%, #ec4899 100%);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
+        }
+      `}</style>
+      <div className="space-y-8">
+        <section className="space-y-2">
+          <div className="flex items-center gap-3">
+            <h1 className="text-3xl font-bold tracking-tight text-white">
+              Selamat datang, <span className="gradient-text">{userName}</span>
+            </h1>
+            <span
+              className={cn(
+                "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium",
+                subscriptionTier === "PREMIUM"
+                  ? "bg-gradient-to-r from-amber-500/20 to-orange-500/20 border border-amber-500/30 text-amber-300"
+                  : "bg-zinc-800 text-zinc-300 border border-zinc-700"
+              )}
+            >
+              {subscriptionTier === "PREMIUM" ? "PREMIUM" : "FREE"}
+            </span>
+          </div>
+          <p className="text-zinc-400">
+            Kelola tugas dan kuota pembelajaran AI Anda di satu tempat
+          </p>
+        </section>
+
+        <div className="grid gap-6 lg:grid-cols-2">
+          <QuotaDisplay quota={quota} isLoading={isLoading} />
+          <QuickActions />
         </div>
-        <p className="text-zinc-500">
-          Kelola tugas dan kuota pembelajaran AI Anda di satu tempat
-        </p>
-      </section>
 
-      <div className="grid gap-6 lg:grid-cols-2">
-        <QuotaDisplay quota={quota} isLoading={isLoading} />
-        <QuickActions />
+        <RecentTasks tasks={recentTasks} isLoading={isLoading} />
       </div>
-
-      <RecentTasks tasks={recentTasks} isLoading={isLoading} />
-    </div>
+    </>
   )
 }
