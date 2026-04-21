@@ -15,14 +15,15 @@ import { Loader2, Plus, X, Search, ChevronDown, Check } from "lucide-react"
 interface Step1InputProps {
   initialData: TaskFormData
   onComplete: (data: TaskFormData) => void
+  lockedTaskType?: "DISCUSSION" | "ASSIGNMENT"
 }
 
-export function Step1Input({ initialData, onComplete }: Step1InputProps) {
+export function Step1Input({ initialData, onComplete, lockedTaskType }: Step1InputProps) {
   const { status } = useSession()
   const [courses, setCourses] = useState<Course[]>([])
   const [isLoadingCourses, setIsLoadingCourses] = useState(true)
 
-  const [taskType, setTaskType] = useState<"DISCUSSION" | "ASSIGNMENT">(initialData.task_type)
+  const [taskType, setTaskType] = useState<"DISCUSSION" | "ASSIGNMENT">(lockedTaskType ?? initialData.task_type)
   const [selectedCourseId, setSelectedCourseId] = useState<string | null>(initialData.course_id)
   const [courseName, setCourseName] = useState(initialData.course_name)
   const [moduleBookTitle, setModuleBookTitle] = useState(initialData.module_book_title)
@@ -156,23 +157,25 @@ export function Step1Input({ initialData, onComplete }: Step1InputProps) {
       <Card className="rounded-xl border border-zinc-200 bg-white shadow-sm lg:col-span-1">
         <CardContent className="p-6 pt-8 flex flex-col justify-center h-full">
           <div className="space-y-4">
-            <div>
-              <Label>Jenis Tugas</Label>
-              <div className="flex gap-4 mt-2">
-                <Button
-                  variant={taskType === "DISCUSSION" ? "default" : "outline"}
-                  onClick={() => setTaskType("DISCUSSION")}
-                >
-                  Tugas Diskusi
-                </Button>
-                <Button
-                  variant={taskType === "ASSIGNMENT" ? "default" : "outline"}
-                  onClick={() => setTaskType("ASSIGNMENT")}
-                >
-                  Tugas Soal
-                </Button>
+            {!lockedTaskType && (
+              <div>
+                <Label>Jenis Tugas</Label>
+                <div className="flex gap-4 mt-2">
+                  <Button
+                    variant={taskType === "DISCUSSION" ? "default" : "outline"}
+                    onClick={() => setTaskType("DISCUSSION")}
+                  >
+                    Tugas Diskusi
+                  </Button>
+                  <Button
+                    variant={taskType === "ASSIGNMENT" ? "default" : "outline"}
+                    onClick={() => setTaskType("ASSIGNMENT")}
+                  >
+                    Tugas Soal
+                  </Button>
+                </div>
               </div>
-            </div>
+            )}
 
             <div>
               <Label>Pilih Mata Kuliah (Opsional)</Label>

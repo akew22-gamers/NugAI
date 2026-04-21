@@ -33,11 +33,20 @@ const studentNavItems: NavItem[] = [
     ),
   },
   {
-    label: "Generator Tugas",
-    href: "/task/new",
+    label: "Tugas Diskusi",
+    href: "/task/diskusi/new",
     icon: (
       <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+      </svg>
+    ),
+  },
+  {
+    label: "Tugas Soal",
+    href: "/task/soal/new",
+    icon: (
+      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
       </svg>
     ),
   },
@@ -145,8 +154,14 @@ export function MobileNav() {
     if (href === "/admin") {
       return pathname === "/admin"
     }
-    if (href === "/task" || href === "/task/new") {
+    if (href === "/task") {
       return pathname === href
+    }
+    if (href === "/task/diskusi/new") {
+      return pathname?.startsWith("/task/diskusi") ?? false
+    }
+    if (href === "/task/soal/new") {
+      return pathname?.startsWith("/task/soal") ?? false
     }
     return pathname === href || (pathname?.startsWith(`${href}/`) ?? false)
   }

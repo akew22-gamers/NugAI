@@ -14,7 +14,7 @@ export function QuickActions() {
       </div>
 
       <div className="mt-6 space-y-3">
-        <Link href="/task/new">
+        <Link href="/task/diskusi/new">
           <Button
             className={cn(
               "w-full justify-start gap-3 h-auto p-4",
