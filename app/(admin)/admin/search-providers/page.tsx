@@ -244,8 +244,8 @@ export default function AdminSearchProvidersPage() {
                     </a>
                   </div>
                   <div className="pt-4 border-t border-slate-200">
-                    <p className="text-sm text-slate-600 mb-2">
-                      Perbarui API Key:
+                    <p className="text-sm font-medium text-slate-700 mb-2">
+                      Ganti API Key
                     </p>
                     <form onSubmit={handleSaveTavily} className="space-y-3">
                       <div className="space-y-2">
@@ -255,15 +255,19 @@ export default function AdminSearchProvidersPage() {
                           type="password"
                           value={tavilyApiKey}
                           onChange={(e) => setTavilyApiKey(e.target.value)}
-                          placeholder="tvly-xxxxx"
+                          placeholder="Masukkan API key baru..."
                         />
+                        <p className="text-xs text-slate-500">
+                          API key tersimpan di server. Masukkan key baru untuk mengganti.
+                        </p>
                       </div>
                       <Button
                         type="submit"
                         size="sm"
                         disabled={isSaving === "TAVILY" || !tavilyApiKey}
+                        className="gap-2"
                       >
-                        {isSaving === "TAVILY" ? "Menyimpan..." : "Perbarui"}
+                        {isSaving === "TAVILY" ? "Menyimpan..." : "Simpan API Key Baru"}
                       </Button>
                     </form>
                   </div>
@@ -358,8 +362,8 @@ export default function AdminSearchProvidersPage() {
                     </a>
                   </div>
                   <div className="pt-4 border-t border-slate-200">
-                    <p className="text-sm text-slate-600 mb-2">
-                      Perbarui API Key:
+                    <p className="text-sm font-medium text-slate-700 mb-2">
+                      Ganti API Key
                     </p>
                     <form onSubmit={handleSaveExa} className="space-y-3">
                       <div className="space-y-2">
@@ -369,15 +373,19 @@ export default function AdminSearchProvidersPage() {
                           type="password"
                           value={exaApiKey}
                           onChange={(e) => setExaApiKey(e.target.value)}
-                          placeholder="exa-xxxxx"
+                          placeholder="Masukkan API key baru..."
                         />
+                        <p className="text-xs text-slate-500">
+                          API key tersimpan di server. Masukkan key baru untuk mengganti.
+                        </p>
                       </div>
                       <Button
                         type="submit"
                         size="sm"
                         disabled={isSaving === "EXA" || !exaApiKey}
+                        className="gap-2"
                       >
-                        {isSaving === "EXA" ? "Menyimpan..." : "Perbarui"}
+                        {isSaving === "EXA" ? "Menyimpan..." : "Simpan API Key Baru"}
                       </Button>
                     </form>
                   </div>

@@ -75,7 +75,7 @@ export default function AdminProvidersPage() {
   const [baseUrl, setBaseUrl] = useState(PRESET_BASE_URLS["DEEPSEEK"])
   const [apiKey, setApiKey] = useState("")
   const [defaultModel, setDefaultModel] = useState("")
-  const [priority, setPriority] = useState(0)
+  const [priority, setPriority] = useState<string>("0")
   const [showApiKey, setShowApiKey] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
 
@@ -168,6 +168,8 @@ export default function AdminProvidersPage() {
       const url = "/api/admin/providers"
       const method = isEditing ? "PATCH" : "POST"
 
+      const priorityNum = parseInt(priority) || 0
+
       const body = isEditing
         ? {
             id: editingProvider?.id,
@@ -175,7 +177,7 @@ export default function AdminProvidersPage() {
             base_url: providerType === "CUSTOM" ? baseUrl : undefined,
             api_key: apiKey || undefined,
             default_model: defaultModel || undefined,
-            priority,
+            priority: priorityNum,
           }
         : {
             provider_type: providerType,
@@ -183,7 +185,7 @@ export default function AdminProvidersPage() {
             base_url: baseUrl,
             api_key: apiKey,
             default_model: defaultModel || "",
-            priority,
+            priority: priorityNum,
           }
 
       const response = await fetch(url, {
@@ -290,7 +292,7 @@ export default function AdminProvidersPage() {
     setBaseUrl(provider.base_url)
     setApiKey("")
     setDefaultModel(provider.default_model)
-    setPriority(provider.priority || 0)
+    setPriority(String(provider.priority || 0))
     
     if (provider.available_models?.models) {
       setAvailableModels(provider.available_models.models)
@@ -307,7 +309,7 @@ export default function AdminProvidersPage() {
     setBaseUrl(PRESET_BASE_URLS["DEEPSEEK"])
     setApiKey("")
     setDefaultModel("")
-    setPriority(0)
+    setPriority("0")
     setShowApiKey(false)
     setAvailableModels([])
   }
@@ -588,11 +590,13 @@ export default function AdminProvidersPage() {
               <Label htmlFor="priority">Priority</Label>
               <Input
                 id="priority"
-                type="number"
+                type="text"
+                inputMode="numeric"
                 value={priority}
-                onChange={(e) => setPriority(parseInt(e.target.value) || 0)}
-                min={0}
-                max={100}
+                onChange={(e) => {
+                  const val = e.target.value
+                  if (val === "" || /^\d+$/.test(val)) setPriority(val)
+                }}
                 placeholder="0-100 (semakin tinggi = semakin prioritas)"
               />
               <p className="text-xs text-slate-500">

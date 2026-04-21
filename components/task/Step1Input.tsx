@@ -35,7 +35,7 @@ export function Step1Input({ initialData, onComplete, lockedTaskType }: Step1Inp
   const [courseName, setCourseName] = useState(initialData.course_name)
   const [moduleBookTitle, setModuleBookTitle] = useState(initialData.module_book_title)
   const [tutorName, setTutorName] = useState(initialData.tutor_name)
-  const [minWords, setMinWords] = useState(initialData.min_words_target)
+  const [minWords, setMinWords] = useState<string>(String(initialData.min_words_target))
   const [taskDescription, setTaskDescription] = useState(initialData.task_description || "")
   const [questions, setQuestions] = useState<string[]>(initialData.questions.length > 0 ? initialData.questions : [""])
   const [errors, setErrors] = useState<Record<string, string>>({})
@@ -126,7 +126,10 @@ export function Step1Input({ initialData, onComplete, lockedTaskType }: Step1Inp
       newErrors.tutorName = "Nama tutor wajib diisi"
     }
 
-    if (minWords < 100) {
+    const minWordsNum = parseInt(minWords)
+    if (!minWords.trim() || isNaN(minWordsNum)) {
+      newErrors.minWords = "Target kata harus diisi dengan angka"
+    } else if (minWordsNum < 100) {
       newErrors.minWords = "Minimal 100 kata"
     }
 
@@ -153,7 +156,7 @@ export function Step1Input({ initialData, onComplete, lockedTaskType }: Step1Inp
       course_name: courseName,
       module_book_title: moduleBookTitle,
       tutor_name: tutorName,
-      min_words_target: minWords,
+      min_words_target: parseInt(minWords) || 300,
       questions: questions.filter((q) => q.trim()),
     })
   }
@@ -278,11 +281,14 @@ export function Step1Input({ initialData, onComplete, lockedTaskType }: Step1Inp
             <div>
               <Label>Target Minimal Kata</Label>
               <Input
-                type="number"
+                type="text"
+                inputMode="numeric"
                 value={minWords}
-                onChange={(e) => setMinWords(parseInt(e.target.value) || 0)}
-                min={100}
-                max={2000}
+                onChange={(e) => {
+                  const val = e.target.value
+                  if (val === "" || /^\d+$/.test(val)) setMinWords(val)
+                }}
+                placeholder="Contoh: 300"
                 className={errors.minWords ? "border-red-500" : ""}
               />
               {errors.minWords && (
