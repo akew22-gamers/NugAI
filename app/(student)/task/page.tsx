@@ -36,6 +36,8 @@ export default function TaskHistoryPage() {
   const [deleteTaskId, setDeleteTaskId] = useState<string | null>(null)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
+  const [isDeleteAllDialogOpen, setIsDeleteAllDialogOpen] = useState(false)
+  const [isDeletingAll, setIsDeletingAll] = useState(false)
 
   useEffect(() => {
     if (status === "authenticated") {
@@ -103,6 +105,26 @@ export default function TaskHistoryPage() {
     return type === "DISCUSSION" ? "Tugas Diskusi" : "Tugas Soal"
   }
 
+  const handleDeleteAll = async () => {
+    setIsDeletingAll(true)
+    try {
+      const response = await fetch("/api/tasks", { method: "DELETE" })
+      if (response.ok) {
+        const data = await response.json()
+        setTasks([])
+        toast.success(`${data.deleted} tugas berhasil dihapus`)
+      } else {
+        toast.error("Gagal menghapus semua tugas")
+      }
+    } catch (error) {
+      console.error("Failed to delete all tasks:", error)
+      toast.error("Gagal menghapus semua tugas")
+    } finally {
+      setIsDeletingAll(false)
+      setIsDeleteAllDialogOpen(false)
+    }
+  }
+
   const getTaskToDelete = () => tasks.find((t) => t.id === deleteTaskId)
 
   if (status === "loading" || isLoading) {
@@ -125,12 +147,24 @@ export default function TaskHistoryPage() {
             Daftar tugas yang pernah dikerjakan
           </p>
         </div>
-        <Link href="/task/new">
-          <Button className="gap-2">
-            <Plus className="w-4 h-4" />
-            Tugas Baru
-          </Button>
-        </Link>
+        <div className="flex items-center gap-2">
+          {tasks.length > 0 && (
+            <Button
+              variant="outline"
+              className="gap-2 text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700 hover:border-red-300"
+              onClick={() => setIsDeleteAllDialogOpen(true)}
+            >
+              <Trash2 className="w-4 h-4" />
+              <span className="hidden sm:inline">Hapus Semua</span>
+            </Button>
+          )}
+          <Link href="/task/new">
+            <Button className="gap-2">
+              <Plus className="w-4 h-4" />
+              Tugas Baru
+            </Button>
+          </Link>
+        </div>
       </div>
 
       {tasks.length === 0 ? (
@@ -218,6 +252,33 @@ export default function TaskHistoryPage() {
               disabled={isDeleting}
             >
               {isDeleting ? "Menghapus..." : "Hapus"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isDeleteAllDialogOpen} onOpenChange={setIsDeleteAllDialogOpen}>
+        <DialogContent className="sm:max-w-[400px]">
+          <DialogHeader>
+            <DialogTitle>Hapus Semua Tugas</DialogTitle>
+            <DialogDescription>
+              Apakah Anda yakin ingin menghapus <strong>semua {tasks.length} tugas</strong>? 
+              Tindakan ini tidak dapat dibatalkan dan semua jawaban akan dihapus permanen.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsDeleteAllDialogOpen(false)}
+            >
+              Batal
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleDeleteAll}
+              disabled={isDeletingAll}
+            >
+              {isDeletingAll ? "Menghapus..." : "Hapus Semua"}
             </Button>
           </DialogFooter>
         </DialogContent>
