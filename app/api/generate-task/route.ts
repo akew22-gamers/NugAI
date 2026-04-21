@@ -113,21 +113,15 @@ export async function POST(request: NextRequest) {
     let usedProviderType: string | null = null
     let usedModel: string | null = null
 
-    // Hitung maxTokens yang cukup: ~2.5 token per kata + buffer, minimal 2048
-    const maxTokens = Math.min(Math.max(Math.ceil(body.min_words_target * 2.5), 2048), 4096)
+    const isDiscussionMulti = body.task_type === 'DISCUSSION' && body.questions.length > 1
 
-    // Proses pertanyaan secara sequential — DeepSeek dan banyak provider lain
-    // memiliki rate limit ketat yang menyebabkan error 429 jika dikirim paralel.
-    for (let i = 0; i < body.questions.length; i++) {
-      const question = body.questions[i]
-      // 1. Search specific to this question
-      const searchQuery = `${body.course_name} ${body.module_book_title} ${question}`
-      const searchResults = await combinedSearch({
-        query: searchQuery,
-        maxResults: 3, // Reduce maxResults since we do it per question
-      })
+    if (isDiscussionMulti) {
+      const combinedQuestions = body.questions.map((q, i) => `${i + 1}. ${q}`).join('\n\n')
+      const maxTokens = Math.min(Math.max(Math.ceil(body.min_words_target * 2.5), 2048), 8192)
+
+      const searchQuery = `${body.course_name} ${body.module_book_title} ${body.questions[0]}`
+      const searchResults = await combinedSearch({ query: searchQuery, maxResults: 5 })
       const searchContext = formatSearchResultsForPrompt(searchResults.results)
-      
       totalTavilyCalls += searchResults.tavilyResults
       totalExaCalls += searchResults.exaResults
       allQuestionReferences.push(searchResults.results.slice(0, 2))
@@ -140,10 +134,10 @@ export async function POST(request: NextRequest) {
         tutor_name: body.tutor_name,
         min_words_target: body.min_words_target,
         task_type: body.task_type,
-        question_text: question,
+        question_text: combinedQuestions,
         search_context: searchContext,
         task_description: body.task_description || undefined,
-        question_index: i,
+        question_index: 0,
         total_questions: body.questions.length,
       })
 
@@ -155,22 +149,16 @@ export async function POST(request: NextRequest) {
         tutor_name: body.tutor_name,
         min_words_target: body.min_words_target,
         task_type: body.task_type,
-        question_text: question,
+        question_text: combinedQuestions,
         search_context: searchContext,
         student_name: profile.full_name,
         student_nim: profile.nim,
         task_description: body.task_description || undefined,
-        question_index: i,
+        question_index: 0,
         total_questions: body.questions.length,
       })
 
-      const result = await generate({
-        systemPrompt,
-        userPrompt,
-        maxTokens,
-        temperature: 0.7,
-      })
-
+      const result = await generate({ systemPrompt, userPrompt, maxTokens, temperature: 0.7 })
       answers.push(result.text)
       totalTokens += result.usage?.totalTokens || 0
 
@@ -179,6 +167,62 @@ export async function POST(request: NextRequest) {
         usedProviderName = castResult.providerName || null
         usedProviderType = castResult.providerType || null
         usedModel = castResult.model || null
+      }
+    } else {
+      const maxTokens = Math.min(Math.max(Math.ceil(body.min_words_target * 2.5), 2048), 4096)
+
+      for (let i = 0; i < body.questions.length; i++) {
+        const question = body.questions[i]
+        const searchQuery = `${body.course_name} ${body.module_book_title} ${question}`
+        const searchResults = await combinedSearch({ query: searchQuery, maxResults: 3 })
+        const searchContext = formatSearchResultsForPrompt(searchResults.results)
+
+        totalTavilyCalls += searchResults.tavilyResults
+        totalExaCalls += searchResults.exaResults
+        allQuestionReferences.push(searchResults.results.slice(0, 2))
+
+        const systemPrompt = buildSystemPrompt({
+          study_program: profile.study_program,
+          university_name: profile.university_name,
+          course_name: body.course_name,
+          module_book_title: body.module_book_title,
+          tutor_name: body.tutor_name,
+          min_words_target: body.min_words_target,
+          task_type: body.task_type,
+          question_text: question,
+          search_context: searchContext,
+          task_description: body.task_description || undefined,
+          question_index: i,
+          total_questions: body.questions.length,
+        })
+
+        const userPrompt = buildUserPrompt({
+          study_program: profile.study_program,
+          university_name: profile.university_name,
+          course_name: body.course_name,
+          module_book_title: body.module_book_title,
+          tutor_name: body.tutor_name,
+          min_words_target: body.min_words_target,
+          task_type: body.task_type,
+          question_text: question,
+          search_context: searchContext,
+          student_name: profile.full_name,
+          student_nim: profile.nim,
+          task_description: body.task_description || undefined,
+          question_index: i,
+          total_questions: body.questions.length,
+        })
+
+        const result = await generate({ systemPrompt, userPrompt, maxTokens, temperature: 0.7 })
+        answers.push(result.text)
+        totalTokens += result.usage?.totalTokens || 0
+
+        const castResult = result as any
+        if ('providerName' in result && castResult.providerName) {
+          usedProviderName = castResult.providerName || null
+          usedProviderType = castResult.providerType || null
+          usedModel = castResult.model || null
+        }
       }
     }
 
@@ -195,14 +239,23 @@ export async function POST(request: NextRequest) {
         ai_provider_type: usedProviderType,
         ai_model: usedModel,
         task_items: {
-          create: body.questions.map((question, index) => ({
-            question_text: question,
-            answer_text: answers[index],
-            status: 'COMPLETED',
-            references_used: allQuestionReferences[index].length > 0
-              ? JSON.parse(JSON.stringify({ references: allQuestionReferences[index] }))
-              : undefined,
-          })),
+          create: isDiscussionMulti
+            ? [{
+                question_text: body.questions.map((q, i) => `${i + 1}. ${q}`).join('\n'),
+                answer_text: answers[0],
+                status: 'COMPLETED',
+                references_used: allQuestionReferences[0]?.length > 0
+                  ? JSON.parse(JSON.stringify({ references: allQuestionReferences[0] }))
+                  : undefined,
+              }]
+            : body.questions.map((question, index) => ({
+                question_text: question,
+                answer_text: answers[index],
+                status: 'COMPLETED',
+                references_used: allQuestionReferences[index]?.length > 0
+                  ? JSON.parse(JSON.stringify({ references: allQuestionReferences[index] }))
+                  : undefined,
+              })),
         },
       },
       include: {

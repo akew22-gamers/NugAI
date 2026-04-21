@@ -96,12 +96,31 @@ ATURAN UMUM REFERENSI:
   const dynamicGreeting = randomGreetings[Math.floor(Math.random() * randomGreetings.length)];
 
   const questionNum = (context.question_index ?? 0) + 1
-  const multiQuestionInstruction = context.total_questions && context.total_questions > 1
+  const assignmentMultiInstruction = context.task_type === 'ASSIGNMENT' && context.total_questions && context.total_questions > 1
     ? `\n\nINSTRUKSI PENANDA SOAL:\n- Ini adalah Soal ${questionNum} dari ${context.total_questions} soal\n- WAJIB tulis "${questionNum}." di baris pertama jawaban sebagai penanda nomor soal\n- Setelah penanda nomor, langsung tulis jawaban\n`
     : ''
 
+  const discussionMultiBody = context.task_type === 'DISCUSSION' && context.total_questions && context.total_questions > 1
+    ? `BAGIAN 3 — BODY JAWABAN (${context.min_words_target}–${maxWords} kata total BODY):
+- Ada ${context.total_questions} soal/pertanyaan yang harus dijawab dalam SATU jawaban utuh
+- WAJIB gunakan penanda nomor (1., 2., 3., dst.) untuk setiap jawaban soal
+- Format setiap jawaban soal:
+  1. [Jawaban soal 1 dalam 1-3 paragraf]
+
+  2. [Jawaban soal 2 dalam 1-3 paragraf]
+
+  dst.
+- Setiap jawaban soal harus memiliki argumentasi berbobot dengan contoh konkret
+- Total semua jawaban soal harus memenuhi target ${context.min_words_target}–${maxWords} kata
+- Gunakan transisi antar nomor soal yang natural`
+    : `BAGIAN 3 — BODY JAWABAN (${context.min_words_target}–${maxWords} kata total BODY):
+- Fleksibel 1-5 paragraf sesuai kebutuhan penjelasan materi
+- FOKUS UTAMA: penuhi batas minimal kata (${context.min_words_target} kata) dengan argumentasi berbobot
+- Berisi pengantar, elaborasi, contoh konkret, dan analisis mendalam
+- Gunakan transisi antar paragraf yang natural`
+
   const structurePrompt = context.task_type === 'DISCUSSION'
-    ? `FORMAT BAKU JAWABAN DISCUSSION — WAJIB IKUTI PERSIS:${multiQuestionInstruction}
+    ? `FORMAT BAKU JAWABAN DISCUSSION — WAJIB IKUTI PERSIS:
 
 BAGIAN 1 — HEADER (tidak dihitung word count BODY):
 Nama  : [Nama Lengkap Mahasiswa]
@@ -111,11 +130,7 @@ NIM   : [NIM Mahasiswa]
 BAGIAN 2 — SALAM PEMBUKA (1 kalimat singkat dan sederhana, termasuk word count BODY):
 Contoh dan Variasi: Gunakan ${dynamicGreeting} (Sesuaikan dengan waktu/konteks yang natural).
 
-BAGIAN 3 — BODY JAWABAN (${context.min_words_target}–${maxWords} kata total BODY):
-- Fleksibel 1-5 paragraf sesuai kebutuhan penjelasan materi
-- FOKUS UTAMA: penuhi batas minimal kata (${context.min_words_target} kata) dengan argumentasi berbobot
-- Berisi pengantar, elaborasi, contoh konkret, dan analisis mendalam
-- Gunakan transisi antar paragraf yang natural
+${discussionMultiBody}
 
 BAGIAN 4 — PENUTUP (1 kalimat simpulan, termasuk word count BODY):
 Contoh: "Dengan demikian, pemahaman tentang [topik] menjadi kunci dalam [konteks yang relevan]."
@@ -132,7 +147,7 @@ CATATAN PENTING:
 - Header ditulis PERSIS seperti di atas: "Nama  : " dan "NIM   : " (dengan spasi sebelum tanda titik dua)
 - Referensi ditulis PERSIS dengan label "Referensi:" di baris tersendiri, lalu baris kosong, lalu nomor 1 dan 2
 - JANGAN menambahkan bagian atau label lain selain yang disebutkan di atas`
-    : `FORMAT BAKU JAWABAN ASSIGNMENT/SOAL:${multiQuestionInstruction}
+    : `FORMAT BAKU JAWABAN ASSIGNMENT/SOAL:${assignmentMultiInstruction}
 
 BAGIAN 1 — BODY JAWABAN (${context.min_words_target}–${maxWords} kata):
 - Jawab langsung dan lengkap dalam paragraf naratif
@@ -174,7 +189,7 @@ NIM: ${context.student_nim}
     ? `Konteks/Deskripsi Soal:\n${context.task_description}\n\n`
     : ''
 
-  const questionLabel = context.total_questions && context.total_questions > 1
+  const questionLabel = context.task_type === 'ASSIGNMENT' && context.total_questions && context.total_questions > 1
     ? `Pertanyaan Soal ${(context.question_index ?? 0) + 1} dari ${context.total_questions}:\n`
     : 'Pertanyaan/Tugas:\n'
 

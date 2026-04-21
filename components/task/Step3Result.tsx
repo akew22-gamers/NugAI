@@ -46,7 +46,7 @@ export function Step3Result({
 
   const handleCopyAnswer = async (index: number) => {
     const answer = result.answers[index]
-    const label = formData.questions.length > 1
+    const label = formData.task_type === "ASSIGNMENT" && formData.questions.length > 1
       ? `${index + 1}.\n\n`
       : ""
     try {
@@ -113,7 +113,7 @@ export function Step3Result({
         </Button>
       </div>
 
-      {formData.questions.length > 1 && (
+      {formData.task_type === "ASSIGNMENT" && formData.questions.length > 1 && (
         <Card className="rounded-xl border border-zinc-200 bg-white shadow-sm">
           <CardContent className="p-4">
             <div className="flex gap-2 flex-wrap">
@@ -137,7 +137,9 @@ export function Step3Result({
           <CardTitle className="flex items-center justify-between flex-wrap gap-2">
             <div className="flex items-center gap-2 flex-1 min-w-[200px]">
               <span>
-                {formData.questions.length > 1 ? `Jawaban Soal ${questionIndex + 1}` : formData.task_type === "ASSIGNMENT" ? "Jawaban Soal" : "Jawaban Diskusi"}
+                {formData.task_type === "ASSIGNMENT" && formData.questions.length > 1
+                  ? `Jawaban Soal ${questionIndex + 1}`
+                  : formData.task_type === "ASSIGNMENT" ? "Jawaban Soal" : "Jawaban Diskusi"}
               </span>
               {providerName && (
                 <span className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-indigo-100 text-indigo-700">
@@ -177,7 +179,7 @@ export function Step3Result({
             className="prose prose-sm max-w-none max-h-[400px] overflow-y-auto pr-2"
             style={{ scrollbarWidth: 'thin', scrollbarColor: '#d4d4d8 #f4f4f5' }}
           >
-            {formData.questions.length > 1 && (
+            {formData.task_type === "ASSIGNMENT" && formData.questions.length > 1 && (
               <p className="font-semibold text-indigo-700 text-base mb-2">
                 {questionIndex + 1}.
               </p>
