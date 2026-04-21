@@ -38,8 +38,6 @@ interface Provider {
   }
   last_model_fetch?: Date
 }
-  last_model_fetch?: Date
-}
 
 interface Model {
   id: string
