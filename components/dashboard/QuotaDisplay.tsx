@@ -18,8 +18,8 @@ interface QuotaDisplayProps {
 export function QuotaDisplay({ quota, isLoading }: QuotaDisplayProps) {
   if (isLoading && !quota) {
     return (
-      <div className="rounded-2xl border border-white/10 bg-zinc-900/60 backdrop-blur-xl p-6 shadow-xl shadow-black/20">
-        <div className="h-24 animate-pulse rounded-xl bg-zinc-800" />
+      <div className="bg-white/80 backdrop-blur-xl border border-white/20 rounded-2xl shadow-lg shadow-zinc-200/50 p-6">
+        <div className="h-24 animate-pulse rounded-xl bg-zinc-100" />
       </div>
     )
   }
@@ -39,15 +39,15 @@ export function QuotaDisplay({ quota, isLoading }: QuotaDisplayProps) {
   }
 
   return (
-    <div className="rounded-2xl border border-white/10 bg-zinc-900/60 backdrop-blur-xl p-6 shadow-xl shadow-black/20">
+    <div className="bg-white/80 backdrop-blur-xl border border-white/20 rounded-2xl shadow-lg shadow-zinc-200/50 p-6">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div
             className={cn(
               "flex h-10 w-10 items-center justify-center rounded-xl",
               isPremium
-                ? "bg-amber-500/20 text-amber-400"
-                : "bg-indigo-500/20 text-indigo-400"
+                ? "bg-amber-50 text-amber-600"
+                : "bg-indigo-50 text-indigo-600"
             )}
           >
             {isPremium ? (
@@ -57,8 +57,8 @@ export function QuotaDisplay({ quota, isLoading }: QuotaDisplayProps) {
             )}
           </div>
           <div>
-            <h3 className="font-semibold text-white">Kuota AI</h3>
-            <p className="text-sm text-zinc-500">
+            <h3 className="font-semibold text-slate-900">Kuota AI</h3>
+            <p className="text-sm text-slate-500">
               {isPremium ? "Paket Premium" : "Paket Free"}
             </p>
           </div>
@@ -66,12 +66,12 @@ export function QuotaDisplay({ quota, isLoading }: QuotaDisplayProps) {
         {!isPremium && (
           <span
             className={cn(
-              "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium backdrop-blur-sm",
+              "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium",
               remaining > 2
-                ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
+                ? "bg-green-50 text-green-700 border border-green-200"
                 : remaining > 0
-                  ? "bg-amber-500/20 text-amber-400 border border-amber-500/30"
-                  : "bg-red-500/20 text-red-400 border border-red-500/30"
+                  ? "bg-amber-50 text-amber-700 border border-amber-200"
+                  : "bg-red-50 text-red-700 border border-red-200"
             )}
           >
             {remaining > 0 ? `${remaining} tersisa` : "Habis"}
@@ -81,20 +81,20 @@ export function QuotaDisplay({ quota, isLoading }: QuotaDisplayProps) {
 
       <div className="mt-6">
         {isPremium ? (
-          <div className="flex items-center gap-2 text-amber-400">
+          <div className="flex items-center gap-2 text-amber-600">
             <Crown className="h-5 w-5" />
             <span className="text-lg font-semibold">Unlimited</span>
           </div>
         ) : (
           <>
             <div className="flex items-center justify-between text-sm">
-              <span className="text-zinc-400">
-                <span className="font-semibold text-white">{remaining}</span>
-                <span className="text-zinc-500"> / {limit}</span>
-                <span className="text-zinc-500"> tersisa</span>
+              <span className="text-slate-400">
+                <span className="font-semibold text-slate-900">{remaining}</span>
+                <span className="text-slate-400"> / {limit}</span>
+                <span className="text-slate-400"> tersisa</span>
               </span>
             </div>
-            <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-zinc-800">
+            <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-zinc-100">
               <div
                 className={cn(
                   "h-full rounded-full transition-all duration-300",
@@ -111,7 +111,7 @@ export function QuotaDisplay({ quota, isLoading }: QuotaDisplayProps) {
         )}
       </div>
 
-      <div className="mt-4 flex items-center gap-2 text-sm text-zinc-500">
+      <div className="mt-4 flex items-center gap-2 text-sm text-slate-400">
         <Clock className="h-4 w-4" />
         <span>Reset pukul {formatResetTime(quota?.resetAt)}</span>
       </div>

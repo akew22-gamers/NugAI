@@ -7,7 +7,7 @@ export default function AdminLayout({
   children: React.ReactNode
 }) {
   return (
-    <div className="min-h-screen bg-zinc-950">
+    <div className="min-h-screen bg-gradient-to-br from-zinc-50 via-white to-zinc-100">
       <Sidebar />
       <MobileNav />
       <main className="lg:ml-64 min-h-screen">

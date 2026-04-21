@@ -63,8 +63,8 @@ export default function DashboardPage() {
     return (
       <div className="flex h-full items-center justify-center">
         <div className="text-center">
-          <div className="h-8 w-8 animate-spin rounded-full border-2 border-zinc-700 border-t-indigo-500 mx-auto" />
-          <p className="mt-2 text-sm text-zinc-500">Memuat dashboard...</p>
+          <div className="h-8 w-8 animate-spin rounded-full border-2 border-zinc-200 border-t-indigo-500 mx-auto" />
+          <p className="mt-2 text-sm text-slate-500">Memuat dashboard...</p>
         </div>
       </div>
     )
@@ -74,7 +74,7 @@ export default function DashboardPage() {
     return (
       <div className="flex h-full items-center justify-center">
         <div className="text-center">
-          <p className="text-zinc-500">Silakan login untuk mengakses dashboard</p>
+          <p className="text-slate-500">Silakan login untuk mengakses dashboard</p>
           <Link href="/login">
             <Button className="mt-4">Login</Button>
           </Link>
@@ -99,21 +99,21 @@ export default function DashboardPage() {
       <div className="space-y-8">
         <section className="space-y-2">
           <div className="flex items-center gap-3">
-            <h1 className="text-3xl font-bold tracking-tight text-white">
+            <h1 className="text-3xl font-bold tracking-tight text-slate-900">
               Selamat datang, <span className="gradient-text">{userName}</span>
             </h1>
             <span
               className={cn(
                 "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium",
                 subscriptionTier === "PREMIUM"
-                  ? "bg-gradient-to-r from-amber-500/20 to-orange-500/20 border border-amber-500/30 text-amber-300"
-                  : "bg-zinc-800 text-zinc-300 border border-zinc-700"
+                  ? "bg-amber-50 text-amber-700 border border-amber-200"
+                  : "bg-zinc-100 text-zinc-700 border border-zinc-200"
               )}
             >
               {subscriptionTier === "PREMIUM" ? "PREMIUM" : "FREE"}
             </span>
           </div>
-          <p className="text-zinc-400">
+          <p className="text-slate-500">
             Kelola tugas dan kuota pembelajaran AI Anda di satu tempat
           </p>
         </section>

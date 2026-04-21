@@ -7,10 +7,10 @@ import { Button } from "@/components/ui/button"
 
 export function QuickActions() {
   return (
-    <div className="rounded-2xl border border-white/10 bg-zinc-900/60 backdrop-blur-xl p-6 shadow-xl shadow-black/20">
+    <div className="bg-white/80 backdrop-blur-xl border border-white/20 rounded-2xl shadow-lg shadow-zinc-200/50 p-6">
       <div>
-        <h3 className="font-semibold text-white">Aksi Cepat</h3>
-        <p className="text-sm text-zinc-500">Mulai dengan cepat</p>
+        <h3 className="font-semibold text-slate-900">Aksi Cepat</h3>
+        <p className="text-sm text-slate-500">Mulai dengan cepat</p>
       </div>
 
       <div className="mt-6 space-y-3">
@@ -24,7 +24,7 @@ export function QuickActions() {
               "transition-all duration-300"
             )}
           >
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-white/10">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-white/20">
               <Sparkles className="h-5 w-5 text-white" />
             </div>
             <div className="flex-1 text-left">
@@ -42,23 +42,23 @@ export function QuickActions() {
             variant="outline"
             className={cn(
               "w-full justify-start gap-3 h-auto p-4",
-              "bg-white/5 border border-white/10 hover:bg-white/10",
-              "text-white rounded-xl",
+              "bg-zinc-50 border border-zinc-200 hover:bg-zinc-100",
+              "text-slate-900 rounded-xl",
               "transition-all duration-300"
             )}
           >
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-white/10">
-              <BookOpen className="h-5 w-5 text-zinc-400" />
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-white border border-zinc-200">
+              <BookOpen className="h-5 w-5 text-slate-600" />
             </div>
             <div className="flex-1 text-left">
-              <span className="block font-semibold text-white">
+              <span className="block font-semibold text-slate-900">
                 Kelola Mata Kuliah
               </span>
-              <span className="text-xs text-zinc-400">
+              <span className="text-xs text-slate-500">
                 Atur mata kuliah Anda
               </span>
             </div>
-            <ArrowRight className="h-5 w-5 text-zinc-500" />
+            <ArrowRight className="h-5 w-5 text-slate-400" />
           </Button>
         </Link>
       </div>

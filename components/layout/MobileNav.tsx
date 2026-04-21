@@ -152,29 +152,19 @@ export function MobileNav() {
   }
 
   const logoBg = isAdmin
-    ? "bg-gradient-to-br from-red-500 to-orange-600 shadow-red-500/30"
-    : "bg-gradient-to-br from-indigo-500 to-purple-600 shadow-indigo-500/30"
+    ? "bg-gradient-to-br from-red-500 to-orange-600 shadow-red-500/20"
+    : "bg-gradient-to-br from-indigo-500 to-purple-600 shadow-indigo-500/20"
 
   return (
     <>
-      <style jsx global>{`
-        @keyframes slideDown {
-          from { opacity: 0; transform: translateY(-8px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-        .mobile-nav-enter {
-          animation: slideDown 0.2s ease-out forwards;
-        }
-      `}</style>
-
-      <header className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-zinc-900/95 backdrop-blur-xl border-b border-white/10">
+      <header className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-xl border-b border-zinc-200">
         <div className="flex items-center justify-between px-4 py-3">
           <Link href={isAdmin ? "/admin" : "/dashboard"} className="flex items-center gap-2">
             <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center shadow-lg", logoBg)}>
               <span className="text-white font-bold text-sm">N</span>
             </div>
             <span className="font-bold">
-              <span className="text-white">Nug</span>
+              <span className="text-slate-900">Nug</span>
               <span
                 className="bg-clip-text text-transparent"
                 style={{
@@ -190,7 +180,7 @@ export function MobileNav() {
 
           <button
             onClick={() => setIsOpen(!isOpen)}
-            className="p-2 text-zinc-300 hover:text-white transition"
+            className="p-2 text-slate-600 hover:text-slate-900 transition"
             aria-label={isOpen ? "Close menu" : "Open menu"}
           >
             {isOpen ? (
@@ -209,18 +199,11 @@ export function MobileNav() {
       {isOpen && (
         <>
           <div
-            className="lg:hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-40"
+            className="lg:hidden fixed inset-0 bg-black/20 z-40"
             onClick={() => setIsOpen(false)}
           />
-          <nav className="lg:hidden fixed inset-x-0 top-[57px] z-50 bg-zinc-900/98 backdrop-blur-xl border-b border-white/10 shadow-2xl shadow-black/40 mobile-nav-enter relative overflow-hidden">
-            <div className={cn(
-              "absolute top-0 right-0 w-40 h-40 rounded-full blur-3xl pointer-events-none opacity-50",
-              isAdmin
-                ? "bg-gradient-to-br from-red-500/10 to-orange-500/10"
-                : "bg-gradient-to-br from-indigo-500/10 to-purple-500/10"
-            )} />
-
-            <div className="relative z-10 p-4 space-y-1">
+          <nav className="lg:hidden fixed inset-x-0 top-[57px] z-50 bg-white border-b border-zinc-200 shadow-xl shadow-zinc-200/50">
+            <div className="p-4 space-y-1">
               {navItems.map((item) => {
                 const isActive = getIsActive(item.href)
 
@@ -230,20 +213,20 @@ export function MobileNav() {
                     href={item.href}
                     onClick={() => setIsOpen(false)}
                     className={cn(
-                      "flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200",
+                      "flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200",
                       isActive
                         ? isAdmin 
-                          ? "bg-gradient-to-r from-red-500/20 to-orange-500/20 border border-red-500/30 text-white font-medium"
-                          : "bg-gradient-to-r from-indigo-500/20 to-purple-500/20 border border-indigo-500/30 text-white font-medium"
-                        : "text-zinc-400 hover:text-white hover:bg-white/5 border border-transparent"
+                          ? "bg-red-50 text-red-700 font-medium"
+                          : "bg-indigo-50 text-indigo-700 font-medium"
+                        : "text-slate-600 hover:bg-zinc-50 hover:text-slate-900"
                     )}
                   >
                     <span
                       className={cn(
                         "shrink-0",
                         isActive 
-                          ? isAdmin ? "text-red-400" : "text-indigo-400"
-                          : "text-zinc-500"
+                          ? isAdmin ? "text-red-600" : "text-indigo-600"
+                          : "text-slate-400"
                       )}
                     >
                       {item.icon}
@@ -254,37 +237,37 @@ export function MobileNav() {
               })}
             </div>
 
-            <div className="relative z-10 p-4 border-t border-white/10 space-y-3">
-              <div className="flex items-center gap-3 p-3 rounded-2xl bg-white/5 border border-white/10">
+            <div className="p-4 border-t border-zinc-100 space-y-3">
+              <div className="flex items-center gap-3 p-3 rounded-xl bg-zinc-50 border border-zinc-200">
                 <div className={cn(
-                  "w-10 h-10 rounded-full flex items-center justify-center shrink-0 shadow-lg",
+                  "w-10 h-10 rounded-full flex items-center justify-center shrink-0",
                   isAdmin
-                    ? "bg-gradient-to-br from-red-500 to-orange-600 shadow-red-500/20"
-                    : "bg-gradient-to-br from-indigo-500 to-purple-600 shadow-indigo-500/20"
+                    ? "bg-gradient-to-br from-red-500 to-orange-600"
+                    : "bg-gradient-to-br from-slate-700 to-slate-900"
                 )}>
                   <span className="text-white font-semibold text-sm">
                     {getInitials(username)}
                   </span>
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-white truncate">{username}</p>
+                  <p className="text-sm font-semibold text-slate-900 truncate">{username}</p>
                   <div className="flex items-center gap-1.5">
                     {isAdmin ? (
                       <>
-                        <span className="text-red-400">{ShieldIcon}</span>
-                        <span className="text-xs font-medium text-red-300 bg-red-500/15 border border-red-500/20 px-1.5 py-0.5 rounded-md">
+                        <span className="text-red-600">{ShieldIcon}</span>
+                        <span className="text-xs font-medium text-red-600 bg-red-50 border border-red-200 px-1.5 py-0.5 rounded">
                           ADMIN
                         </span>
                       </>
                     ) : isPremium ? (
                       <>
-                        <span className="text-amber-400">{CrownIcon}</span>
-                        <span className="text-xs font-medium text-amber-300 bg-amber-500/15 border border-amber-500/20 px-1.5 py-0.5 rounded-md">
+                        <span className="text-amber-600">{CrownIcon}</span>
+                        <span className="text-xs font-medium text-amber-600 bg-amber-50 border border-amber-200 px-1.5 py-0.5 rounded">
                           PREMIUM
                         </span>
                       </>
                     ) : (
-                      <span className="text-xs text-zinc-400 bg-white/5 border border-white/10 px-1.5 py-0.5 rounded-md">
+                      <span className="text-xs text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded">
                         FREE
                       </span>
                     )}
@@ -295,7 +278,7 @@ export function MobileNav() {
               <Button
                 variant="ghost"
                 onClick={handleLogout}
-                className="w-full justify-start text-zinc-400 hover:text-red-400 hover:bg-red-500/10 transition-colors"
+                className="w-full justify-start text-slate-600 hover:text-red-600 hover:bg-red-50 transition-colors"
               >
                 <span className="shrink-0 mr-3">{LogoutIcon}</span>
                 <span>Logout</span>

@@ -36,15 +36,15 @@ export function RecentTasks({ tasks, isLoading }: RecentTasksProps) {
   }
 
   return (
-    <div className="rounded-2xl border border-white/10 bg-zinc-900/60 backdrop-blur-xl p-6 shadow-xl shadow-black/20">
+    <div className="bg-white/80 backdrop-blur-xl border border-white/20 rounded-2xl shadow-lg shadow-zinc-200/50 p-6">
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="font-semibold text-white">Tugas Terakhir</h3>
-          <p className="text-sm text-zinc-500">5 tugas terakhir yang dibuat</p>
+          <h3 className="font-semibold text-slate-900">Tugas Terakhir</h3>
+          <p className="text-sm text-slate-500">5 tugas terakhir yang dibuat</p>
         </div>
         <Link
           href="/task"
-          className="flex items-center gap-1 text-sm font-medium text-indigo-400 hover:text-indigo-300 transition-colors"
+          className="flex items-center gap-1 text-sm font-medium text-indigo-600 hover:text-indigo-700 transition-colors"
         >
           Lihat semua
           <ArrowRight className="h-4 w-4" />
@@ -57,15 +57,15 @@ export function RecentTasks({ tasks, isLoading }: RecentTasksProps) {
             {[...Array(3)].map((_, i) => (
               <div
                 key={i}
-                className="h-16 animate-pulse rounded-xl bg-zinc-800"
+                className="h-16 animate-pulse rounded-lg bg-zinc-100"
               />
             ))}
           </div>
         ) : tasks.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-12 text-center">
-            <FileText className="h-12 w-12 text-zinc-700" />
-            <h4 className="mt-4 font-medium text-white">Belum ada tugas</h4>
-            <p className="mt-1 text-sm text-zinc-500">
+            <FileText className="h-12 w-12 text-zinc-300" />
+            <h4 className="mt-4 font-medium text-slate-900">Belum ada tugas</h4>
+            <p className="mt-1 text-sm text-slate-500">
               Mulai buat tugas pertama Anda dengan AI
             </p>
             <Link
@@ -81,22 +81,22 @@ export function RecentTasks({ tasks, isLoading }: RecentTasksProps) {
             <Link
               key={task.id}
               href={`/task/${task.id}`}
-              className="group flex items-center justify-between rounded-xl border border-white/10 bg-white/5 p-4 transition-all duration-300 hover:border-white/20 hover:bg-white/10"
+              className="group flex items-center justify-between rounded-xl bg-white border border-zinc-100 p-4 transition-all duration-200 hover:border-zinc-200 hover:bg-zinc-50"
             >
               <div className="flex items-center gap-3">
-                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-indigo-500/20">
-                  <CheckCircle2 className="h-4 w-4 text-indigo-400" />
+                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-indigo-50">
+                  <CheckCircle2 className="h-4 w-4 text-indigo-600" />
                 </div>
                 <div>
-                  <h4 className="font-medium text-white group-hover:text-zinc-200">
+                  <h4 className="font-medium text-slate-900 group-hover:text-slate-700">
                     {task.course_name || "Tugas Tanpa Mata Kuliah"}
                   </h4>
-                  <p className="text-sm text-zinc-500">
+                  <p className="text-sm text-slate-500">
                     {getTaskTypeLabel(task.task_type)} • {task.items_count} soal
                   </p>
                 </div>
               </div>
-              <span className="text-xs text-zinc-500">{formatDate(task.created_at)}</span>
+              <span className="text-xs text-slate-400">{formatDate(task.created_at)}</span>
             </Link>
           ))
         )}
