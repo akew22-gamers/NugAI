@@ -181,14 +181,6 @@ export default function AdminProvidersPage() {
             default_model: defaultModel || "",
             priority,
           }
-        : {
-            provider_type: providerType,
-            provider_name: providerType === "CUSTOM" ? providerName : "",
-            base_url: baseUrl,
-            api_key: apiKey,
-            default_model: defaultModel || "",
-            priority,
-          }
 
       const response = await fetch(url, {
         method,
