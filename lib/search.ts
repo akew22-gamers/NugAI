@@ -147,6 +147,37 @@ export function formatSearchResultsForPrompt(results: SearchResult[]): string {
     .join('\n\n')
 }
 
+export async function searchModuleMetadata(
+  moduleTitle: string,
+  universityName: string
+): Promise<string> {
+  const tavilyQuery = `"${moduleTitle}" ${universityName} pengarang penulis tahun terbit penerbit ISBN buku modul`
+  const exaQuery = `buku modul "${moduleTitle}" ${universityName} author publisher year edition`
+
+  const [tavilyResults, exaResults] = await Promise.all([
+    tavilySearch({ query: tavilyQuery, maxResults: 3 }),
+    exaSearch({ query: exaQuery, maxResults: 3, searchType: 'academic' }),
+  ])
+
+  const allResults = [...exaResults, ...tavilyResults]
+
+  if (allResults.length === 0) return ''
+
+  const metadataContext = allResults
+    .slice(0, 5)
+    .map((r, i) => {
+      const parts = [`[${i + 1}] ${r.title}`]
+      if (r.url) parts.push(`URL: ${r.url}`)
+      if (r.metadata?.author) parts.push(`Author: ${r.metadata.author}`)
+      if (r.metadata?.publishedDate) parts.push(`Published: ${r.metadata.publishedDate}`)
+      parts.push(`Content: ${r.content.slice(0, 600)}`)
+      return parts.join('\n')
+    })
+    .join('\n\n')
+
+  return metadataContext
+}
+
 export function isSearchProviderConfigured(providerType: SearchProviderType): Promise<boolean> {
   return getSearchProviderKey(providerType)
     .then((data) => data !== null && data.isActive)

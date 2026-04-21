@@ -13,6 +13,7 @@ export interface TaskGenerationContext {
   task_description?: string
   question_index?: number
   total_questions?: number
+  module_metadata?: string
 }
 
 export function buildSystemPrompt(context: TaskGenerationContext): string {
@@ -49,31 +50,30 @@ GAYA YANG DIHARAPKAN:
 - TIDAK BOLEH lebih dari ${maxWords} kata untuk BODY (15% toleransi maksimal)
 - HITUNG kata dengan teliti sebelum menyelesaikan jawaban`
 
+  const moduleMetadataBlock = context.module_metadata
+    ? `\nHASIL RISET METADATA MODUL/BUKU REFERENSI KE-1 (gunakan informasi ini untuk melengkapi referensi ke-1):\n${context.module_metadata}\n`
+    : ''
+
   const referencePrompt = `WAJIB tulis REFERENSI di AKHIR jawaban.
-
-Format referensi yang diharapkan:
-
-Referensi:
-
-1. ${context.module_book_title}. ${context.university_name}.
-2. [Judul Buku Akademik yang relevan dengan mata kuliah ${context.course_name}]. [Tahun]. [Penerbit].
-
-ATURAN REFERENSI KE-1:
-- Referensi ke-1 adalah modul/buku referensi dari ${context.university_name}
-- TULIS JUDUL MODUL PERSIS: "${context.module_book_title}"
-- Sumber: ${context.university_name}
+${moduleMetadataBlock}
+ATURAN REFERENSI KE-1 (MODUL/BUKU UTAMA):
+- Referensi ke-1 adalah modul/buku pegangan utama: "${context.module_book_title}" dari ${context.university_name}
+- Modul/buku ini adalah SUMBER UTAMA untuk menjawab pertanyaan — jawaban HARUS berdasarkan materi dari modul ini
 - JANGAN PERNAH menulis nama Dosen/Tutor (${context.tutor_name}) sebagai pengarang referensi ke-1
 - Pengarang modul BUKAN ${context.tutor_name} - JANGAN tulis nama tutor sebagai pengarang
-- Format: ${context.module_book_title}. ${context.university_name}.
+- FORMAT LENGKAP yang diharapkan: [Pengarang/Tim Penyusun]. ([Tahun]). ${context.module_book_title}. [Edisi jika ada]. [Penerbit/${context.university_name}].
+- Jika dari hasil riset metadata di atas ditemukan pengarang, tahun, edisi, atau penerbit — WAJIB gunakan data tersebut
+- Jika pengarang tidak ditemukan, tulis: Tim Penyusun ${context.university_name}. ([Tahun jika ditemukan, atau tanpa tahun]). ${context.module_book_title}. ${context.university_name}.
+- PRIORITAS: data dari hasil riset metadata > pengetahuan umum > format default
 
-ATURAN REFERENSI KE-2:
-- WAJIB dari BUKU AKADEMIK, JURNAL, atau ARTIKEL ILMIAH dari sumber yang kredibel
-- DILARANG KERAS mengarang/memanipulasi (halusinasi) judul buku, pengarang, atau tahun terbit. Referensi HARUS NYATA, ADA, dan JELAS datanya.
-- Buku/Jurnal harus RELEVAN dengan mata kuliah ${context.course_name}
-- DILARANG KERAS menggunakan sumber dari: scribd.com, academia.edu, slideshare.net, blogspot, wordpress, atau website tidak kredibel lainnya
-- Jika menggunakan website/artikel online, pastikan berasal dari universitas, pemerintah, atau lembaga resmi
-- Format Buku: [Nama Pengarang]. [Tahun]. [Judul Buku]. [Penerbit].
-- Format Jurnal/Web: [Nama Pengarang]. [Tahun]. [Judul Artikel]. [Nama Jurnal/Situs]. [URL]
+ATURAN REFERENSI KE-2 (SUMBER PENDUKUNG):
+- WAJIB dari BUKU AKADEMIK CETAK atau KARYA ILMIAH (jurnal, skripsi, tesis, disertasi) yang RELEVAN dengan mata kuliah ${context.course_name}
+- DILARANG KERAS menggunakan sumber dari website/online apapun — HANYA buku cetak dan karya ilmiah
+- DILARANG KERAS mengarang/memanipulasi (halusinasi) judul buku, pengarang, atau tahun terbit. Referensi HARUS NYATA, ADA, dan DAPAT DIVERIFIKASI.
+- Buku harus dari PENERBIT RESMI (contoh: Erlangga, Gramedia, Salemba Empat, Rajawali Pers, Andi Offset, Kencana, dll)
+- Karya ilmiah harus dari JURNAL TERAKREDITASI atau repositori universitas
+- Format Buku: [Nama Pengarang]. ([Tahun]). [Judul Buku]. [Penerbit].
+- Format Jurnal: [Nama Pengarang]. ([Tahun]). [Judul Artikel]. [Nama Jurnal], [Volume]([Nomor]), [Halaman].
 
 ATURAN UMUM REFERENSI:
 - Jangan gunakan simbol seperti asterisk (*) atau bullet (•)
@@ -139,8 +139,8 @@ BAGIAN 5 — REFERENSI (tidak dihitung word count BODY):
 [baris kosong]
 Referensi:
 [baris kosong]
-1. ${context.module_book_title}. ${context.university_name}.
-2. [Nama Pengarang]. [Tahun]. [Judul Referensi Akademik]. [Penerbit/Jurnal/Situs].
+1. [Pengarang/Tim Penyusun]. ([Tahun]). ${context.module_book_title}. [Edisi]. ${context.university_name}.
+2. [Nama Pengarang]. ([Tahun]). [Judul Buku/Karya Ilmiah]. [Penerbit/Jurnal].
 
 CATATAN PENTING:
 - Word Count BODY = Salam Pembuka + Paragraf Body + Penutup (TIDAK termasuk Header dan Referensi)
@@ -158,8 +158,8 @@ BAGIAN 2 — REFERENSI (tidak dihitung word count):
 [baris kosong]
 Referensi:
 [baris kosong]
-1. ${context.module_book_title}. ${context.university_name}.
-2. [Nama Pengarang]. [Tahun]. [Judul Buku Akademik]. [Penerbit].
+1. [Pengarang/Tim Penyusun]. ([Tahun]). ${context.module_book_title}. [Edisi]. ${context.university_name}.
+2. [Nama Pengarang]. ([Tahun]). [Judul Buku/Karya Ilmiah]. [Penerbit/Jurnal].
 
 CATATAN: Word Count = seluruh isi jawaban (TIDAK termasuk bagian Referensi).`
 
@@ -205,24 +205,23 @@ INSTRUKSI KRITIS:
 2. BODY = Salam Pembuka + Isi Argumentasi + Penutup (tidak termasuk Header Nama/NIM dan Referensi)
 3. JAWABAN HARUS LENGKAP DAN UTUH - tidak boleh terpotong di tengah kalimat atau paragraf
 4. Tulis Referensi DI AKHIR (tidak dihitung word count)
-5. Referensi ke-1: tulis judul modul "${context.module_book_title}" dari ${context.university_name} - JANGAN tulis ${context.tutor_name} sebagai pengarang
-6. Referensi ke-2: HARUS dari BUKU/JURNAL AKADEMIK atau SUMBER WEB KREDIBEL, BUKAN dari scribd.com atau website abal-abal
+5. Referensi ke-1: tulis modul "${context.module_book_title}" dari ${context.university_name} dengan format lengkap (pengarang, tahun, edisi jika ada) berdasarkan hasil riset metadata - JANGAN tulis ${context.tutor_name} sebagai pengarang
+6. Referensi ke-2: WAJIB dari BUKU CETAK atau KARYA ILMIAH (jurnal/skripsi/tesis) — DILARANG dari website/online apapun
 7. JANGAN gunakan simbol atau karakter aneh
 8. Hitung jumlah kata BODY dengan teliti sebelum selesai`
 
   if (context.search_context) {
     return `${basePrompt}
 
-INFORMASI dari pencarian web (gunakan untuk referensi ke-2 jika relevan):
+INFORMASI TAMBAHAN dari pencarian web (gunakan sebagai PENGETAHUAN untuk memperkaya jawaban, BUKAN sebagai sumber referensi ke-2):
 ${context.search_context}
 
-Pilih referensi ke-2 yang:
-- WAJIB dari BUKU AKADEMIK, JURNAL, atau SUMBER WEB KREDIBEL yang ada di hasil pencarian di atas
-- Dari lembaga/institusi BERBEDA dari ${context.university_name}
-- Relevan dengan topik jawaban dan mata kuliah ${context.course_name}
-- DILARANG dari scribd.com, academia.edu, slideshare.net, blogspot, wordpress, atau website tidak kredibel
-- Jika menggunakan hasil pencarian, tulis pengarang (jika ada), tahun, judul, dan penerbit/sumber
-- Jika tidak ada hasil pencarian yang relevan, gunakan pengetahuanmu tentang buku teks akademik yang sesuai`
+UNTUK REFERENSI KE-2:
+- WAJIB dari BUKU CETAK atau KARYA ILMIAH (jurnal terakreditasi, skripsi, tesis, disertasi)
+- DILARANG menggunakan URL/website sebagai referensi ke-2
+- Gunakan pengetahuanmu tentang buku teks akademik yang relevan dengan mata kuliah ${context.course_name}
+- Buku harus dari penerbit resmi Indonesia (Erlangga, Gramedia, Salemba Empat, Rajawali Pers, Andi Offset, Kencana, dll) atau penerbit internasional terkemuka
+- Format: [Nama Pengarang]. ([Tahun]). [Judul Buku]. [Penerbit].`
   }
   return basePrompt
 }

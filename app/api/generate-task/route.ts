@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { generate } from '@/lib/ai'
-import { combinedSearch, formatSearchResultsForPrompt } from '@/lib/search'
+import { combinedSearch, formatSearchResultsForPrompt, searchModuleMetadata } from '@/lib/search'
 import { buildSystemPrompt, buildUserPrompt } from '@/lib/prompts/task-generation'
 import { isProviderConfigured } from '@/lib/ai'
 
@@ -113,6 +113,8 @@ export async function POST(request: NextRequest) {
     let usedProviderType: string | null = null
     let usedModel: string | null = null
 
+    const moduleMetadata = await searchModuleMetadata(body.module_book_title, profile.university_name)
+
     const isDiscussionMulti = body.task_type === 'DISCUSSION' && body.questions.length > 1
 
     if (isDiscussionMulti) {
@@ -139,6 +141,7 @@ export async function POST(request: NextRequest) {
         task_description: body.task_description || undefined,
         question_index: 0,
         total_questions: body.questions.length,
+        module_metadata: moduleMetadata || undefined,
       })
 
       const userPrompt = buildUserPrompt({
@@ -156,6 +159,7 @@ export async function POST(request: NextRequest) {
         task_description: body.task_description || undefined,
         question_index: 0,
         total_questions: body.questions.length,
+        module_metadata: moduleMetadata || undefined,
       })
 
       const result = await generate({ systemPrompt, userPrompt, maxTokens, temperature: 0.7 })
@@ -194,6 +198,7 @@ export async function POST(request: NextRequest) {
           task_description: body.task_description || undefined,
           question_index: i,
           total_questions: body.questions.length,
+          module_metadata: moduleMetadata || undefined,
         })
 
         const userPrompt = buildUserPrompt({
@@ -211,6 +216,7 @@ export async function POST(request: NextRequest) {
           task_description: body.task_description || undefined,
           question_index: i,
           total_questions: body.questions.length,
+          module_metadata: moduleMetadata || undefined,
         })
 
         const result = await generate({ systemPrompt, userPrompt, maxTokens, temperature: 0.7 })
