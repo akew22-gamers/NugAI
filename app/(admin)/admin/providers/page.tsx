@@ -31,10 +31,13 @@ interface Provider {
   base_url: string
   default_model: string
   is_active: boolean
+  priority?: number
   available_models?: {
     models: Array<{ id: string; name?: string; owned_by?: string }>
     fetched_at: string
   }
+  last_model_fetch?: Date
+}
   last_model_fetch?: Date
 }
 
@@ -74,6 +77,7 @@ export default function AdminProvidersPage() {
   const [baseUrl, setBaseUrl] = useState(PRESET_BASE_URLS["DEEPSEEK"])
   const [apiKey, setApiKey] = useState("")
   const [defaultModel, setDefaultModel] = useState("")
+  const [priority, setPriority] = useState(0)
   const [isSaving, setIsSaving] = useState(false)
 
   useEffect(() => {
@@ -169,6 +173,7 @@ export default function AdminProvidersPage() {
             base_url: providerType === "CUSTOM" ? baseUrl : undefined,
             api_key: apiKey || undefined,
             default_model: defaultModel || undefined,
+            priority,
           }
         : {
             provider_type: providerType,
@@ -176,6 +181,15 @@ export default function AdminProvidersPage() {
             base_url: baseUrl,
             api_key: apiKey,
             default_model: defaultModel || "",
+            priority,
+          }
+        : {
+            provider_type: providerType,
+            provider_name: providerType === "CUSTOM" ? providerName : "",
+            base_url: baseUrl,
+            api_key: apiKey,
+            default_model: defaultModel || "",
+            priority,
           }
 
       const response = await fetch(url, {
@@ -282,6 +296,7 @@ export default function AdminProvidersPage() {
     setBaseUrl(provider.base_url)
     setApiKey("")
     setDefaultModel(provider.default_model)
+    setPriority(provider.priority || 0)
     
     if (provider.available_models?.models) {
       setAvailableModels(provider.available_models.models)
@@ -298,6 +313,7 @@ export default function AdminProvidersPage() {
     setBaseUrl(PRESET_BASE_URLS["DEEPSEEK"])
     setApiKey("")
     setDefaultModel("")
+    setPriority(0)
     setAvailableModels([])
   }
 
@@ -336,9 +352,8 @@ export default function AdminProvidersPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {(() => {
             const sortedProviders = [...providers].sort((a, b) => {
-              if (a.is_active && !b.is_active) return -1
-              if (!a.is_active && b.is_active) return 1
-              return 0
+              if (a.is_active !== b.is_active) return a.is_active ? -1 : 1;
+              return (b.priority || 0) - (a.priority || 0)
             })
             
             return sortedProviders.map((provider) => (
@@ -371,7 +386,23 @@ export default function AdminProvidersPage() {
                         )}
                       </CardDescription>
                     </div>
-                    <div className="flex items-center gap-2">
+            <div className="space-y-2">
+              <Label htmlFor="priority">Priority</Label>
+              <Input
+                id="priority"
+                type="number"
+                value={priority}
+                onChange={(e) => setPriority(parseInt(e.target.value) || 0)}
+                min={0}
+                max={100}
+                placeholder="0-100 (semakin tinggi = semakin prioritas)"
+              />
+              <p className="text-xs text-slate-500">
+                Provider dengan priority tertinggi akan digunakan pertama
+              </p>
+            </div>
+
+            <div className="flex items-center gap-2">
                       <Switch
                         checked={provider.is_active}
                         onCheckedChange={() => handleToggleActive(provider)}
@@ -390,6 +421,10 @@ export default function AdminProvidersPage() {
                       <span className="ml-2 text-slate-700">
                         {provider.default_model || "Tidak ada"}
                       </span>
+                    </div>
+                    <div className="text-sm">
+                      <span className="text-slate-500">Priority:</span>
+                      <span className="ml-2 text-slate-700 font-medium">{provider.priority || 0}</span>
                     </div>
                     {provider.last_model_fetch && (
                       <div className="text-sm">
@@ -420,7 +455,7 @@ export default function AdminProvidersPage() {
                     {provider.is_active && (
                       <div className="mt-3 p-3 rounded-lg bg-blue-50 border border-blue-100">
                         <p className="text-xs text-blue-700">
-                          <span className="font-semibold">Info:</span> Provider ini digunakan sebagai primary untuk failover.
+                          <span className="font-semibold">Info:</span> Provider aktif dengan priority tertinggi digunakan pertama. Failover otomatis ke provider berikutnya jika gagal.
                         </p>
                       </div>
                     )}
@@ -549,6 +584,22 @@ export default function AdminProvidersPage() {
                   {availableModels.length} model tersedia
                 </span>
               )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="priority">Priority</Label>
+              <Input
+                id="priority"
+                type="number"
+                value={priority}
+                onChange={(e) => setPriority(parseInt(e.target.value) || 0)}
+                min={0}
+                max={100}
+                placeholder="0-100 (semakin tinggi = semakin prioritas)"
+              />
+              <p className="text-xs text-slate-500">
+                Provider dengan priority tertinggi akan digunakan pertama saat generate tugas
+              </p>
             </div>
 
             <div className="flex items-center justify-end gap-2 pt-4">

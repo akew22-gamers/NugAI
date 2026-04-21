@@ -10,6 +10,9 @@ export interface TaskGenerationContext {
   search_context?: string
   student_name?: string
   student_nim?: string
+  task_description?: string
+  question_index?: number
+  total_questions?: number
 }
 
 export function buildSystemPrompt(context: TaskGenerationContext): string {
@@ -92,6 +95,10 @@ ATURAN UMUM REFERENSI:
   ];
   const dynamicGreeting = randomGreetings[Math.floor(Math.random() * randomGreetings.length)];
 
+  const multiQuestionInstruction = context.task_type === 'ASSIGNMENT' && context.total_questions && context.total_questions > 1
+    ? `\n\nINSTRUKSI PENANDA SOAL:\n- Ini adalah Soal ${(context.question_index ?? 0) + 1} dari ${context.total_questions} soal\n- WAJIB tulis "Jawaban Soal ${(context.question_index ?? 0) + 1}:" di baris pertama jawaban\n- Setelah label tersebut, langsung tulis jawaban\n`
+    : ''
+
   const structurePrompt = context.task_type === 'DISCUSSION'
     ? `FORMAT BAKU JAWABAN DISCUSSION — WAJIB IKUTI PERSIS:
 
@@ -124,7 +131,7 @@ CATATAN PENTING:
 - Header ditulis PERSIS seperti di atas: "Nama  : " dan "NIM   : " (dengan spasi sebelum tanda titik dua)
 - Referensi ditulis PERSIS dengan label "Referensi:" di baris tersendiri, lalu baris kosong, lalu nomor 1 dan 2
 - JANGAN menambahkan bagian atau label lain selain yang disebutkan di atas`
-    : `FORMAT BAKU JAWABAN ASSIGNMENT/SOAL:
+    : `FORMAT BAKU JAWABAN ASSIGNMENT/SOAL:${multiQuestionInstruction}
 
 BAGIAN 1 — BODY JAWABAN (${context.min_words_target}–${maxWords} kata):
 - Jawab langsung dan lengkap dalam paragraf naratif
@@ -162,8 +169,15 @@ NIM: ${context.student_nim}
 `
     : ''
 
-  const basePrompt = `${studentDataPrompt}Pertanyaan/Tugas:
-${context.question_text}
+  const descriptionBlock = context.task_description
+    ? `Konteks/Deskripsi Soal:\n${context.task_description}\n\n`
+    : ''
+
+  const questionLabel = context.task_type === 'ASSIGNMENT' && context.total_questions && context.total_questions > 1
+    ? `Pertanyaan Soal ${(context.question_index ?? 0) + 1} dari ${context.total_questions}:\n`
+    : 'Pertanyaan/Tugas:\n'
+
+  const basePrompt = `${studentDataPrompt}${descriptionBlock}${questionLabel}${context.question_text}
 
 Mata Kuliah: ${context.course_name}
 Modul Referensi: ${context.module_book_title}

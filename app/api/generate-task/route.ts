@@ -8,6 +8,7 @@ import { isProviderConfigured } from '@/lib/ai'
 
 interface GenerateTaskRequest {
   task_type: 'DISCUSSION' | 'ASSIGNMENT'
+  task_description: string
   course_id: string | null
   course_name: string
   module_book_title: string
@@ -117,7 +118,8 @@ export async function POST(request: NextRequest) {
 
     // Proses pertanyaan secara sequential — DeepSeek dan banyak provider lain
     // memiliki rate limit ketat yang menyebabkan error 429 jika dikirim paralel.
-    for (const question of body.questions) {
+    for (let i = 0; i < body.questions.length; i++) {
+      const question = body.questions[i]
       // 1. Search specific to this question
       const searchQuery = `${body.course_name} ${body.module_book_title} ${question}`
       const searchResults = await combinedSearch({
@@ -140,6 +142,9 @@ export async function POST(request: NextRequest) {
         task_type: body.task_type,
         question_text: question,
         search_context: searchContext,
+        task_description: body.task_description || undefined,
+        question_index: i,
+        total_questions: body.questions.length,
       })
 
       const userPrompt = buildUserPrompt({
@@ -154,6 +159,9 @@ export async function POST(request: NextRequest) {
         search_context: searchContext,
         student_name: profile.full_name,
         student_nim: profile.nim,
+        task_description: body.task_description || undefined,
+        question_index: i,
+        total_questions: body.questions.length,
       })
 
       const result = await generate({

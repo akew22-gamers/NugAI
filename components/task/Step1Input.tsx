@@ -10,7 +10,14 @@ import { OCRDropzone } from "@/components/task/OCRDropzone"
 import { Course } from "@/components/courses/CourseCard"
 import { TaskFormData } from "@/app/(student)/task/new/page"
 import { useSession } from "next-auth/react"
-import { Loader2, Plus, X, Search, ChevronDown, Check } from "lucide-react"
+import { Loader2, Plus, X, Search, ChevronDown, Check, Sparkles } from "lucide-react"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 
 interface Step1InputProps {
   initialData: TaskFormData
@@ -29,10 +36,12 @@ export function Step1Input({ initialData, onComplete, lockedTaskType }: Step1Inp
   const [moduleBookTitle, setModuleBookTitle] = useState(initialData.module_book_title)
   const [tutorName, setTutorName] = useState(initialData.tutor_name)
   const [minWords, setMinWords] = useState(initialData.min_words_target)
+  const [taskDescription, setTaskDescription] = useState(initialData.task_description || "")
   const [questions, setQuestions] = useState<string[]>(initialData.questions.length > 0 ? initialData.questions : [""])
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [courseSearch, setCourseSearch] = useState("")
   const [isCourseDropdownOpen, setIsCourseDropdownOpen] = useState(false)
+  const [isReviewModalOpen, setIsReviewModalOpen] = useState(false)
 
   useEffect(() => {
     if (status === "authenticated") {
@@ -132,9 +141,14 @@ export function Step1Input({ initialData, onComplete, lockedTaskType }: Step1Inp
 
   const handleSubmit = () => {
     if (!validate()) return
+    setIsReviewModalOpen(true)
+  }
 
+  const handleConfirmSubmit = () => {
+    setIsReviewModalOpen(false)
     onComplete({
       task_type: taskType,
+      task_description: taskDescription,
       course_id: selectedCourseId,
       course_name: courseName,
       module_book_title: moduleBookTitle,
@@ -282,7 +296,20 @@ export function Step1Input({ initialData, onComplete, lockedTaskType }: Step1Inp
       <Card className="rounded-xl border border-zinc-200 bg-white shadow-sm lg:col-span-2 flex flex-col">
         <CardContent className="p-6 pt-8 flex flex-col h-full">
           <div className="flex flex-col h-full space-y-4">
-            <div className="flex items-center justify-between">
+            <div className="space-y-2">
+              <Label>Deskripsi/Cerita Soal (Opsional)</Label>
+              <Textarea
+                value={taskDescription}
+                onChange={(e) => setTaskDescription(e.target.value)}
+                placeholder="Masukkan cerita kasus, deskripsi, atau konteks soal yang berlaku untuk semua pertanyaan di bawah ini"
+                className="min-h-[100px] resize-y"
+              />
+              <p className="text-xs text-slate-500">
+                Jika soal memiliki cerita/kasus yang sama, masukkan di sini. Deskripsi akan digunakan sebagai konteks untuk semua soal.
+              </p>
+            </div>
+
+            <div className="flex items-center justify-between mt-4">
               <Label>Soal/Tugas</Label>
               <Button variant="outline" size="sm" onClick={handleAddQuestion} className="gap-2">
                 <Plus className="w-4 h-4" />
@@ -328,6 +355,73 @@ export function Step1Input({ initialData, onComplete, lockedTaskType }: Step1Inp
           Generate Jawaban
         </Button>
       </div>
+
+      <Dialog open={isReviewModalOpen} onOpenChange={setIsReviewModalOpen}>
+        <DialogContent className="sm:max-w-lg max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Review Sebelum Generate</DialogTitle>
+            <DialogDescription>
+              Periksa kembali data sebelum memulai proses generate
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-2">
+            <div className="grid grid-cols-2 gap-3 text-sm">
+              <div>
+                <p className="text-slate-500">Jenis Tugas</p>
+                <p className="font-medium text-slate-900">
+                  {(lockedTaskType ?? taskType) === "DISCUSSION" ? "Tugas Diskusi" : "Tugas Soal"}
+                </p>
+              </div>
+              <div>
+                <p className="text-slate-500">Target Kata</p>
+                <p className="font-medium text-slate-900">{minWords} kata</p>
+              </div>
+              <div>
+                <p className="text-slate-500">Mata Kuliah</p>
+                <p className="font-medium text-slate-900">{courseName || "-"}</p>
+              </div>
+              <div>
+                <p className="text-slate-500">Modul/Buku</p>
+                <p className="font-medium text-slate-900">{moduleBookTitle || "-"}</p>
+              </div>
+              <div>
+                <p className="text-slate-500">Tutor</p>
+                <p className="font-medium text-slate-900">{tutorName || "-"}</p>
+              </div>
+            </div>
+
+            {taskDescription && (
+              <div className="border-t border-zinc-200 pt-3">
+                <p className="text-sm text-slate-500 mb-1">Deskripsi/Cerita Soal</p>
+                <p className="text-sm text-slate-700 whitespace-pre-wrap line-clamp-4">{taskDescription}</p>
+              </div>
+            )}
+
+            <div className="border-t border-zinc-200 pt-3">
+              <p className="text-sm text-slate-500 mb-2">Soal ({questions.filter(q => q.trim()).length})</p>
+              <div className="space-y-2">
+                {questions.filter(q => q.trim()).map((q, i) => (
+                  <div key={i} className="text-sm bg-zinc-50 rounded-lg p-3 border border-zinc-100">
+                    <span className="font-medium text-slate-700">Soal {i + 1}:</span>
+                    <span className="text-slate-600 ml-1 line-clamp-2">{q}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <div className="flex justify-end gap-2 pt-2">
+            <Button variant="outline" onClick={() => setIsReviewModalOpen(false)}>
+              Kembali
+            </Button>
+            <Button onClick={handleConfirmSubmit} className="bg-emerald-600 hover:bg-emerald-700 text-white gap-2">
+              <Sparkles className="w-4 h-4" />
+              Generate Jawaban
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

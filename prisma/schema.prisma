@@ -248,6 +248,7 @@ model AIProvider {
   available_models  Json?                               // Fetched models from provider endpoint
   default_model     String         @db.VarChar(100)     // Selected default model ID
   is_active         Boolean        @default(true)
+  priority          Int            @default(0)
   last_model_fetch  DateTime?
   created_at        DateTime       @default(now())
   updated_at        DateTime       @updatedAt

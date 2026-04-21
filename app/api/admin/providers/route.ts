@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json()
-    const { provider_type, provider_name, base_url, api_key, default_model } = body
+    const { provider_type, provider_name, base_url, api_key, default_model, priority } = body
 
     if (!provider_type || !api_key) {
       return NextResponse.json(
@@ -73,6 +73,7 @@ export async function POST(request: NextRequest) {
       base_url: base_url || '',
       api_key,
       default_model,
+      priority: typeof priority === 'number' ? priority : parseInt(priority) || 0,
     }
 
     const provider = await createAIProvider(input)
@@ -91,7 +92,7 @@ export async function PATCH(request: NextRequest) {
 
   try {
     const body = await request.json()
-    const { id, is_active, ...updates } = body
+    const { id, is_active, priority, ...updates } = body
 
     if (!id) {
       return NextResponse.json(
@@ -113,7 +114,11 @@ export async function PATCH(request: NextRequest) {
       }
     }
 
-    const input: UpdateAIProviderInput = { is_active, ...updates }
+    const input: UpdateAIProviderInput = { 
+      is_active, 
+      ...(priority !== undefined && { priority: typeof priority === 'number' ? priority : parseInt(priority) || 0 }),
+      ...updates 
+    }
     const provider = await updateAIProvider(id, input)
     return NextResponse.json({ provider })
   } catch (error) {

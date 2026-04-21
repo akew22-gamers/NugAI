@@ -16,6 +16,7 @@ export function TaskWizard({ defaultTaskType, title, subtitle }: TaskWizardProps
   const [step, setStep] = useState(1)
   const [formData, setFormData] = useState<TaskFormData>({
     task_type: defaultTaskType,
+    task_description: "",
     course_id: null,
     course_name: "",
     module_book_title: "",
@@ -105,6 +106,7 @@ export function TaskWizard({ defaultTaskType, title, subtitle }: TaskWizardProps
     setStep(1)
     setFormData({
       task_type: defaultTaskType,
+      task_description: "",
       course_id: null,
       course_name: "",
       module_book_title: "",

@@ -4,6 +4,7 @@ import { TaskWizard } from "@/components/task/TaskWizard"
 
 export interface TaskFormData {
   task_type: "DISCUSSION" | "ASSIGNMENT"
+  task_description: string
   course_id: string | null
   course_name: string
   module_book_title: string

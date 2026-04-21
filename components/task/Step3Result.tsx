@@ -46,8 +46,11 @@ export function Step3Result({
 
   const handleCopyAnswer = async (index: number) => {
     const answer = result.answers[index]
+    const label = formData.task_type === "ASSIGNMENT" && formData.questions.length > 1
+      ? `Jawaban Soal ${index + 1}:\n\n`
+      : ""
     try {
-      await navigator.clipboard.writeText(answer)
+      await navigator.clipboard.writeText(label + answer)
       setCopiedIndex(index)
       toast.success("Jawaban berhasil di-copy")
       setTimeout(() => setCopiedIndex(null), 2000)
@@ -174,6 +177,11 @@ export function Step3Result({
             className="prose prose-sm max-w-none max-h-[400px] overflow-y-auto pr-2"
             style={{ scrollbarWidth: 'thin', scrollbarColor: '#d4d4d8 #f4f4f5' }}
           >
+            {formData.task_type === "ASSIGNMENT" && formData.questions.length > 1 && (
+              <p className="font-semibold text-indigo-700 text-base mb-2">
+                Jawaban Soal {questionIndex + 1}
+              </p>
+            )}
             <p className="whitespace-pre-wrap text-zinc-700 leading-relaxed">
               {currentAnswer}
             </p>

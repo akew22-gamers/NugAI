@@ -9,6 +9,7 @@ export interface AIProviderConfig {
   base_url: string
   default_model: string
   is_active: boolean
+  priority: number
   available_models?: {
     models: Array<{ id: string; name?: string; owned_by?: string }>
     fetched_at: string
@@ -22,6 +23,7 @@ export interface CreateAIProviderInput {
   base_url: string
   api_key: string
   default_model?: string
+  priority?: number
 }
 
 export interface UpdateAIProviderInput {
@@ -30,6 +32,7 @@ export interface UpdateAIProviderInput {
   api_key?: string
   default_model?: string
   is_active?: boolean
+  priority?: number
 }
 
 export const PRESET_PROVIDERS: Record<AIProviderType, { name: string; base_url: string }> = {
@@ -51,9 +54,11 @@ export async function getActiveAIProvider(): Promise<AIProviderConfig | null> {
       api_key: true,
       default_model: true,
       is_active: true,
+      priority: true,
       available_models: true,
       last_model_fetch: true,
     },
+    orderBy: [{ priority: 'desc' }, { created_at: 'asc' }],
   })
 
   if (!provider) return null
@@ -65,6 +70,7 @@ export async function getActiveAIProvider(): Promise<AIProviderConfig | null> {
     base_url: provider.base_url,
     default_model: provider.default_model,
     is_active: provider.is_active,
+    priority: provider.priority,
     available_models: provider.available_models as AIProviderConfig['available_models'],
     last_model_fetch: provider.last_model_fetch ?? undefined,
   }
@@ -84,9 +90,11 @@ export async function getActiveProviderWithKey(): Promise<{
       api_key: true,
       default_model: true,
       is_active: true,
+      priority: true,
       available_models: true,
       last_model_fetch: true,
     },
+    orderBy: [{ priority: 'desc' }, { created_at: 'asc' }],
   })
 
   if (!provider) return null
@@ -101,6 +109,7 @@ export async function getActiveProviderWithKey(): Promise<{
       base_url: provider.base_url,
       default_model: provider.default_model,
       is_active: provider.is_active,
+      priority: provider.priority,
       available_models: provider.available_models as AIProviderConfig['available_models'],
       last_model_fetch: provider.last_model_fetch ?? undefined,
     },
@@ -117,10 +126,11 @@ export async function getAllAIProviders(): Promise<AIProviderConfig[]> {
       base_url: true,
       default_model: true,
       is_active: true,
+      priority: true,
       available_models: true,
       last_model_fetch: true,
     },
-    orderBy: { created_at: 'desc' },
+    orderBy: [{ priority: 'desc' }, { created_at: 'asc' }],
   })
 
   return providers.map((p) => ({
@@ -130,6 +140,7 @@ export async function getAllAIProviders(): Promise<AIProviderConfig[]> {
     base_url: p.base_url,
     default_model: p.default_model,
     is_active: p.is_active,
+    priority: p.priority,
     available_models: p.available_models as AIProviderConfig['available_models'],
     last_model_fetch: p.last_model_fetch ?? undefined,
   }))
@@ -150,6 +161,7 @@ export async function createAIProvider(input: CreateAIProviderInput): Promise<AI
       api_key: encryptedKey,
       default_model: input.default_model || '',
       is_active: true,
+      priority: input.priority ?? 0,
     },
   })
 
@@ -160,6 +172,7 @@ export async function createAIProvider(input: CreateAIProviderInput): Promise<AI
     base_url: provider.base_url,
     default_model: provider.default_model,
     is_active: provider.is_active,
+    priority: provider.priority,
   }
 }
 
@@ -174,6 +187,7 @@ export async function updateAIProvider(
   if (input.api_key) updateData.api_key = encryptApiKey(input.api_key)
   if (input.default_model) updateData.default_model = input.default_model
   if (input.is_active !== undefined) updateData.is_active = input.is_active
+  if (input.priority !== undefined) updateData.priority = input.priority
 
   const provider = await prisma.aIProvider.update({
     where: { id },
@@ -187,6 +201,7 @@ export async function updateAIProvider(
     base_url: provider.base_url,
     default_model: provider.default_model,
     is_active: provider.is_active,
+    priority: provider.priority,
     available_models: provider.available_models as AIProviderConfig['available_models'],
     last_model_fetch: provider.last_model_fetch ?? undefined,
   }
