@@ -168,23 +168,23 @@ export default function TaskHistoryPage() {
       </div>
 
       {tasks.length === 0 ? (
-        <Card className="border-dashed border-2 border-slate-200">
-          <CardContent className="px-6 py-16 flex flex-col items-center justify-center text-center min-h-[300px]">
-            <div className="w-16 h-16 rounded-2xl bg-slate-100 flex items-center justify-center mb-5">
-              <FileText className="w-8 h-8 text-slate-400" />
+        <div className="border-2 border-dashed border-slate-200 rounded-xl flex items-center justify-center min-h-[350px] p-8">
+          <div className="flex flex-col items-center text-center max-w-xs">
+            <div className="w-14 h-14 rounded-xl bg-slate-100 flex items-center justify-center">
+              <FileText className="w-7 h-7 text-slate-400" />
             </div>
-            <h3 className="text-lg font-semibold text-slate-900">Belum ada tugas</h3>
-            <p className="text-slate-500 mt-2 max-w-sm">
-              Anda belum pernah membuat tugas. Mulai buat tugas pertama Anda dengan bantuan AI.
+            <h3 className="text-lg font-semibold text-slate-900 mt-5">Belum ada tugas</h3>
+            <p className="text-sm text-slate-500 mt-2 leading-relaxed">
+              Anda belum pernah membuat tugas. Mulai buat tugas pertama dengan bantuan AI.
             </p>
-            <Link href="/task/new" className="mt-6">
+            <Link href="/task/new" className="mt-5">
               <Button className="gap-2 bg-indigo-600 hover:bg-indigo-700 text-white">
                 <Plus className="w-4 h-4" />
                 Buat Tugas Baru
               </Button>
             </Link>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       ) : (
         <div className="space-y-3">
           {tasks.map((task) => (
