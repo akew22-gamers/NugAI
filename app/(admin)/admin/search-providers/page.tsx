@@ -265,7 +265,7 @@ export default function AdminSearchProvidersPage() {
                         type="submit"
                         size="sm"
                         disabled={isSaving === "TAVILY" || !tavilyApiKey}
-                        className="gap-2"
+                        className="gap-2 bg-blue-600 hover:bg-blue-700 text-white disabled:bg-slate-200 disabled:text-slate-400 disabled:cursor-not-allowed"
                       >
                         {isSaving === "TAVILY" ? "Menyimpan..." : "Simpan API Key Baru"}
                       </Button>
@@ -383,7 +383,7 @@ export default function AdminSearchProvidersPage() {
                         type="submit"
                         size="sm"
                         disabled={isSaving === "EXA" || !exaApiKey}
-                        className="gap-2"
+                        className="gap-2 bg-purple-600 hover:bg-purple-700 text-white disabled:bg-slate-200 disabled:text-slate-400 disabled:cursor-not-allowed"
                       >
                         {isSaving === "EXA" ? "Menyimpan..." : "Simpan API Key Baru"}
                       </Button>
