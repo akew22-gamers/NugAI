@@ -168,15 +168,17 @@ export default function TaskHistoryPage() {
       </div>
 
       {tasks.length === 0 ? (
-        <Card>
-          <CardContent className="py-12 flex flex-col items-center justify-center text-center">
-            <FileText className="w-12 h-12 text-slate-400 mb-4" />
-            <h3 className="font-semibold text-slate-900">Belum ada tugas</h3>
-            <p className="text-slate-500 mt-2">
-              Mulai buat tugas pertama Anda dengan AI
+        <Card className="border-dashed border-2 border-slate-200">
+          <CardContent className="px-6 py-16 flex flex-col items-center justify-center text-center min-h-[300px]">
+            <div className="w-16 h-16 rounded-2xl bg-slate-100 flex items-center justify-center mb-5">
+              <FileText className="w-8 h-8 text-slate-400" />
+            </div>
+            <h3 className="text-lg font-semibold text-slate-900">Belum ada tugas</h3>
+            <p className="text-slate-500 mt-2 max-w-sm">
+              Anda belum pernah membuat tugas. Mulai buat tugas pertama Anda dengan bantuan AI.
             </p>
-            <Link href="/task/new" className="mt-4">
-              <Button className="gap-2">
+            <Link href="/task/new" className="mt-6">
+              <Button className="gap-2 bg-indigo-600 hover:bg-indigo-700 text-white">
                 <Plus className="w-4 h-4" />
                 Buat Tugas Baru
               </Button>
