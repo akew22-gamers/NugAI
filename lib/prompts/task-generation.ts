@@ -57,13 +57,13 @@ GAYA YANG DIHARAPKAN:
   const referencePrompt = `WAJIB tulis REFERENSI di AKHIR jawaban.
 ${moduleMetadataBlock}
 ATURAN REFERENSI KE-1 (MODUL/BUKU UTAMA):
-- Referensi ke-1 adalah modul/buku pegangan utama: "${context.module_book_title}" dari ${context.university_name}
+- Referensi ke-1 adalah modul/buku pegangan utama: "${context.module_book_title}"
 - Modul/buku ini adalah SUMBER UTAMA untuk menjawab pertanyaan — jawaban HARUS berdasarkan materi dari modul ini
 - JANGAN PERNAH menulis nama Dosen/Tutor (${context.tutor_name}) sebagai pengarang referensi ke-1
 - Pengarang modul BUKAN ${context.tutor_name} - JANGAN tulis nama tutor sebagai pengarang
-- FORMAT LENGKAP yang diharapkan: [Pengarang/Tim Penyusun]. ([Tahun]). ${context.module_book_title}. [Edisi jika ada]. [Penerbit/${context.university_name}].
+- FORMAT LENGKAP yang diharapkan: [Pengarang/Tim Penyusun]. ([Tahun]). ${context.module_book_title}. [Edisi jika ada]. [Penerbit].
 - Jika dari hasil riset metadata di atas ditemukan pengarang, tahun, edisi, atau penerbit — WAJIB gunakan data tersebut
-- Jika pengarang tidak ditemukan, tulis: Tim Penyusun ${context.university_name}. ([Tahun jika ditemukan, atau tanpa tahun]). ${context.module_book_title}. ${context.university_name}.
+- Jika pengarang tidak ditemukan, tulis: Tim Penyusun. ([Tahun jika ditemukan, atau tanpa tahun]). ${context.module_book_title}. [Penerbit jika ditemukan].
 - PRIORITAS: data dari hasil riset metadata > pengetahuan umum > format default
 
 ATURAN REFERENSI KE-2 (SUMBER PENDUKUNG):
@@ -139,7 +139,7 @@ BAGIAN 5 — REFERENSI (tidak dihitung word count BODY):
 [baris kosong]
 Referensi:
 [baris kosong]
-1. [Pengarang/Tim Penyusun]. ([Tahun]). ${context.module_book_title}. [Edisi]. ${context.university_name}.
+1. [Pengarang/Tim Penyusun]. ([Tahun]). ${context.module_book_title}. [Edisi]. [Penerbit].
 2. [Nama Pengarang]. ([Tahun]). [Judul Buku/Karya Ilmiah]. [Penerbit/Jurnal].
 
 CATATAN PENTING:
@@ -158,7 +158,7 @@ BAGIAN 2 — REFERENSI (tidak dihitung word count):
 [baris kosong]
 Referensi:
 [baris kosong]
-1. [Pengarang/Tim Penyusun]. ([Tahun]). ${context.module_book_title}. [Edisi]. ${context.university_name}.
+1. [Pengarang/Tim Penyusun]. ([Tahun]). ${context.module_book_title}. [Edisi]. [Penerbit].
 2. [Nama Pengarang]. ([Tahun]). [Judul Buku/Karya Ilmiah]. [Penerbit/Jurnal].
 
 CATATAN: Word Count = seluruh isi jawaban (TIDAK termasuk bagian Referensi).`
@@ -205,7 +205,7 @@ INSTRUKSI KRITIS:
 2. BODY = Salam Pembuka + Isi Argumentasi + Penutup (tidak termasuk Header Nama/NIM dan Referensi)
 3. JAWABAN HARUS LENGKAP DAN UTUH - tidak boleh terpotong di tengah kalimat atau paragraf
 4. Tulis Referensi DI AKHIR (tidak dihitung word count)
-5. Referensi ke-1: tulis modul "${context.module_book_title}" dari ${context.university_name} dengan format lengkap (pengarang, tahun, edisi jika ada) berdasarkan hasil riset metadata - JANGAN tulis ${context.tutor_name} sebagai pengarang
+5. Referensi ke-1: tulis modul "${context.module_book_title}" dengan format lengkap (pengarang, tahun, edisi, penerbit) berdasarkan hasil riset metadata - JANGAN tulis ${context.tutor_name} sebagai pengarang
 6. Referensi ke-2: WAJIB dari BUKU CETAK atau KARYA ILMIAH (jurnal/skripsi/tesis) — DILARANG dari website/online apapun
 7. JANGAN gunakan simbol atau karakter aneh
 8. Hitung jumlah kata BODY dengan teliti sebelum selesai`
