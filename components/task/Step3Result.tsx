@@ -180,9 +180,12 @@ export function Step3Result({
             style={{ scrollbarWidth: 'thin', scrollbarColor: '#d4d4d8 #f4f4f5' }}
           >
             {formData.task_type === "ASSIGNMENT" && formData.questions.length > 1 && (
-              <p className="font-semibold text-indigo-700 text-base mb-2">
-                {questionIndex + 1}.
-              </p>
+              <div className="mb-4">
+                <p className="font-semibold text-indigo-700 text-base">Soal No {questionIndex + 1}</p>
+                <p className="text-slate-500 text-sm mt-1 font-medium">Pertanyaan:</p>
+                <p className="text-slate-600 text-sm mt-0.5 whitespace-pre-wrap">{formData.questions[questionIndex]}</p>
+                <p className="text-slate-500 text-sm mt-3 font-medium">Jawaban:</p>
+              </div>
             )}
             <p className="whitespace-pre-wrap text-zinc-700 leading-relaxed">
               {currentAnswer}

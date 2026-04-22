@@ -110,7 +110,6 @@ const styles = StyleSheet.create({
   },
   referenceHeader: {
     fontSize: 12,
-    fontWeight: 'bold',
     marginBottom: 10,
   },
   referenceItem: {
@@ -333,6 +332,10 @@ function parseAnswerWithReferences(answerText: string): {
   return { body: bodyText, references }
 }
 
+function stripLeadingNumber(text: string): string {
+  return text.replace(/^\d+\.\s*/, '').trim()
+}
+
 function AssignmentTemplate({ data }: { data: PDFData }) {
   return (
     <Document>
@@ -352,10 +355,11 @@ function AssignmentTemplate({ data }: { data: PDFData }) {
         <Text style={styles.soalListHeader}>JAWABAN</Text>
         {data.taskItems.map((item, index) => {
           const { body, references } = parseAnswerWithReferences(item.answer_text)
+          const cleanBody = stripLeadingNumber(body)
           return (
-            <View key={index} wrap={false} style={{ marginBottom: 20 }}>
+            <View key={index} style={{ marginBottom: 24 }}>
               <Text style={styles.questionHeader}>Jawaban No. {index + 1}</Text>
-              <Text style={styles.discussionBody}>{body}</Text>
+              <Text style={styles.discussionBody}>{cleanBody}</Text>
               {references.length > 0 && (
                 <View style={styles.referenceSection}>
                   <Text style={styles.referenceHeader}>Referensi:</Text>
