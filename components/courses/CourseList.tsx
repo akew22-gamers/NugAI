@@ -37,10 +37,10 @@ export function CourseList({
           <BookOpen className="w-8 h-8 text-zinc-400" />
         </div>
         <h3 className="text-lg font-semibold text-zinc-900 mb-1">
-          Belum ada course
+          Belum ada mata kuliah
         </h3>
         <p className="text-sm text-zinc-500 text-center max-w-sm">
-          Tambah course pertama Anda untuk mulai membuat tugas.
+          Tambah mata kuliah pertama Anda untuk mulai membuat tugas.
         </p>
       </div>
     )

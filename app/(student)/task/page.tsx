@@ -196,36 +196,36 @@ export default function TaskHistoryPage() {
           {tasks.map((task) => (
             <Card key={task.id} className="hover:border-zinc-300 transition-colors">
               <CardContent className="p-0">
-                <div className="flex items-center justify-between px-4 py-3">
+                <div className="p-4">
                   <Link
                     href={`/task/${task.id}`}
-                    className="flex items-center gap-3 flex-1"
+                    className="flex items-start gap-3"
                   >
                     <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-zinc-200 bg-white">
                       <CheckCircle2 className="h-5 w-5 text-emerald-600" />
                     </div>
-                    <div className="flex flex-col justify-center min-h-0">
-                      <h3 className="font-medium text-slate-900 hover:text-indigo-600 leading-tight">
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-medium text-slate-900 hover:text-indigo-600 leading-tight truncate">
                         {task.course_name || "Tugas Tanpa Mata Kuliah"}
                       </h3>
                       <p className="text-sm text-slate-500 leading-tight mt-0.5">
-                        {getTaskTypeLabel(task.task_type)} • {task.items_count} soal • Panjang {getLengthLabel(task.min_words_target)}
+                        {getTaskTypeLabel(task.task_type)} • {task.items_count} soal • {getLengthLabel(task.min_words_target)}
                       </p>
                       {task.module_book_title && (
-                        <p className="text-xs text-slate-400 leading-tight mt-0.5">
+                        <p className="text-xs text-slate-400 leading-tight mt-0.5 truncate">
                           Modul: {task.module_book_title}
                         </p>
                       )}
                     </div>
                   </Link>
-                  <div className="flex items-center gap-3 shrink-0">
-                    <p className="text-xs text-slate-400 text-right">
+                  <div className="flex items-center justify-between mt-2 pt-2 border-t border-zinc-100">
+                    <p className="text-xs text-slate-400">
                       {formatDate(task.created_at)}
                     </p>
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                      className="text-red-600 hover:text-red-700 hover:bg-red-50 -mr-2"
                       onClick={() => openDeleteDialog(task.id)}
                     >
                       <Trash2 className="w-4 h-4" />

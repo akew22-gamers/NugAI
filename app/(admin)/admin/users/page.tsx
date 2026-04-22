@@ -298,52 +298,54 @@ export default function AdminUsersPage() {
           {users.map((user) => (
             <Card key={user.id} className="overflow-hidden">
               <CardContent className="p-0">
-                <div className="flex items-center gap-4 p-4 px-6">
-                  <div className="flex items-center justify-center w-10 h-10 rounded-full bg-slate-100 shrink-0">
-                    {user.role === "ADMIN" ? (
-                      <Crown className="w-5 h-5 text-amber-600" />
-                    ) : (
-                      <User className="w-5 h-5 text-slate-600" />
-                    )}
-                  </div>
-                  
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <p className="font-semibold text-slate-900">{user.username}</p>
-                      <span
-                        className={`text-xs font-medium px-2 py-0.5 rounded-full ${
-                          user.subscription_tier === "PREMIUM"
-                            ? "text-amber-700 bg-amber-100"
-                            : "text-slate-600 bg-slate-100"
-                        }`}
-                      >
-                        {user.subscription_tier}
-                      </span>
-                      <span
-                        className={`text-xs font-medium px-2 py-0.5 rounded-full ${
-                          user.role === "ADMIN"
-                            ? "text-purple-700 bg-purple-100"
-                            : "text-emerald-700 bg-emerald-100"
-                        }`}
-                      >
-                        {user.role === "ADMIN" ? "Admin" : "Student"}
-                      </span>
+                <div className="p-4">
+                  <div className="flex items-start gap-3">
+                    <div className="flex items-center justify-center w-10 h-10 rounded-full bg-slate-100 shrink-0">
+                      {user.role === "ADMIN" ? (
+                        <Crown className="w-5 h-5 text-amber-600" />
+                      ) : (
+                        <User className="w-5 h-5 text-slate-600" />
+                      )}
                     </div>
-                    {user.student_profile && (
-                      <p className="text-sm text-slate-600 mt-1">
-                        {user.student_profile.full_name} • {user.student_profile.nim}
+                    
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <p className="font-semibold text-slate-900">{user.username}</p>
+                        <span
+                          className={`text-xs font-medium px-2 py-0.5 rounded-full ${
+                            user.subscription_tier === "PREMIUM"
+                              ? "text-amber-700 bg-amber-100"
+                              : "text-slate-600 bg-slate-100"
+                          }`}
+                        >
+                          {user.subscription_tier}
+                        </span>
+                        <span
+                          className={`text-xs font-medium px-2 py-0.5 rounded-full ${
+                            user.role === "ADMIN"
+                              ? "text-purple-700 bg-purple-100"
+                              : "text-emerald-700 bg-emerald-100"
+                          }`}
+                        >
+                          {user.role === "ADMIN" ? "Admin" : "Student"}
+                        </span>
+                      </div>
+                      {user.student_profile && (
+                        <p className="text-sm text-slate-600 mt-1 truncate">
+                          {user.student_profile.full_name} • {user.student_profile.nim}
+                        </p>
+                      )}
+                      <p className="text-xs text-slate-400 mt-1">
+                        {user._count.task_sessions} tugas • {new Date(user.created_at).toLocaleDateString("id-ID")}
                       </p>
-                    )}
-                    <p className="text-xs text-slate-400 mt-1">
-                      {user._count.task_sessions} tugas • {new Date(user.created_at).toLocaleDateString("id-ID")}
-                    </p>
+                    </div>
                   </div>
                   
-                  <div className="flex items-center gap-2 shrink-0">
+                  <div className="flex items-center gap-2 mt-3 pt-3 border-t border-slate-100">
                     <button
                       onClick={() => handleUpdateTier(user.id, user.subscription_tier === "FREE" ? "PREMIUM" : "FREE")}
                       className={cn(
-                        "relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2",
+                        "relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 shrink-0",
                         user.subscription_tier === "PREMIUM" ? "bg-amber-500" : "bg-slate-200"
                       )}
                     >
@@ -355,24 +357,25 @@ export default function AdminUsersPage() {
                       />
                     </button>
                     <span className={cn(
-                      "text-xs font-medium",
+                      "text-xs font-medium shrink-0",
                       user.subscription_tier === "PREMIUM" ? "text-amber-600" : "text-slate-500"
                     )}>
                       {user.subscription_tier}
                     </span>
+                    <div className="flex-1" />
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={() => openResetPasswordDialog(user)}
-                      className="gap-1"
+                      className="gap-1 shrink-0"
                     >
                       <KeyRound className="w-4 h-4" />
-                      Reset
+                      <span className="hidden sm:inline">Reset</span>
                     </Button>
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="text-red-600 hover:text-red-700 hover:bg-red-50 gap-1"
+                      className="text-red-600 hover:text-red-700 hover:bg-red-50 shrink-0"
                       onClick={() => openDeleteDialog(user)}
                     >
                       <Trash2 className="w-4 h-4" />

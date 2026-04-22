@@ -55,7 +55,7 @@ export function CourseCard({ course, onEdit, onDelete, className }: CourseCardPr
         <div
           className={cn(
             "flex items-center gap-1 transition-opacity duration-200",
-            showActions ? "opacity-100" : "opacity-0"
+            "opacity-100 sm:opacity-0 sm:group-hover:opacity-100"
           )}
         >
           <Button

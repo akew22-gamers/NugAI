@@ -62,7 +62,7 @@ export default function CoursesPage() {
         throw new Error(error.error || "Gagal menambahkan course")
       }
 
-      toast.success("Course berhasil ditambahkan")
+      toast.success("Mata kuliah berhasil ditambahkan")
       await fetchCourses()
       setIsModalOpen(false)
     } catch (error) {
@@ -95,7 +95,7 @@ export default function CoursesPage() {
         throw new Error(error.error || "Gagal mengupdate course")
       }
 
-      toast.success("Course berhasil diperbarui")
+      toast.success("Mata kuliah berhasil diperbarui")
       await fetchCourses()
       setIsModalOpen(false)
       setEditingCourse(null)
@@ -125,7 +125,7 @@ export default function CoursesPage() {
         throw new Error(error.error || "Gagal menghapus course")
       }
 
-      toast.success("Course berhasil dihapus")
+      toast.success("Mata kuliah berhasil dihapus")
       await fetchCourses()
     } catch (error) {
       const message = error instanceof Error ? error.message : "Terjadi kesalahan"
@@ -180,14 +180,14 @@ export default function CoursesPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-zinc-900">Courses</h1>
+          <h1 className="text-2xl font-bold text-zinc-900">Mata Kuliah</h1>
           <p className="text-sm text-zinc-500 mt-1">
             Kelola mata kuliah yang sedang Anda ambil
           </p>
         </div>
         <Button onClick={openAddModal} className="gap-2">
           <Plus className="w-4 h-4" />
-          Tambah Course
+          Tambah
         </Button>
       </div>
 
