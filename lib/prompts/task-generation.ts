@@ -184,6 +184,11 @@ CATATAN PENTING:
 - JANGAN menambahkan bagian atau label lain selain yang disebutkan di atas`
     : `FORMAT BAKU JAWABAN ASSIGNMENT/SOAL:${assignmentMultiInstruction}
 
+LARANGAN IDENTITAS:
+- JANGAN PERNAH menulis Nama, NIM, atau identitas mahasiswa di jawaban
+- JANGAN menulis header "Nama :", "NIM :", atau data pribadi apapun
+- Langsung tulis jawaban tanpa identitas
+
 BAGIAN 1 — BODY JAWABAN (${context.min_words_target}–${maxWords} kata):
 - Jawab langsung dan lengkap dalam paragraf naratif
 - Minimal 2 paragraf argumentasi dengan bukti dan contoh konkret

@@ -61,13 +61,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   coverTitle: {
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: 'bold',
     textAlign: 'center',
     marginBottom: 10,
   },
   coverSubtitle: {
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: 'bold',
     textAlign: 'center',
     marginBottom: 20,
@@ -88,13 +88,13 @@ const styles = StyleSheet.create({
     marginBottom: 15,
   },
   coverFooter: {
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: 'bold',
     textAlign: 'center',
     marginTop: 40,
   },
   coverFooterLine: {
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: 'bold',
     textAlign: 'center',
     marginBottom: 8,
@@ -113,18 +113,18 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   referenceItem: {
-    fontSize: 11,
+    fontSize: 12,
     marginBottom: 8,
     lineHeight: 1.15,
     flexDirection: 'row',
   },
   referenceNumber: {
-    fontSize: 11,
+    fontSize: 12,
     lineHeight: 1.15,
     width: 18,
   },
   referenceText: {
-    fontSize: 11,
+    fontSize: 12,
     lineHeight: 1.15,
     flex: 1,
   },
@@ -149,7 +149,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   soalListHeader: {
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: 'bold',
     textAlign: 'center',
     marginBottom: 20,
@@ -163,7 +163,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   questionHeader: {
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: 'bold',
     marginBottom: 15,
   },
@@ -351,14 +351,16 @@ function AssignmentTemplate({ data }: { data: PDFData }) {
         ))}
       </Page>
 
-      <Page size={PAGE_SIZE} style={styles.page} wrap>
+      <Page size={PAGE_SIZE} style={styles.page}>
         <Text style={styles.soalListHeader}>JAWABAN</Text>
-        {data.taskItems.map((item, index) => {
-          const { body, references } = parseAnswerWithReferences(item.answer_text)
+        {(() => {
+          const firstItem = data.taskItems[0]
+          if (!firstItem) return null
+          const { body, references } = parseAnswerWithReferences(firstItem.answer_text)
           const cleanBody = stripLeadingNumber(body)
           return (
-            <View key={index} style={{ marginBottom: 24 }}>
-              <Text style={styles.questionHeader}>Jawaban No. {index + 1}</Text>
+            <View>
+              <Text style={styles.questionHeader}>Jawaban No. 1</Text>
               <Text style={styles.discussionBody}>{cleanBody}</Text>
               {references.length > 0 && (
                 <View style={styles.referenceSection}>
@@ -373,8 +375,30 @@ function AssignmentTemplate({ data }: { data: PDFData }) {
               )}
             </View>
           )
-        })}
+        })()}
       </Page>
+
+      {data.taskItems.slice(1).map((item, idx) => {
+        const { body, references } = parseAnswerWithReferences(item.answer_text)
+        const cleanBody = stripLeadingNumber(body)
+        return (
+          <Page key={idx + 1} size={PAGE_SIZE} style={styles.page}>
+            <Text style={styles.questionHeader}>Jawaban No. {idx + 2}</Text>
+            <Text style={styles.discussionBody}>{cleanBody}</Text>
+            {references.length > 0 && (
+              <View style={styles.referenceSection}>
+                <Text style={styles.referenceHeader}>Referensi:</Text>
+                {references.map((ref, refIdx) => (
+                  <View key={refIdx} style={styles.referenceItem}>
+                    <Text style={styles.referenceNumber}>{ref.number}</Text>
+                    <Text style={styles.referenceText}>{ref.text}</Text>
+                  </View>
+                ))}
+              </View>
+            )}
+          </Page>
+        )
+      })}
     </Document>
   )
 }
