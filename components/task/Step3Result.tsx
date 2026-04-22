@@ -98,7 +98,6 @@ export function Step3Result({
 
   const currentAnswer = result.answers[questionIndex] || ""
   const wordCount = countWords(currentAnswer)
-  const meetsTarget = wordCount >= formData.min_words_target
   const regenCount = regenerateCounts[questionIndex] || 0
 
   return (
@@ -167,8 +166,8 @@ export function Step3Result({
           </div>
           <div className="flex items-center gap-2 mt-1">
             {isProcessing && <Loader2 className="w-4 h-4 animate-spin text-zinc-600" />}
-            <span className={`text-sm ${meetsTarget ? "text-emerald-600" : "text-amber-600"}`}>
-              {wordCount} kata {meetsTarget ? "✓" : `(min: ${formData.min_words_target})`}
+            <span className="text-sm text-slate-600">
+              {wordCount} kata
             </span>
           </div>
         </CardHeader>

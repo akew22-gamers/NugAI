@@ -18,6 +18,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
+import { cn } from "@/lib/utils"
 
 interface Step1InputProps {
   initialData: TaskFormData
@@ -35,7 +36,7 @@ export function Step1Input({ initialData, onComplete, lockedTaskType }: Step1Inp
   const [courseName, setCourseName] = useState(initialData.course_name)
   const [moduleBookTitle, setModuleBookTitle] = useState(initialData.module_book_title)
   const [tutorName, setTutorName] = useState(initialData.tutor_name)
-  const [minWords, setMinWords] = useState<string>(String(initialData.min_words_target))
+  const [answerLength, setAnswerLength] = useState<"SHORT" | "MEDIUM" | "LONG">(initialData.answer_length || "MEDIUM")
   const [taskDescription, setTaskDescription] = useState(initialData.task_description || "")
   const [questions, setQuestions] = useState<string[]>(initialData.questions.length > 0 ? initialData.questions : [""])
   const [errors, setErrors] = useState<Record<string, string>>({})
@@ -126,13 +127,6 @@ export function Step1Input({ initialData, onComplete, lockedTaskType }: Step1Inp
       newErrors.tutorName = "Nama tutor wajib diisi"
     }
 
-    const minWordsNum = parseInt(minWords)
-    if (!minWords.trim() || isNaN(minWordsNum)) {
-      newErrors.minWords = "Target kata harus diisi dengan angka"
-    } else if (minWordsNum < 100) {
-      newErrors.minWords = "Minimal 100 kata"
-    }
-
     const emptyQuestions = questions.filter((q) => !q.trim())
     if (emptyQuestions.length === questions.length) {
       newErrors.questions = "Minimal 1 soal wajib diisi"
@@ -156,7 +150,7 @@ export function Step1Input({ initialData, onComplete, lockedTaskType }: Step1Inp
       course_name: courseName,
       module_book_title: moduleBookTitle,
       tutor_name: tutorName,
-      min_words_target: parseInt(minWords) || 300,
+      answer_length: answerLength,
       questions: questions.filter((q) => q.trim()),
     })
   }
@@ -279,21 +273,29 @@ export function Step1Input({ initialData, onComplete, lockedTaskType }: Step1Inp
             </div>
 
             <div>
-              <Label>Target Minimal Kata</Label>
-              <Input
-                type="text"
-                inputMode="numeric"
-                value={minWords}
-                onChange={(e) => {
-                  const val = e.target.value
-                  if (val === "" || /^\d+$/.test(val)) setMinWords(val)
-                }}
-                placeholder="Contoh: 300"
-                className={errors.minWords ? "border-red-500" : ""}
-              />
-              {errors.minWords && (
-                <p className="text-sm text-red-600 mt-1">{errors.minWords}</p>
-              )}
+              <Label>Panjang Jawaban</Label>
+              <div className="flex gap-2 mt-2">
+                {([
+                  { value: "SHORT", label: "Singkat", desc: "Jawaban ringkas dan padat" },
+                  { value: "MEDIUM", label: "Sedang", desc: "Jawaban standar" },
+                  { value: "LONG", label: "Panjang", desc: "Jawaban detail dan mendalam" },
+                ] as const).map((opt) => (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    onClick={() => setAnswerLength(opt.value)}
+                    className={cn(
+                      "flex-1 p-3 rounded-lg border text-left transition-all",
+                      answerLength === opt.value
+                        ? "border-indigo-500 bg-indigo-50 ring-1 ring-indigo-500"
+                        : "border-zinc-200 hover:border-zinc-300"
+                    )}
+                  >
+                    <p className={cn("text-sm font-medium", answerLength === opt.value ? "text-indigo-700" : "text-slate-900")}>{opt.label}</p>
+                    <p className="text-xs text-slate-500 mt-0.5">{opt.desc}</p>
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
         </CardContent>
@@ -380,8 +382,10 @@ export function Step1Input({ initialData, onComplete, lockedTaskType }: Step1Inp
                 </p>
               </div>
               <div>
-                <p className="text-slate-500">Target Kata</p>
-                <p className="font-medium text-slate-900">{minWords} kata</p>
+                <p className="text-slate-500">Panjang Jawaban</p>
+                <p className="font-medium text-slate-900">
+                  {answerLength === "SHORT" ? "Singkat" : answerLength === "LONG" ? "Panjang" : "Sedang"}
+                </p>
               </div>
               <div>
                 <p className="text-slate-500">Mata Kuliah</p>

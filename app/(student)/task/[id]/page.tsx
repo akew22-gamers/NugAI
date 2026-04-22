@@ -155,6 +155,12 @@ export default function TaskDetailPage() {
     return text.trim().split(/\s+/).filter((w) => w.length > 0).length
   }
 
+  const getLengthLabel = (minWords: number) => {
+    if (minWords <= 150) return "Singkat"
+    if (minWords >= 500) return "Panjang"
+    return "Sedang"
+  }
+
   if (status === "loading" || isLoading) {
     return (
       <div className="flex h-full items-center justify-center">
@@ -235,8 +241,8 @@ export default function TaskDetailPage() {
               <p className="font-medium">{task.tutor_name_snapshot || "-"}</p>
             </div>
             <div>
-              <p className="text-sm text-slate-500">Target Kata</p>
-              <p className="font-medium">{task.min_words_target} kata</p>
+              <p className="text-sm text-slate-500">Panjang Jawaban</p>
+              <p className="font-medium">{getLengthLabel(task.min_words_target)}</p>
             </div>
           </div>
         </CardContent>

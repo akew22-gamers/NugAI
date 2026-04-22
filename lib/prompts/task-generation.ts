@@ -4,7 +4,7 @@ export interface TaskGenerationContext {
   course_name: string
   module_book_title: string
   tutor_name: string
-  min_words_target: number
+  answer_length?: 'SHORT' | 'MEDIUM' | 'LONG'
   task_type: 'DISCUSSION' | 'ASSIGNMENT'
   question_text: string
   search_context?: string
@@ -17,7 +17,6 @@ export interface TaskGenerationContext {
 }
 
 export function buildSystemPrompt(context: TaskGenerationContext): string {
-  const maxWords = Math.ceil(context.min_words_target * 1.15)
   
   const personaPrompt = `Kamu adalah mahasiswa tingkat sarjana program studi ${context.study_program} di ${context.university_name}. Jawab pertanyaan akademik ini sesuai bidang studimu dengan pemahaman yang mendalam dan argumentasi yang logis. WAJIB TULIS NAMA LENGKAP DAN NIM MAHASISWA DI AWAL JAWABAN untuk jenis tugas DISCUSSION. Nama dan NIM akan disediakan dalam user prompt.`
   
@@ -73,17 +72,26 @@ ATURAN PENULISAN MATEMATIKA:
 
 Jika soal BUKAN matematika/perhitungan, abaikan instruksi ini dan jawab dengan paragraf naratif biasa.`
 
-  const wordCountPrompt = `ATURAN KATA KRITIS:
-- Target kata BODY (isi jawaban): ${context.min_words_target} kata
-- Maksimal kata BODY: ${maxWords} kata (${context.min_words_target} + 15% toleransi)
-- BODY = paragraf argumentasi utama (SALAM PEMBUKA + ISI + PENUTUP)
-- TIDAK TERMASUK: Header "Nama/NIM" dan bagian "Referensi"
-- JAWABAN HARUS LENGKAP - tidak boleh terpotong di tengah kalimat
-- Jika mendekati batas maksimal ${maxWords} kata, TETAP selesaikan kalimat dan paragraf terakhir dengan sempurna
-- Prioritaskan KELENGKAPAN jawaban - lebih baik sedikit di bawah target daripada terpotong
-- TIDAK BOLEH kurang dari ${context.min_words_target} kata untuk BODY
-- TIDAK BOLEH lebih dari ${maxWords} kata untuk BODY (15% toleransi maksimal)
-- HITUNG kata dengan teliti sebelum menyelesaikan jawaban`
+  const wordCountPrompt = context.answer_length === 'SHORT'
+    ? `PANJANG JAWABAN: SINGKAT
+- Jawab dengan RINGKAS dan PADAT
+- Langsung ke inti jawaban tanpa bertele-tele
+- Gunakan kalimat efektif dan efisien
+- Tetap mudah dipahami dan natural seperti tulisan mahasiswa
+- Tidak perlu elaborasi panjang, cukup poin-poin utama dalam paragraf singkat`
+    : context.answer_length === 'LONG'
+    ? `PANJANG JAWABAN: PANJANG
+- Jawab dengan DETAIL dan MENDALAM
+- Elaborasi setiap poin dengan contoh konkret dan analogi
+- Berikan analisis yang komprehensif dari berbagai sudut pandang
+- Tetap dalam konteks jawaban soal — jangan keluar topik
+- Gunakan gaya bahasa natural mahasiswa, bukan robotik
+- Tambahkan penjelasan tambahan yang memperkaya jawaban`
+    : `PANJANG JAWABAN: SEDANG (DEFAULT)
+- Jawab dengan panjang standar/default
+- Berikan argumentasi yang cukup dengan contoh
+- Gunakan gaya bahasa natural mahasiswa
+- Tidak terlalu singkat, tidak terlalu panjang`
 
   const moduleMetadataBlock = context.module_metadata
     ? `\nHASIL RISET METADATA MODUL/BUKU REFERENSI KE-1 (gunakan informasi ini untuk melengkapi referensi ke-1):\n${context.module_metadata}\n`
@@ -136,7 +144,7 @@ ATURAN UMUM REFERENSI:
     : ''
 
   const discussionMultiBody = context.task_type === 'DISCUSSION' && context.total_questions && context.total_questions > 1
-    ? `BAGIAN 3 — BODY JAWABAN (${context.min_words_target}–${maxWords} kata total BODY):
+    ? `BAGIAN 3 — BODY JAWABAN:
 - Ada ${context.total_questions} soal/pertanyaan yang harus dijawab dalam SATU jawaban utuh
 - WAJIB gunakan penanda nomor (1., 2., 3., dst.) untuk setiap jawaban soal
 - Format setiap jawaban soal:
@@ -146,11 +154,9 @@ ATURAN UMUM REFERENSI:
 
   dst.
 - Setiap jawaban soal harus memiliki argumentasi berbobot dengan contoh konkret
-- Total semua jawaban soal harus memenuhi target ${context.min_words_target}–${maxWords} kata
 - Gunakan transisi antar nomor soal yang natural`
-    : `BAGIAN 3 — BODY JAWABAN (${context.min_words_target}–${maxWords} kata total BODY):
+    : `BAGIAN 3 — BODY JAWABAN:
 - Fleksibel 1-5 paragraf sesuai kebutuhan penjelasan materi
-- FOKUS UTAMA: penuhi batas minimal kata (${context.min_words_target} kata) dengan argumentasi berbobot
 - Berisi pengantar, elaborasi, contoh konkret, dan analisis mendalam
 - Gunakan transisi antar paragraf yang natural`
 
@@ -178,7 +184,6 @@ Referensi:
 2. [Nama Pengarang]. ([Tahun]). [Judul Buku/Karya Ilmiah]. [Penerbit/Jurnal].
 
 CATATAN PENTING:
-- Word Count BODY = Salam Pembuka + Paragraf Body + Penutup (TIDAK termasuk Header dan Referensi)
 - Header ditulis PERSIS seperti di atas: "Nama  : " dan "NIM   : " (dengan spasi sebelum tanda titik dua)
 - Referensi ditulis PERSIS dengan label "Referensi:" di baris tersendiri, lalu baris kosong, lalu nomor 1 dan 2
 - JANGAN menambahkan bagian atau label lain selain yang disebutkan di atas`
@@ -189,7 +194,7 @@ LARANGAN IDENTITAS:
 - JANGAN menulis header "Nama :", "NIM :", atau data pribadi apapun
 - Langsung tulis jawaban tanpa identitas
 
-BAGIAN 1 — BODY JAWABAN (${context.min_words_target}–${maxWords} kata):
+BAGIAN 1 — BODY JAWABAN:
 - Jawab langsung dan lengkap dalam paragraf naratif
 - Minimal 2 paragraf argumentasi dengan bukti dan contoh konkret
 - PASTIKAN LENGKAP — tidak terpotong di tengah kalimat
@@ -199,9 +204,7 @@ BAGIAN 2 — REFERENSI (tidak dihitung word count):
 Referensi:
 [baris kosong]
 1. [Pengarang/Tim Penyusun]. ([Tahun]). ${context.module_book_title}. [Edisi]. [Penerbit].
-2. [Nama Pengarang]. ([Tahun]). [Judul Buku/Karya Ilmiah]. [Penerbit/Jurnal].
-
-CATATAN: Word Count = seluruh isi jawaban (TIDAK termasuk bagian Referensi).`
+2. [Nama Pengarang]. ([Tahun]). [Judul Buku/Karya Ilmiah]. [Penerbit/Jurnal].`
 
   return `${personaPrompt}
 
@@ -217,8 +220,18 @@ ${structurePrompt}`
 }
 
 export function buildUserPrompt(context: TaskGenerationContext): string {
-  const maxWords = Math.ceil(context.min_words_target * 1.15)
-  
+  const lengthInstruction = context.answer_length === 'SHORT'
+    ? `PANJANG JAWABAN: SINGKAT
+- Jawab dengan RINGKAS dan PADAT
+- Langsung ke inti jawaban tanpa bertele-tele`
+    : context.answer_length === 'LONG'
+    ? `PANJANG JAWABAN: PANJANG
+- Jawab dengan DETAIL dan MENDALAM
+- Elaborasi setiap poin dengan contoh konkret dan analogi`
+    : `PANJANG JAWABAN: SEDANG (DEFAULT)
+- Jawab dengan panjang standar/default
+- Berikan argumentasi yang cukup dengan contoh`
+
   const studentDataPrompt = context.task_type === 'DISCUSSION' && context.student_name && context.student_nim
     ? `DATA MAHASISWA (WAJIB tulis di awal jawaban):
 Nama: ${context.student_name}
@@ -240,17 +253,15 @@ NIM: ${context.student_nim}
 Mata Kuliah: ${context.course_name}
 Modul Referensi: ${context.module_book_title}
 Tutor Pembimbing: ${context.tutor_name}
-Target Kata BODY: ${context.min_words_target}-${maxWords} kata (15% toleransi)
 
 INSTRUKSI KRITIS:
-1. BODY jawaban harus ${context.min_words_target}-${maxWords} kata (tidak kurang, tidak lebih dari 15% toleransi)
+1. ${lengthInstruction}
 2. BODY = Salam Pembuka + Isi Argumentasi + Penutup (tidak termasuk Header Nama/NIM dan Referensi)
 3. JAWABAN HARUS LENGKAP DAN UTUH - tidak boleh terpotong di tengah kalimat atau paragraf
 4. Tulis Referensi DI AKHIR (tidak dihitung word count)
 5. Referensi ke-1: tulis modul "${context.module_book_title}" dengan format lengkap (pengarang, tahun, edisi, penerbit) berdasarkan hasil riset metadata - JANGAN tulis ${context.tutor_name} sebagai pengarang
 6. Referensi ke-2: WAJIB dari BUKU CETAK atau KARYA ILMIAH (jurnal/skripsi/tesis) — DILARANG dari website/online apapun
-7. JANGAN gunakan simbol atau karakter aneh
-8. Hitung jumlah kata BODY dengan teliti sebelum selesai`
+7. JANGAN gunakan simbol atau karakter aneh`
 
   if (context.search_context) {
     return `${basePrompt}

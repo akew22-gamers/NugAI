@@ -6,10 +6,10 @@ import { TaskFormData } from "@/app/(student)/task/new/page"
 
 interface Step2ProcessingProps {
   formData: TaskFormData
-  isProcessing: boolean
 }
 
-export function Step2Processing({ formData, isProcessing }: Step2ProcessingProps) {
+export function Step2Processing({ formData }: Step2ProcessingProps) {
+  const lengthLabel = { SHORT: "Singkat", MEDIUM: "Sedang", LONG: "Panjang" }
   return (
     <Card className="rounded-xl border border-zinc-200 bg-white shadow-sm">
       <CardContent className="p-6">
@@ -37,7 +37,7 @@ export function Step2Processing({ formData, isProcessing }: Step2ProcessingProps
               <strong>Mata Kuliah:</strong> {formData.course_name}
             </p>
             <p className="text-sm text-zinc-600">
-              <strong>Target Kata:</strong> {formData.min_words_target} kata
+              <strong>Panjang Jawaban:</strong> {lengthLabel[formData.answer_length]}
             </p>
             <p className="text-sm text-zinc-600">
               <strong>Jumlah Soal:</strong> {formData.questions.length}

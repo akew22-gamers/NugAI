@@ -13,8 +13,16 @@ interface GenerateTaskRequest {
   course_name: string
   module_book_title: string
   tutor_name: string
-  min_words_target: number
+  answer_length: 'SHORT' | 'MEDIUM' | 'LONG'
   questions: string[]
+}
+
+function getConfigForLength(length: 'SHORT' | 'MEDIUM' | 'LONG') {
+  switch (length) {
+    case 'SHORT': return { minWords: 150, maxTokens: 2048 }
+    case 'MEDIUM': return { minWords: 300, maxTokens: 4096 }
+    case 'LONG': return { minWords: 500, maxTokens: 8192 }
+  }
 }
 
 async function checkQuota(userId: string): Promise<{ canProceed: boolean; error?: string }> {
@@ -113,13 +121,15 @@ export async function POST(request: NextRequest) {
     let usedProviderType: string | null = null
     let usedModel: string | null = null
 
+    const lengthConfig = getConfigForLength(body.answer_length || 'MEDIUM')
+
     const moduleMetadata = await searchModuleMetadata(body.module_book_title, profile.university_name)
 
     const isDiscussionMulti = body.task_type === 'DISCUSSION' && body.questions.length > 1
 
     if (isDiscussionMulti) {
       const combinedQuestions = body.questions.map((q, i) => `${i + 1}. ${q}`).join('\n\n')
-      const maxTokens = Math.min(Math.max(Math.ceil(body.min_words_target * 2.5), 2048), 8192)
+      const maxTokens = lengthConfig.maxTokens
 
       const searchQuery = `${body.course_name} ${body.module_book_title} ${body.questions[0]}`
       const searchResults = await combinedSearch({ query: searchQuery, maxResults: 5 })
@@ -134,7 +144,7 @@ export async function POST(request: NextRequest) {
         course_name: body.course_name,
         module_book_title: body.module_book_title,
         tutor_name: body.tutor_name,
-        min_words_target: body.min_words_target,
+        answer_length: body.answer_length,
         task_type: body.task_type,
         question_text: combinedQuestions,
         search_context: searchContext,
@@ -150,7 +160,7 @@ export async function POST(request: NextRequest) {
         course_name: body.course_name,
         module_book_title: body.module_book_title,
         tutor_name: body.tutor_name,
-        min_words_target: body.min_words_target,
+        answer_length: body.answer_length,
         task_type: body.task_type,
         question_text: combinedQuestions,
         search_context: searchContext,
@@ -173,7 +183,7 @@ export async function POST(request: NextRequest) {
         usedModel = castResult.model || null
       }
     } else {
-      const maxTokens = Math.min(Math.max(Math.ceil(body.min_words_target * 2.5), 2048), 4096)
+      const maxTokens = lengthConfig.maxTokens
 
       for (let i = 0; i < body.questions.length; i++) {
         const question = body.questions[i]
@@ -191,7 +201,7 @@ export async function POST(request: NextRequest) {
           course_name: body.course_name,
           module_book_title: body.module_book_title,
           tutor_name: body.tutor_name,
-          min_words_target: body.min_words_target,
+          answer_length: body.answer_length,
           task_type: body.task_type,
           question_text: question,
           search_context: searchContext,
@@ -207,7 +217,7 @@ export async function POST(request: NextRequest) {
           course_name: body.course_name,
           module_book_title: body.module_book_title,
           tutor_name: body.tutor_name,
-          min_words_target: body.min_words_target,
+          answer_length: body.answer_length,
           task_type: body.task_type,
           question_text: question,
           search_context: searchContext,
@@ -237,7 +247,7 @@ export async function POST(request: NextRequest) {
         user_id: session.user.id,
         course_id: body.course_id,
         task_type: body.task_type,
-        min_words_target: body.min_words_target,
+        min_words_target: lengthConfig.minWords,
         course_name_snapshot: body.course_name,
         module_book_title_snapshot: body.module_book_title,
         tutor_name_snapshot: body.tutor_name,

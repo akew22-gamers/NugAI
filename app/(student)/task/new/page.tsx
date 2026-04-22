@@ -5,11 +5,11 @@ import { TaskWizard } from "@/components/task/TaskWizard"
 export interface TaskFormData {
   task_type: "DISCUSSION" | "ASSIGNMENT"
   task_description: string
+  answer_length: "SHORT" | "MEDIUM" | "LONG"
   course_id: string | null
   course_name: string
   module_book_title: string
   tutor_name: string
-  min_words_target: number
   questions: string[]
 }
 

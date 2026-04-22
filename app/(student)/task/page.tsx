@@ -105,6 +105,12 @@ export default function TaskHistoryPage() {
     return type === "DISCUSSION" ? "Tugas Diskusi" : "Tugas Soal"
   }
 
+  const getLengthLabel = (minWords: number) => {
+    if (minWords <= 150) return "Singkat"
+    if (minWords >= 500) return "Panjang"
+    return "Sedang"
+  }
+
   const handleDeleteAll = async () => {
     setIsDeletingAll(true)
     try {
@@ -203,7 +209,7 @@ export default function TaskHistoryPage() {
                         {task.course_name || "Tugas Tanpa Mata Kuliah"}
                       </h3>
                       <p className="text-sm text-slate-500 leading-tight mt-0.5">
-                        {getTaskTypeLabel(task.task_type)} • {task.items_count} soal • {task.min_words_target} kata
+                        {getTaskTypeLabel(task.task_type)} • {task.items_count} soal • Panjang {getLengthLabel(task.min_words_target)}
                       </p>
                       {task.module_book_title && (
                         <p className="text-xs text-slate-400 leading-tight mt-0.5">

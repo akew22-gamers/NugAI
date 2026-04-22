@@ -83,6 +83,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Profile not found' }, { status: 404 })
     }
 
+    const answerLengthMapping = (minWords: number): "SHORT" | "MEDIUM" | "LONG" => {
+      if (minWords <= 150) return "SHORT"
+      if (minWords >= 500) return "LONG"
+      return "MEDIUM"
+    }
+
+    const answer_length = answerLengthMapping(taskSession.min_words_target)
+
     const regenerationContext = {
       question_text: taskItem.question_text,
       previous_answer: taskItem.answer_text || '',
@@ -90,7 +98,7 @@ export async function POST(request: NextRequest) {
       task_type: taskSession.task_type,
       student_name: profile.full_name,
       student_nim: profile.nim,
-      min_words_target: taskSession.min_words_target,
+      answer_length: answer_length,
       course_name: taskSession.course_name_snapshot || undefined,
       module_book_title: taskSession.module_book_title_snapshot || undefined,
       tutor_name: taskSession.tutor_name_snapshot || undefined,
@@ -100,10 +108,14 @@ export async function POST(request: NextRequest) {
     const systemPrompt = buildRegenerationSystemPrompt(regenerationContext)
     const userPrompt = buildRegenerationUserPrompt(regenerationContext)
 
+    let maxTokens = 4096
+    if (answer_length === "SHORT") maxTokens = 2048
+    if (answer_length === "LONG") maxTokens = 8192
+
     const result = await generate({
       systemPrompt,
       userPrompt,
-      maxTokens: Math.min(Math.max(Math.ceil(taskSession.min_words_target * 2.5), 2048), 4096),
+      maxTokens: maxTokens,
       temperature: 0.7,
     })
 
