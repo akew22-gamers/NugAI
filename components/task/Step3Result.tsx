@@ -132,8 +132,8 @@ export function Step3Result({
 
       <Card className="rounded-xl border border-zinc-200 bg-white shadow-sm">
         <CardHeader>
-          <CardTitle className="flex items-center justify-between flex-wrap gap-2">
-            <div className="flex items-center gap-2 flex-1 min-w-[200px]">
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2">
               <span>
                 {formData.task_type === "ASSIGNMENT" && formData.questions.length > 1
                   ? `Jawaban Soal ${questionIndex + 1}`
@@ -149,28 +149,28 @@ export function Step3Result({
                   Regenerate: {regenCount}x
                 </span>
               )}
-            </div>
-            <div className="flex items-center gap-2 flex-shrink-0">
-              {isProcessing && <Loader2 className="w-4 h-4 animate-spin text-zinc-600" />}
-              <span className={`text-sm ${meetsTarget ? "text-emerald-600" : "text-amber-600"}`}>
-                {wordCount} kata {meetsTarget ? "✓" : `(min: ${formData.min_words_target})`}
-              </span>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => handleCopyAnswer(questionIndex)}
-                disabled={isProcessing}
-                className="gap-1.5 h-7 px-2.5 text-xs"
-              >
-                {copiedIndex === questionIndex ? (
-                  <Check className="w-3.5 h-3.5 text-emerald-600" />
-                ) : (
-                  <Copy className="w-3.5 h-3.5" />
-                )}
-                {copiedIndex === questionIndex ? "Copied!" : "Copy"}
-              </Button>
-            </div>
-          </CardTitle>
+            </CardTitle>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handleCopyAnswer(questionIndex)}
+              disabled={isProcessing}
+              className="gap-1.5 h-8 px-3 text-xs shrink-0 ml-4"
+            >
+              {copiedIndex === questionIndex ? (
+                <Check className="w-3.5 h-3.5 text-emerald-600" />
+              ) : (
+                <Copy className="w-3.5 h-3.5" />
+              )}
+              {copiedIndex === questionIndex ? "Copied!" : "Copy"}
+            </Button>
+          </div>
+          <div className="flex items-center gap-2 mt-1">
+            {isProcessing && <Loader2 className="w-4 h-4 animate-spin text-zinc-600" />}
+            <span className={`text-sm ${meetsTarget ? "text-emerald-600" : "text-amber-600"}`}>
+              {wordCount} kata {meetsTarget ? "✓" : `(min: ${formData.min_words_target})`}
+            </span>
+          </div>
         </CardHeader>
         <CardContent className="space-y-4">
           <div 
