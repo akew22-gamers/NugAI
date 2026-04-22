@@ -45,6 +45,7 @@ interface PDFData {
   upbjjBranch?: string
   universityLogoUrl: string
   taskItems: TaskItemData[]
+  taskDescription?: string
   createdAt: Date
 }
 
@@ -341,6 +342,11 @@ function AssignmentTemplate({ data }: { data: PDFData }) {
     <Document>
       <Page size={PAGE_SIZE} style={styles.page}>
         <Text style={styles.soalListHeader}>SOAL</Text>
+        {data.taskDescription && (
+          <Text style={{ fontSize: 12, lineHeight: 1.15, textAlign: 'justify', marginBottom: 15 }}>
+            {data.taskDescription}
+          </Text>
+        )}
         {data.taskItems.map((item, index) => (
           <View key={index} style={styles.soalItem}>
             <View style={styles.referenceItem}>

@@ -12,7 +12,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json()
-    const { sessionId, taskType } = body
+    const { sessionId, taskType, taskDescription } = body
 
     if (!sessionId) {
       return NextResponse.json(
@@ -73,6 +73,7 @@ export async function POST(request: NextRequest) {
         answer_text: item.answer_text || '',
         references_used: (item.references_used as unknown as PDFData['taskItems'][0]['references_used']) || undefined,
       })),
+      taskDescription: taskDescription || undefined,
       createdAt: taskSession.created_at,
     }
 
