@@ -292,70 +292,85 @@ function DiscussionTemplate({ data }: { data: PDFData }) {
   )
 }
 
+function parseAnswerWithReferences(answerText: string): {
+  body: string
+  references: Array<{ number: string; text: string }>
+} {
+  const lines = answerText.split('\n')
+  let refSectionIndex = -1
+  for (let i = lines.length - 1; i >= 0; i--) {
+    const trimmed = lines[i].trim().toLowerCase()
+    if (trimmed === 'referensi:' || trimmed === 'referensi') {
+      refSectionIndex = i
+      break
+    }
+  }
+
+  const references: Array<{ number: string; text: string }> = []
+  let bodyText: string
+
+  if (refSectionIndex >= 0) {
+    bodyText = lines.slice(0, refSectionIndex).join('\n').trim()
+    const refLines = lines.slice(refSectionIndex + 1)
+    let currentRef: { number: string; text: string } | null = null
+
+    for (const line of refLines) {
+      const trimmed = line.trim()
+      if (!trimmed) continue
+      const refMatch = trimmed.match(/^(\d+)\.\s*(.+)$/)
+      if (refMatch) {
+        if (currentRef) references.push(currentRef)
+        currentRef = { number: refMatch[1] + '.', text: refMatch[2] }
+      } else if (currentRef) {
+        currentRef.text += ' ' + trimmed
+      }
+    }
+    if (currentRef) references.push(currentRef)
+  } else {
+    bodyText = answerText.trim()
+  }
+
+  return { body: bodyText, references }
+}
+
 function AssignmentTemplate({ data }: { data: PDFData }) {
   return (
     <Document>
-      <Page size={PAGE_SIZE} style={styles.coverPage}>
-        <Text style={styles.coverTitle}>TUGAS TUTORIAL</Text>
-        <Text style={styles.coverSubtitle}>MATA KULIAH: {data.courseName}</Text>
-        
-        {data.universityLogoUrl && (
-          <Image
-            style={styles.coverLogo}
-            src={data.universityLogoUrl}
-          />
-        )}
-        
-        <Text style={styles.coverSectionTitle}>TUTOR PEMBIMBING:</Text>
-        <Text style={styles.coverSectionContent}>{data.tutorName}</Text>
-        
-        <Text style={styles.coverSectionTitle}>DISUSUN OLEH:</Text>
-        <Text style={styles.coverSectionContent}>{data.studentName}</Text>
-        <Text style={styles.coverSectionContent}>{data.studentNim}</Text>
-        
-        <View style={styles.coverFooter}>
-          <Text style={styles.coverFooterLine}>{data.studyProgram}</Text>
-          <Text style={styles.coverFooterLine}>{data.faculty}</Text>
-          {data.upbjjBranch && <Text style={styles.coverFooterLine}>{data.upbjjBranch}</Text>}
-          <Text style={styles.coverFooterLine}>{data.universityName}</Text>
-        </View>
-      </Page>
-      
       <Page size={PAGE_SIZE} style={styles.page}>
-        <Text style={styles.soalListHeader}>DAFTAR SOAL</Text>
+        <Text style={styles.soalListHeader}>SOAL</Text>
         {data.taskItems.map((item, index) => (
-          <Text key={index} style={styles.soalItem}>
-            <Text style={styles.soalNumber}>{index + 1}. </Text>
-            {item.question_text}
-          </Text>
+          <View key={index} style={styles.soalItem}>
+            <View style={styles.referenceItem}>
+              <Text style={styles.referenceNumber}>{index + 1}.</Text>
+              <Text style={styles.referenceText}>{item.question_text}</Text>
+            </View>
+          </View>
         ))}
       </Page>
-      
-      {data.taskItems.map((item, index) => (
-        <Page key={index} size={PAGE_SIZE} style={styles.page}>
-          <Text style={styles.questionHeader}>SOAL NOMOR {index + 1}</Text>
-          
-          <Text style={styles.discussionBody}>
-            {item.answer_text}
-          </Text>
-          
-          {item.references_used && item.references_used.length > 0 ? (
-            <View style={styles.referenceSection}>
-              <Text style={styles.referenceHeader}>Referensi:</Text>
-              {item.references_used.slice(0, 2).map((ref, refIndex) => {
-                const formatted = formatReference(ref)
-                if (!formatted) return null
-                return (
-                  <View key={refIndex} style={styles.referenceItem}>
-                    <Text style={styles.referenceNumber}>{refIndex + 1}.</Text>
-                    <Text style={styles.referenceText}>{formatted}</Text>
-                  </View>
-                )
-              })}
+
+      <Page size={PAGE_SIZE} style={styles.page} wrap>
+        <Text style={styles.soalListHeader}>JAWABAN</Text>
+        {data.taskItems.map((item, index) => {
+          const { body, references } = parseAnswerWithReferences(item.answer_text)
+          return (
+            <View key={index} wrap={false} style={{ marginBottom: 20 }}>
+              <Text style={styles.questionHeader}>Jawaban No. {index + 1}</Text>
+              <Text style={styles.discussionBody}>{body}</Text>
+              {references.length > 0 && (
+                <View style={styles.referenceSection}>
+                  <Text style={styles.referenceHeader}>Referensi:</Text>
+                  {references.map((ref, refIdx) => (
+                    <View key={refIdx} style={styles.referenceItem}>
+                      <Text style={styles.referenceNumber}>{ref.number}</Text>
+                      <Text style={styles.referenceText}>{ref.text}</Text>
+                    </View>
+                  ))}
+                </View>
+              )}
             </View>
-          ) : null}
-        </Page>
-      ))}
+          )
+        })}
+      </Page>
     </Document>
   )
 }
