@@ -191,7 +191,11 @@ function formatReference(ref: ReferenceData): string {
   }
 }
 
-function parseDiscussionAnswer(answerText: string): { identityLines: Array<{ label: string; value: string }>; body: string } {
+function parseDiscussionAnswer(answerText: string): {
+  identityLines: Array<{ label: string; value: string }>
+  body: string
+  references: Array<{ number: string; text: string }>
+} {
   const lines = answerText.split('\n')
   const identityLines: Array<{ label: string; value: string }> = []
   let bodyStartIndex = 0
@@ -211,8 +215,40 @@ function parseDiscussionAnswer(answerText: string): { identityLines: Array<{ lab
     }
   }
 
-  const body = lines.slice(bodyStartIndex).join('\n').trim()
-  return { identityLines, body }
+  const remainingLines = lines.slice(bodyStartIndex)
+  let refSectionIndex = -1
+  for (let i = remainingLines.length - 1; i >= 0; i--) {
+    if (remainingLines[i].trim().toLowerCase() === 'referensi:' || remainingLines[i].trim().toLowerCase() === 'referensi') {
+      refSectionIndex = i
+      break
+    }
+  }
+
+  const references: Array<{ number: string; text: string }> = []
+  let bodyText: string
+
+  if (refSectionIndex >= 0) {
+    bodyText = remainingLines.slice(0, refSectionIndex).join('\n').trim()
+    const refLines = remainingLines.slice(refSectionIndex + 1)
+    let currentRef: { number: string; text: string } | null = null
+
+    for (const line of refLines) {
+      const trimmed = line.trim()
+      if (!trimmed) continue
+      const refMatch = trimmed.match(/^(\d+)\.\s*(.+)$/)
+      if (refMatch) {
+        if (currentRef) references.push(currentRef)
+        currentRef = { number: refMatch[1] + '.', text: refMatch[2] }
+      } else if (currentRef) {
+        currentRef.text += ' ' + trimmed
+      }
+    }
+    if (currentRef) references.push(currentRef)
+  } else {
+    bodyText = remainingLines.join('\n').trim()
+  }
+
+  return { identityLines, body: bodyText, references }
 }
 
 function DiscussionTemplate({ data }: { data: PDFData }) {
@@ -222,7 +258,7 @@ function DiscussionTemplate({ data }: { data: PDFData }) {
     <Document>
       <Page size={PAGE_SIZE} style={styles.page}>
         {allAnswers.map((answer, index) => {
-          const { identityLines, body } = parseDiscussionAnswer(answer)
+          const { identityLines, body, references } = parseDiscussionAnswer(answer)
           return (
             <View key={index}>
               {identityLines.length > 0 && (
@@ -237,6 +273,17 @@ function DiscussionTemplate({ data }: { data: PDFData }) {
                 </View>
               )}
               <Text style={styles.discussionBody}>{body}</Text>
+              {references.length > 0 && (
+                <View style={styles.referenceSection}>
+                  <Text style={styles.referenceHeader}>Referensi:</Text>
+                  {references.map((ref, refIdx) => (
+                    <View key={refIdx} style={styles.referenceItem}>
+                      <Text style={styles.referenceNumber}>{ref.number}</Text>
+                      <Text style={styles.referenceText}>{ref.text}</Text>
+                    </View>
+                  ))}
+                </View>
+              )}
             </View>
           )
         })}
