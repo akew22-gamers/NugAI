@@ -115,23 +115,19 @@ export function Step3Result({
       </div>
 
       {formData.task_type === "ASSIGNMENT" && formData.questions.length > 1 && (
-        <Card className="rounded-xl border border-zinc-200 bg-white shadow-sm">
-          <CardContent className="px-4 py-4">
-            <div className="flex gap-2 flex-wrap items-center">
-              {formData.questions.map((_, index) => (
-                <Button
-                  key={index}
-                  variant={questionIndex === index ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setQuestionIndex(index)}
-                  className={questionIndex === index ? "bg-zinc-900 text-white hover:bg-zinc-800" : ""}
-                >
-                  Soal {index + 1}
-                </Button>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+        <div className="flex gap-2 flex-wrap items-center rounded-xl border border-zinc-200 bg-white shadow-sm p-3">
+          {formData.questions.map((_, index) => (
+            <Button
+              key={index}
+              variant={questionIndex === index ? "default" : "outline"}
+              size="sm"
+              onClick={() => setQuestionIndex(index)}
+              className={questionIndex === index ? "bg-zinc-900 text-white hover:bg-zinc-800" : ""}
+            >
+              Soal {index + 1}
+            </Button>
+          ))}
+        </div>
       )}
 
       <Card className="rounded-xl border border-zinc-200 bg-white shadow-sm">
@@ -159,6 +155,20 @@ export function Step3Result({
               <span className={`text-sm ${meetsTarget ? "text-emerald-600" : "text-amber-600"}`}>
                 {wordCount} kata {meetsTarget ? "✓" : `(min: ${formData.min_words_target})`}
               </span>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handleCopyAnswer(questionIndex)}
+                disabled={isProcessing}
+                className="gap-1.5 h-7 px-2.5 text-xs"
+              >
+                {copiedIndex === questionIndex ? (
+                  <Check className="w-3.5 h-3.5 text-emerald-600" />
+                ) : (
+                  <Copy className="w-3.5 h-3.5" />
+                )}
+                {copiedIndex === questionIndex ? "Copied!" : "Copy"}
+              </Button>
             </div>
           </CardTitle>
         </CardHeader>
@@ -177,23 +187,6 @@ export function Step3Result({
             <p className="whitespace-pre-wrap text-zinc-700 leading-relaxed">
               {currentAnswer.replace(/^\d+\.\s*/, '')}
             </p>
-          </div>
-
-          <div className="flex justify-end pt-2 border-t border-zinc-100">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => handleCopyAnswer(questionIndex)}
-              disabled={isProcessing}
-              className="gap-1.5 text-xs"
-            >
-              {copiedIndex === questionIndex ? (
-                <Check className="w-3.5 h-3.5 text-emerald-600" />
-              ) : (
-                <Copy className="w-3.5 h-3.5" />
-              )}
-              {copiedIndex === questionIndex ? "Copied!" : "Copy Jawaban"}
-            </Button>
           </div>
 
           {showRegenerateInput && (
