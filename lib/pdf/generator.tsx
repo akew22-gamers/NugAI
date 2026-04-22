@@ -52,7 +52,7 @@ const styles = StyleSheet.create({
   page: {
     fontFamily: getFontFamily(),
     fontSize: 12,
-    lineHeight: 1.8,
+    lineHeight: 1.15,
     padding: PAGE_MARGIN,
   },
   coverPage: {
@@ -102,7 +102,7 @@ const styles = StyleSheet.create({
   discussionBody: {
     fontFamily: getFontFamily(),
     fontSize: 12,
-    lineHeight: 1.8,
+    lineHeight: 1.15,
     textAlign: 'justify',
   },
   referenceSection: {
@@ -116,7 +116,7 @@ const styles = StyleSheet.create({
   referenceItem: {
     fontSize: 11,
     marginBottom: 8,
-    lineHeight: 1.5,
+    lineHeight: 1.15,
   },
   soalListHeader: {
     fontSize: 14,
@@ -127,7 +127,7 @@ const styles = StyleSheet.create({
   soalItem: {
     fontSize: 12,
     marginBottom: 10,
-    lineHeight: 1.5,
+    lineHeight: 1.15,
   },
   soalNumber: {
     fontWeight: 'bold',

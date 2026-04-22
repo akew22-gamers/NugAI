@@ -6,6 +6,8 @@ export function registerFonts(): void {
   if (fontsRegistered) return
   
   try {
+    Font.registerHyphenationCallback((word: string) => [word])
+
     Font.register({
       family: 'Helvetica',
       fonts: [
