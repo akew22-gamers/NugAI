@@ -323,8 +323,8 @@ export default function AdminUsersPage() {
                         <span
                           className={`text-xs font-medium px-2 py-0.5 rounded-full ${
                             user.role === "ADMIN"
-                              ? "text-purple-700 bg-purple-100"
-                              : "text-emerald-700 bg-emerald-100"
+                              ? "text-red-700 bg-red-100"
+                              : "text-orange-700 bg-orange-100"
                           }`}
                         >
                           {user.role === "ADMIN" ? "Admin" : "Student"}
@@ -345,7 +345,7 @@ export default function AdminUsersPage() {
                     <button
                       onClick={() => handleUpdateTier(user.id, user.subscription_tier === "FREE" ? "PREMIUM" : "FREE")}
                       className={cn(
-                        "relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 shrink-0",
+                        "relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 shrink-0",
                         user.subscription_tier === "PREMIUM" ? "bg-amber-500" : "bg-slate-200"
                       )}
                     >

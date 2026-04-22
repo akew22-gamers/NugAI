@@ -434,8 +434,8 @@ export default function AdminProvidersPage() {
                     </div>
                     
                     {provider.is_active && (
-                      <div className="mt-3 p-3 rounded-lg bg-blue-50 border border-blue-100">
-                        <p className="text-xs text-blue-700">
+                      <div className="mt-3 p-3 rounded-lg bg-red-50 border border-red-100">
+                        <p className="text-xs text-red-700">
                           <span className="font-semibold">Info:</span> Provider aktif dengan priority tertinggi digunakan pertama. Failover otomatis ke provider berikutnya jika gagal.
                         </p>
                       </div>

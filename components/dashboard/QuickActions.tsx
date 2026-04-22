@@ -67,20 +67,20 @@ export function QuickActions() {
             <div className="grid grid-cols-1 gap-3 pt-2">
               <button
                 onClick={() => handleSelect("/task/diskusi/new")}
-                className="group flex items-center gap-4 p-4 rounded-xl border border-zinc-200 bg-zinc-50 hover:bg-indigo-50 hover:border-indigo-300 transition-all duration-200 text-left"
+                className="group flex items-center gap-4 p-4 rounded-xl border border-zinc-200 bg-zinc-50 hover:bg-purple-50 hover:border-purple-300 transition-all duration-200 text-left"
               >
-                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 shadow-lg shadow-indigo-500/20 group-hover:shadow-indigo-500/30 shrink-0">
+                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-purple-500 to-purple-600 shadow-lg shadow-purple-500/20 group-hover:shadow-purple-500/30 shrink-0">
                   <MessageSquareText className="h-6 w-6 text-white" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-slate-900 group-hover:text-indigo-700">
+                  <p className="font-semibold text-slate-900 group-hover:text-purple-700">
                     Tugas Diskusi
                   </p>
                   <p className="text-sm text-slate-500">
                     Generate jawaban tugas diskusi forum
                   </p>
                 </div>
-                <ArrowRight className="h-5 w-5 text-slate-300 group-hover:text-indigo-500 group-hover:translate-x-0.5 transition-all shrink-0" />
+                <ArrowRight className="h-5 w-5 text-slate-300 group-hover:text-purple-500 group-hover:translate-x-0.5 transition-all shrink-0" />
               </button>
 
               <button

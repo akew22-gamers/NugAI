@@ -47,7 +47,7 @@ export function QuotaDisplay({ quota, isLoading }: QuotaDisplayProps) {
               "flex h-10 w-10 items-center justify-center rounded-xl",
               isPremium
                 ? "bg-amber-50 text-amber-600"
-                : "bg-indigo-50 text-indigo-600"
+                : "bg-purple-50 text-purple-600"
             )}
           >
             {isPremium ? (

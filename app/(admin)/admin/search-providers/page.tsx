@@ -28,7 +28,7 @@ const SEARCH_PROVIDER_INFO = {
     description: "API pencarian web yang cepat dan akurat",
     docsUrl: "https://docs.tavily.com",
     icon: (
-      <svg className="w-8 h-8 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <svg className="w-8 h-8 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
       </svg>
     ),
@@ -38,7 +38,7 @@ const SEARCH_PROVIDER_INFO = {
     description: "API pencarian neural untuk konten akademik",
     docsUrl: "https://docs.exa.ai",
     icon: (
-      <svg className="w-8 h-8 text-purple-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <svg className="w-8 h-8 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
       </svg>
     ),
@@ -238,7 +238,7 @@ export default function AdminSearchProvidersPage() {
                       href={SEARCH_PROVIDER_INFO.TAVILY.docsUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-sm text-blue-600 hover:underline"
+                      className="text-sm text-red-600 hover:underline"
                     >
                       Dokumentasi
                     </a>
@@ -265,7 +265,7 @@ export default function AdminSearchProvidersPage() {
                         type="submit"
                         size="sm"
                         disabled={isSaving === "TAVILY" || !tavilyApiKey}
-                        className="gap-2 bg-blue-600 hover:bg-blue-700 text-white disabled:bg-slate-200 disabled:text-slate-400 disabled:cursor-not-allowed"
+                        className="gap-2 bg-red-600 hover:bg-red-700 text-white disabled:bg-slate-200 disabled:text-slate-400 disabled:cursor-not-allowed"
                       >
                         {isSaving === "TAVILY" ? "Menyimpan..." : "Simpan API Key Baru"}
                       </Button>
@@ -305,7 +305,7 @@ export default function AdminSearchProvidersPage() {
                       href={SEARCH_PROVIDER_INFO.TAVILY.docsUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-sm text-blue-600 hover:underline"
+                      className="text-sm text-red-600 hover:underline"
                     >
                       Dokumentasi
                     </a>
@@ -356,7 +356,7 @@ export default function AdminSearchProvidersPage() {
                       href={SEARCH_PROVIDER_INFO.EXA.docsUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-sm text-blue-600 hover:underline"
+                      className="text-sm text-red-600 hover:underline"
                     >
                       Dokumentasi
                     </a>
@@ -383,7 +383,7 @@ export default function AdminSearchProvidersPage() {
                         type="submit"
                         size="sm"
                         disabled={isSaving === "EXA" || !exaApiKey}
-                        className="gap-2 bg-purple-600 hover:bg-purple-700 text-white disabled:bg-slate-200 disabled:text-slate-400 disabled:cursor-not-allowed"
+                        className="gap-2 bg-orange-600 hover:bg-orange-700 text-white disabled:bg-slate-200 disabled:text-slate-400 disabled:cursor-not-allowed"
                       >
                         {isSaving === "EXA" ? "Menyimpan..." : "Simpan API Key Baru"}
                       </Button>
@@ -423,7 +423,7 @@ export default function AdminSearchProvidersPage() {
                       href={SEARCH_PROVIDER_INFO.EXA.docsUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-sm text-blue-600 hover:underline"
+                      className="text-sm text-red-600 hover:underline"
                     >
                       Dokumentasi
                     </a>

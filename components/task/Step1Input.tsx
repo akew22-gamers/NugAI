@@ -287,11 +287,11 @@ export function Step1Input({ initialData, onComplete, lockedTaskType }: Step1Inp
                     className={cn(
                       "flex-1 p-3 rounded-lg border text-left transition-all",
                       answerLength === opt.value
-                        ? "border-indigo-500 bg-indigo-50 ring-1 ring-indigo-500"
+                        ? "border-purple-500 bg-purple-50 ring-1 ring-purple-500"
                         : "border-zinc-200 hover:border-zinc-300"
                     )}
                   >
-                    <p className={cn("text-sm font-medium", answerLength === opt.value ? "text-indigo-700" : "text-slate-900")}>{opt.label}</p>
+                    <p className={cn("text-sm font-medium", answerLength === opt.value ? "text-purple-700" : "text-slate-900")}>{opt.label}</p>
                     <p className="text-xs text-slate-500 mt-0.5">{opt.desc}</p>
                   </button>
                 ))}

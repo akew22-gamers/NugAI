@@ -184,7 +184,7 @@ export default function TaskHistoryPage() {
               Anda belum pernah membuat tugas. Mulai buat tugas pertama dengan bantuan AI.
             </p>
             <Link href="/task/new" className="mt-5">
-              <Button className="gap-2 bg-indigo-600 hover:bg-indigo-700 text-white">
+              <Button className="gap-2 bg-purple-600 hover:bg-purple-700 text-white">
                 <Plus className="w-4 h-4" />
                 Buat Tugas Baru
               </Button>
@@ -205,7 +205,7 @@ export default function TaskHistoryPage() {
                       <CheckCircle2 className="h-5 w-5 text-emerald-600" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <h3 className="font-medium text-slate-900 hover:text-indigo-600 leading-tight truncate">
+                      <h3 className="font-medium text-slate-900 hover:text-purple-600 leading-tight truncate">
                         {task.course_name || "Tugas Tanpa Mata Kuliah"}
                       </h3>
                       <p className="text-sm text-slate-500 leading-tight mt-0.5">

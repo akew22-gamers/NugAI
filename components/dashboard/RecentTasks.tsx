@@ -44,7 +44,7 @@ export function RecentTasks({ tasks, isLoading }: RecentTasksProps) {
         </div>
         <Link
           href="/task"
-          className="flex items-center gap-1 text-sm font-medium text-indigo-600 hover:text-indigo-700 transition-colors"
+          className="flex items-center gap-1 text-sm font-medium text-purple-600 hover:text-purple-700 transition-colors"
         >
           Lihat semua
           <ArrowRight className="h-4 w-4" />
@@ -84,8 +84,8 @@ export function RecentTasks({ tasks, isLoading }: RecentTasksProps) {
               className="group flex items-center justify-between rounded-xl bg-white border border-zinc-100 p-4 transition-all duration-200 hover:border-zinc-200 hover:bg-zinc-50"
             >
               <div className="flex items-center gap-3">
-                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-indigo-50">
-                  <CheckCircle2 className="h-4 w-4 text-indigo-600" />
+                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-purple-50">
+                  <CheckCircle2 className="h-4 w-4 text-purple-600" />
                 </div>
                 <div>
                   <h4 className="font-medium text-slate-900 group-hover:text-slate-700">

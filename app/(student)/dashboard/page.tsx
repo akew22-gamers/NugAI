@@ -63,7 +63,7 @@ export default function DashboardPage() {
     return (
       <div className="flex h-full items-center justify-center">
         <div className="text-center">
-          <div className="h-8 w-8 animate-spin rounded-full border-2 border-zinc-200 border-t-indigo-500 mx-auto" />
+          <div className="h-8 w-8 animate-spin rounded-full border-2 border-zinc-200 border-t-purple-500 mx-auto" />
           <p className="mt-2 text-sm text-slate-500">Memuat dashboard...</p>
         </div>
       </div>

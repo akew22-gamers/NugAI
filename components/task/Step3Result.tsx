@@ -139,7 +139,7 @@ export function Step3Result({
                   : formData.task_type === "ASSIGNMENT" ? "Jawaban Soal" : "Jawaban Diskusi"}
               </span>
               {providerName && (
-                <span className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-indigo-100 text-indigo-700">
+                <span className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-purple-100 text-purple-700">
                   {providerName}
                 </span>
               )}

@@ -35,7 +35,7 @@ export function CourseCard({ course, onEdit, onDelete, className }: CourseCardPr
     >
       <div className="flex items-start justify-between gap-4 mb-4">
         <div className="flex items-center gap-3 min-w-0">
-          <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-zinc-900 flex items-center justify-center">
+          <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-purple-600 flex items-center justify-center">
             <BookOpen className="w-5 h-5 text-white" />
           </div>
           <div className="min-w-0">
