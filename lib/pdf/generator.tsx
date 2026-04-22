@@ -117,6 +117,37 @@ const styles = StyleSheet.create({
     fontSize: 11,
     marginBottom: 8,
     lineHeight: 1.15,
+    flexDirection: 'row',
+  },
+  referenceNumber: {
+    fontSize: 11,
+    lineHeight: 1.15,
+    width: 18,
+  },
+  referenceText: {
+    fontSize: 11,
+    lineHeight: 1.15,
+    flex: 1,
+  },
+  identityRow: {
+    flexDirection: 'row',
+    marginBottom: 2,
+  },
+  identityLabel: {
+    fontSize: 12,
+    width: 45,
+  },
+  identitySeparator: {
+    fontSize: 12,
+    width: 15,
+    textAlign: 'center',
+  },
+  identityValue: {
+    fontSize: 12,
+    flex: 1,
+  },
+  identitySection: {
+    marginBottom: 12,
   },
   soalListHeader: {
     fontSize: 14,
@@ -160,17 +191,55 @@ function formatReference(ref: ReferenceData): string {
   }
 }
 
+function parseDiscussionAnswer(answerText: string): { identityLines: Array<{ label: string; value: string }>; body: string } {
+  const lines = answerText.split('\n')
+  const identityLines: Array<{ label: string; value: string }> = []
+  let bodyStartIndex = 0
+
+  for (let i = 0; i < Math.min(lines.length, 5); i++) {
+    const line = lines[i].trim()
+    const match = line.match(/^(Nama|NIM)\s*:\s*(.+)$/i)
+    if (match) {
+      identityLines.push({ label: match[1], value: match[2].trim() })
+      bodyStartIndex = i + 1
+    } else if (line === '' && identityLines.length > 0) {
+      bodyStartIndex = i + 1
+    } else if (identityLines.length > 0) {
+      break
+    } else if (line !== '') {
+      break
+    }
+  }
+
+  const body = lines.slice(bodyStartIndex).join('\n').trim()
+  return { identityLines, body }
+}
+
 function DiscussionTemplate({ data }: { data: PDFData }) {
   const allAnswers = data.taskItems.map(item => item.answer_text)
   
   return (
     <Document>
       <Page size={PAGE_SIZE} style={styles.page}>
-        {allAnswers.map((answer, index) => (
-          <Text key={index} style={styles.discussionBody}>
-            {answer}
-          </Text>
-        ))}
+        {allAnswers.map((answer, index) => {
+          const { identityLines, body } = parseDiscussionAnswer(answer)
+          return (
+            <View key={index}>
+              {identityLines.length > 0 && (
+                <View style={styles.identitySection}>
+                  {identityLines.map((id, idx) => (
+                    <View key={idx} style={styles.identityRow}>
+                      <Text style={styles.identityLabel}>{id.label}</Text>
+                      <Text style={styles.identitySeparator}>:</Text>
+                      <Text style={styles.identityValue}>{id.value}</Text>
+                    </View>
+                  ))}
+                </View>
+              )}
+              <Text style={styles.discussionBody}>{body}</Text>
+            </View>
+          )
+        })}
       </Page>
     </Document>
   )
@@ -230,9 +299,10 @@ function AssignmentTemplate({ data }: { data: PDFData }) {
                 const formatted = formatReference(ref)
                 if (!formatted) return null
                 return (
-                  <Text key={refIndex} style={styles.referenceItem}>
-                    {refIndex + 1}. {formatted}
-                  </Text>
+                  <View key={refIndex} style={styles.referenceItem}>
+                    <Text style={styles.referenceNumber}>{refIndex + 1}.</Text>
+                    <Text style={styles.referenceText}>{formatted}</Text>
+                  </View>
                 )
               })}
             </View>
