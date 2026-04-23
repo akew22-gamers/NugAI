@@ -341,6 +341,30 @@ export default function LandingPage() {
         <div className="absolute top-1/3 right-[5%] w-10 h-10 opacity-35 animate-spin-slow">
           <Sparkles className="w-full h-full text-indigo-400" />
         </div>
+        <div className="absolute top-28 left-[25%] w-8 h-8 opacity-20 animate-float" style={{ animationDelay: '1s' }}>
+          <div className="w-full h-full rounded-lg bg-gradient-to-br from-purple-400 to-pink-400 rotate-45" />
+        </div>
+        <div className="absolute top-[60%] left-[5%] w-6 h-6 opacity-20 animate-float-alt" style={{ animationDelay: '0.5s' }}>
+          <div className="w-full h-full rounded-full bg-gradient-to-br from-indigo-400 to-blue-400" />
+        </div>
+        <div className="absolute top-[20%] left-[40%] w-5 h-5 opacity-15 animate-spin-slow" style={{ animationDelay: '2s' }}>
+          <Sparkles className="w-full h-full text-purple-400" />
+        </div>
+        <div className="absolute bottom-[20%] left-[15%] w-10 h-10 opacity-20 animate-float" style={{ animationDelay: '1.5s' }}>
+          <div className="w-full h-full rounded-2xl bg-gradient-to-br from-amber-400 to-orange-400 -rotate-12" />
+        </div>
+        <div className="absolute top-[45%] right-[10%] w-7 h-7 opacity-20 animate-float-alt" style={{ animationDelay: '0.8s' }}>
+          <div className="w-full h-full rounded-full bg-gradient-to-br from-pink-400 to-rose-400" />
+        </div>
+        <div className="absolute bottom-40 left-[35%] w-5 h-5 opacity-25 animate-spin-slow" style={{ animationDelay: '3s' }}>
+          <Sparkles className="w-full h-full text-indigo-300" />
+        </div>
+        <div className="absolute top-32 right-[35%] w-6 h-6 opacity-15 animate-float" style={{ animationDelay: '2.5s' }}>
+          <div className="w-full h-full rounded-lg bg-gradient-to-br from-cyan-400 to-blue-400 rotate-12" />
+        </div>
+        <div className="absolute bottom-24 right-[40%] w-8 h-8 opacity-15 animate-float-alt" style={{ animationDelay: '1.2s' }}>
+          <div className="w-full h-full rounded-full bg-gradient-to-br from-violet-400 to-purple-500" />
+        </div>
 
         <div className="max-w-7xl mx-auto relative">
           <div className="text-center max-w-4xl mx-auto">
@@ -457,7 +481,6 @@ export default function LandingPage() {
             </p>
           </div>
 
-            <div className="hidden lg:block absolute top-12 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-indigo-200 to-transparent" />
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 lg:gap-12">
               {steps.map((step, index) => (
                 <div key={index} className="relative text-center animate-fade-in-up" style={{ animationDelay: `${index * 200}ms` }}>
@@ -479,7 +502,7 @@ export default function LandingPage() {
             <Link href="/login">
               <Button
                 size="lg"
-                className="group !bg-gradient-to-r from-indigo-600 to-purple-600 text-white hover:from-indigo-700 hover:to-purple-700 text-lg px-8 shadow-xl shadow-indigo-500/25 hover:shadow-indigo-500/40 transition-all duration-300 hover:scale-105 font-semibold"
+                className="group !bg-gradient-to-r from-indigo-600 to-purple-600 !text-white hover:from-indigo-700 hover:to-purple-700 text-lg px-8 shadow-xl shadow-indigo-500/25 hover:shadow-indigo-500/40 transition-all duration-300 hover:scale-105 font-semibold"
               >
                 Mulai Sekarang
                 <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
