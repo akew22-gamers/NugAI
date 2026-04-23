@@ -33,6 +33,7 @@ export function ProfileForm({ className }: ProfileFormProps) {
   })
   const [isLoading, setIsLoading] = useState(false)
   const [isFetching, setIsFetching] = useState(true)
+  const [isNewProfile, setIsNewProfile] = useState(false)
   const [errors, setErrors] = useState<Partial<Record<keyof ProfileData, string>>>({})
 
   useEffect(() => {
@@ -42,6 +43,8 @@ export function ProfileForm({ className }: ProfileFormProps) {
         if (response.ok) {
           const result = await response.json()
           if (result.data) {
+            const hasProfile = !!(result.data.full_name && result.data.nim && result.data.university_name && result.data.study_program)
+            setIsNewProfile(!hasProfile)
             setFormData({
               full_name: result.data.full_name || "",
               nim: result.data.nim || "",
@@ -50,6 +53,8 @@ export function ProfileForm({ className }: ProfileFormProps) {
               study_program: result.data.study_program || "",
               upbjj_branch: result.data.upbjj_branch || "",
             })
+          } else {
+            setIsNewProfile(true)
           }
         } else {
           const errorData = await response.json()
@@ -114,7 +119,11 @@ export function ProfileForm({ className }: ProfileFormProps) {
 
       if (response.ok) {
         toast.success("Profil berhasil diperbarui")
-        router.refresh()
+        if (isNewProfile) {
+          router.push("/dashboard")
+        } else {
+          router.refresh()
+        }
       } else {
         const data = await response.json()
         toast.error("Gagal memperbarui profil", {
