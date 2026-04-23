@@ -367,17 +367,14 @@ export default function LandingPage() {
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12 animate-fade-in-down delay-300">
               <Link href="/login">
-                <Button
-                  size="lg"
-                  className="group !bg-gradient-to-r from-indigo-500 to-purple-600 text-white hover:from-indigo-600 hover:to-purple-700 text-lg px-8 shadow-2xl shadow-indigo-500/30 hover:shadow-indigo-500/50 transition-all duration-300 hover:scale-105"
-                >
+                <button className="group h-12 px-8 rounded-lg !bg-gradient-to-r from-indigo-500 to-purple-600 text-white hover:from-indigo-600 hover:to-purple-700 text-base font-semibold shadow-2xl shadow-indigo-500/30 hover:shadow-indigo-500/50 transition-all duration-300 hover:scale-105 inline-flex items-center justify-center gap-2 bg-gradient-to-r">
                   Mulai Gratis
-                  <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
-                </Button>
+                  <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                </button>
               </Link>
               <button
                 onClick={() => scrollToSection("how-it-works")}
-                className="group px-8 py-3 rounded-lg border-2 border-zinc-300 text-slate-700 font-medium hover:border-indigo-400 hover:text-indigo-600 hover:bg-indigo-50 transition-all duration-300 flex items-center justify-center gap-2"
+                className="group h-12 px-8 rounded-lg border-2 border-zinc-300 text-slate-700 text-base font-semibold hover:border-indigo-400 hover:text-indigo-600 hover:bg-indigo-50 transition-all duration-300 inline-flex items-center justify-center gap-2"
               >
                 Cara Kerja
                 <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
