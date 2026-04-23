@@ -174,19 +174,12 @@ export function MobileNav() {
     return pathname === href || (pathname?.startsWith(`${href}/`) ?? false)
   }
 
-  const logoBg = isAdmin
-    ? "bg-gradient-to-br from-red-500 to-orange-600 shadow-red-500/20"
-    : "bg-gradient-to-br from-indigo-500 to-purple-600 shadow-indigo-500/20"
-
   return (
     <>
       <header className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-xl border-b border-zinc-200">
         <div className="flex items-center justify-between px-4 py-3">
           <Link href={isAdmin ? "/admin" : "/dashboard"} className="flex items-center gap-2">
-            <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center shadow-lg", logoBg)}>
-              <span className="text-white font-bold text-sm">N</span>
-            </div>
-            <span className="font-bold">
+            <span className="font-bold text-lg">
               <span className="text-slate-900">Nug</span>
               <span
                 className="bg-clip-text text-transparent"

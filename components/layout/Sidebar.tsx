@@ -194,18 +194,25 @@ export function Sidebar() {
       )}
     >
       <div className="flex items-center justify-between p-6 border-b border-zinc-100">
-        <Link href={isAdmin ? "/admin" : "/dashboard"} className="flex items-center gap-3">
-          <div className={cn(
-            "w-10 h-10 rounded-xl flex items-center justify-center shrink-0 shadow-lg",
-            isAdmin 
-              ? "bg-gradient-to-br from-red-500 to-orange-600 shadow-red-500/20"
-              : "bg-gradient-to-br from-indigo-500 to-purple-600 shadow-lg shadow-indigo-500/20"
-          )}>
-            <span className="text-white font-bold text-lg">N</span>
-          </div>
+        <Link href={isAdmin ? "/admin" : "/dashboard"} className="flex items-center gap-2">
           {!isCollapsed && (
-            <span className="font-bold text-lg">
+            <span className="font-bold text-xl">
               <span className="text-slate-900">Nug</span>
+              <span
+                className="bg-clip-text text-transparent"
+                style={{
+                  backgroundImage: isAdmin
+                    ? "linear-gradient(135deg, #ef4444 0%, #f97316 50%, #f59e0b 100%)"
+                    : "linear-gradient(135deg, #6366f1 0%, #a855f7 50%, #ec4899 100%)",
+                }}
+              >
+                AI
+              </span>
+            </span>
+          )}
+          {isCollapsed && (
+            <span className="font-bold text-lg">
+              <span className="text-slate-900">N</span>
               <span
                 className="bg-clip-text text-transparent"
                 style={{

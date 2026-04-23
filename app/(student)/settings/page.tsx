@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent } from "@/components/ui/card"
 import { ProfileForm } from "@/components/settings/ProfileForm"
@@ -8,9 +8,31 @@ import { PasswordForm } from "@/components/settings/PasswordForm"
 
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState("profile")
+  const [hasIncompleteProfile, setHasIncompleteProfile] = useState(false)
+
+  useEffect(() => {
+    fetch("/api/profile")
+      .then((res) => {
+        if (res.ok) return res.json()
+        throw new Error("No profile")
+      })
+      .then((data) => {
+        const profile = data.data
+        const isComplete = profile?.full_name && profile?.nim && profile?.university_name && profile?.study_program
+        setHasIncompleteProfile(!isComplete)
+      })
+      .catch(() => setHasIncompleteProfile(true))
+  }, [])
 
   return (
     <div className="space-y-6">
+      {hasIncompleteProfile && (
+        <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-6">
+          <p className="text-amber-800 font-medium">Lengkapi profil Anda</p>
+          <p className="text-amber-600 text-sm mt-1">Anda harus melengkapi data profil sebelum dapat menggunakan fitur lainnya.</p>
+        </div>
+      )}
+
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-zinc-900">Pengaturan</h1>

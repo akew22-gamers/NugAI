@@ -22,7 +22,6 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url)
     const search = searchParams.get('search')
     const tier = searchParams.get('tier')
-    const role = searchParams.get('role')
 
     const where: Record<string, unknown> = { role: 'USER' }
 
@@ -81,7 +80,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json()
-    const { username, password, role, subscription_tier, full_name, nim, university_name, faculty, study_program, upbjj_branch } = body
+    const { username, password, role, subscription_tier } = body
 
     if (!username || !password) {
       return NextResponse.json(
@@ -128,21 +127,6 @@ export async function POST(request: NextRequest) {
         subscription_tier: userTier,
       },
     })
-
-    if (userRole === UserRole.USER && full_name && nim) {
-      await prisma.studentProfile.create({
-        data: {
-          user_id: user.id,
-          full_name,
-          nim,
-          university_name: university_name || '',
-          faculty: faculty || '',
-          study_program: study_program || '',
-          upbjj_branch: upbjj_branch || null,
-          university_logo_url: '',
-        },
-      })
-    }
 
     return NextResponse.json({
       user: {

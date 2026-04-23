@@ -228,11 +228,8 @@ export default function LandingPage() {
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16 lg:h-20">
-            <Link href="/" className="flex items-center gap-2.5 group">
-              <div className="w-9 h-9 lg:w-10 lg:h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/25 group-hover:shadow-indigo-500/40 transition-all duration-300 group-hover:scale-105">
-                <span className="text-white font-bold text-sm lg:text-base">N</span>
-              </div>
-              <span className="font-bold text-xl text-slate-900">NugAI</span>
+            <Link href="/" className="flex items-center gap-2 group">
+              <span className="font-bold text-xl text-slate-900">Nug<span className="gradient-text">AI</span></span>
             </Link>
 
             <nav className="hidden md:flex items-center gap-1">
@@ -663,11 +660,8 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10 lg:gap-12 mb-12">
             <div className="lg:col-span-1">
-              <Link href="/" className="flex items-center gap-2.5 mb-5 group">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/20 group-hover:shadow-indigo-500/40 transition-all">
-                  <span className="text-white font-bold">N</span>
-                </div>
-                <span className="font-bold text-xl text-slate-900">NugAI</span>
+              <Link href="/" className="flex items-center gap-2 mb-5 group">
+                <span className="font-bold text-xl text-slate-900">Nug<span className="gradient-text">AI</span></span>
               </Link>
               <p className="text-slate-500 text-sm leading-relaxed mb-5">
                 Asisten tugas akademik berbasis AI untuk mahasiswa Indonesia. Kerjakan tugas lebih cepat dengan referensi kredibel.

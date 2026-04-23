@@ -60,11 +60,6 @@ export default function AdminUsersPage() {
   const [password, setPassword] = useState("")
   const [role, setRole] = useState<UserRole>("USER")
   const [subscriptionTier, setSubscriptionTier] = useState<SubscriptionTier>("FREE")
-  const [fullName, setFullName] = useState("")
-  const [nim, setNim] = useState("")
-  const [universityName, setUniversityName] = useState("")
-  const [faculty, setFaculty] = useState("")
-  const [studyProgram, setStudyProgram] = useState("")
 
   useEffect(() => {
     fetchUsers()
@@ -101,11 +96,6 @@ export default function AdminUsersPage() {
       return
     }
 
-    if (role === "USER" && (!fullName || !nim)) {
-      toast.error("Nama lengkap dan NIM harus diisi untuk pengguna student")
-      return
-    }
-
     setIsSaving(true)
     try {
       const response = await fetch("/api/admin/users", {
@@ -116,11 +106,6 @@ export default function AdminUsersPage() {
           password,
           role,
           subscription_tier: subscriptionTier,
-          full_name: fullName,
-          nim,
-          university_name: universityName,
-          faculty,
-          study_program: studyProgram,
         }),
       })
 
@@ -241,11 +226,6 @@ export default function AdminUsersPage() {
     setPassword("")
     setRole("USER")
     setSubscriptionTier("FREE")
-    setFullName("")
-    setNim("")
-    setUniversityName("")
-    setFaculty("")
-    setStudyProgram("")
   }
 
   const openNewUserDialog = () => {
@@ -446,62 +426,6 @@ export default function AdminUsersPage() {
                 }
               />
             </div>
-
-            {role === "USER" && (
-              <div className="space-y-4 pt-4 border-t border-slate-200">
-                <p className="text-sm font-medium text-slate-700">Data Student (Wajib)</p>
-
-                <div className="space-y-2">
-                  <Label htmlFor="full_name">Nama Lengkap</Label>
-                  <Input
-                    id="full_name"
-                    value={fullName}
-                    onChange={(e) => setFullName(e.target.value)}
-                    placeholder="Nama lengkap"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="nim">NIM</Label>
-                  <Input
-                    id="nim"
-                    value={nim}
-                    onChange={(e) => setNim(e.target.value)}
-                    placeholder="Nomor Induk Mahasiswa"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="university_name">Universitas</Label>
-                  <Input
-                    id="university_name"
-                    value={universityName}
-                    onChange={(e) => setUniversityName(e.target.value)}
-                    placeholder="Nama universitas"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="faculty">Fakultas</Label>
-                  <Input
-                    id="faculty"
-                    value={faculty}
-                    onChange={(e) => setFaculty(e.target.value)}
-                    placeholder="Nama fakultas"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="study_program">Program Studi</Label>
-                  <Input
-                    id="study_program"
-                    value={studyProgram}
-                    onChange={(e) => setStudyProgram(e.target.value)}
-                    placeholder="Nama program studi"
-                  />
-                </div>
-              </div>
-            )}
 
             <DialogFooter className="pt-4">
               <Button
