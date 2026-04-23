@@ -164,7 +164,7 @@ export default function TaskDetailPage() {
 
   if (status === "loading" || isLoading) {
     return (
-      <Loading text="Memuat tugas..." className="min-h-[50vh]" />
+      <Loading text="Memuat tugas..." />
     )
   }
 

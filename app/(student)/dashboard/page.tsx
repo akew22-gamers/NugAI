@@ -62,7 +62,7 @@ export default function DashboardPage() {
 
   if (status === "loading" || isLoading) {
     return (
-      <Loading text="Memuat dashboard..." className="min-h-[50vh]" />
+      <Loading text="Memuat dashboard..." />
     )
   }
 

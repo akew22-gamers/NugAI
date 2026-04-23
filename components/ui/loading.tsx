@@ -17,13 +17,15 @@ export function Loading({ text = "Memuat...", className }: LoadingProps) {
   return (
     <>
       <style dangerouslySetInnerHTML={{ __html: keyframes }} />
-      <div className={cn("flex-1 flex flex-col items-center justify-center w-full", className)}>
-        <div className="flex items-center gap-3">
-          <span className="block w-3 h-3 rounded-full bg-purple-500" style={dotAnim("0s")} />
-          <span className="block w-3 h-3 rounded-full bg-indigo-500" style={dotAnim("0.2s")} />
-          <span className="block w-3 h-3 rounded-full bg-pink-500" style={dotAnim("0.4s")} />
+      <div className={cn("grid place-items-center w-full h-[calc(100dvh-90px)] lg:h-[calc(100dvh-64px)]", className)}>
+        <div className="flex flex-col items-center">
+          <div className="flex items-center gap-3">
+            <span className="block w-3 h-3 rounded-full bg-purple-500" style={dotAnim("0s")} />
+            <span className="block w-3 h-3 rounded-full bg-indigo-500" style={dotAnim("0.2s")} />
+            <span className="block w-3 h-3 rounded-full bg-pink-500" style={dotAnim("0.4s")} />
+          </div>
+          {text && <p className="text-sm text-slate-500 mt-4">{text}</p>}
         </div>
-        {text && <p className="text-sm text-slate-500 mt-4">{text}</p>}
       </div>
     </>
   )
@@ -33,13 +35,15 @@ export function LoadingAdmin({ text = "Memuat...", className }: LoadingProps) {
   return (
     <>
       <style dangerouslySetInnerHTML={{ __html: keyframes }} />
-      <div className={cn("flex-1 flex flex-col items-center justify-center w-full", className)}>
-        <div className="flex items-center gap-3">
-          <span className="block w-3 h-3 rounded-full bg-red-500" style={dotAnim("0s")} />
-          <span className="block w-3 h-3 rounded-full bg-orange-500" style={dotAnim("0.2s")} />
-          <span className="block w-3 h-3 rounded-full bg-amber-500" style={dotAnim("0.4s")} />
+      <div className={cn("grid place-items-center w-full h-[calc(100dvh-90px)] lg:h-[calc(100dvh-64px)]", className)}>
+        <div className="flex flex-col items-center">
+          <div className="flex items-center gap-3">
+            <span className="block w-3 h-3 rounded-full bg-red-500" style={dotAnim("0s")} />
+            <span className="block w-3 h-3 rounded-full bg-orange-500" style={dotAnim("0.2s")} />
+            <span className="block w-3 h-3 rounded-full bg-amber-500" style={dotAnim("0.4s")} />
+          </div>
+          {text && <p className="text-sm text-slate-500 mt-4">{text}</p>}
         </div>
-        {text && <p className="text-sm text-slate-500 mt-4">{text}</p>}
       </div>
     </>
   )

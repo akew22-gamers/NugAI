@@ -155,7 +155,7 @@ export default function CoursesPage() {
 
   if (status === "loading" || (status === "authenticated" && isLoading && courses.length === 0)) {
     return (
-      <Loading text="Memuat data..." className="min-h-[50vh]" />
+      <Loading text="Memuat data..." />
     )
   }
 
