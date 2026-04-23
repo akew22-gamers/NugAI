@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/dialog"
 import { AIProviderType } from "@prisma/client"
 import { cn } from "@/lib/utils"
+import { LoadingAdmin } from "@/components/ui/loading"
 
 interface Provider {
   id: string
@@ -337,7 +338,7 @@ export default function AdminProvidersPage() {
       </div>
 
       {isLoading ? (
-        <div className="text-center py-8 text-slate-500">Memuat provider...</div>
+        <LoadingAdmin text="Memuat provider..." />
       ) : providers.length === 0 ? (
         <Card className="h-[200px]">
           <CardContent className="h-full flex flex-col items-center justify-center text-center">

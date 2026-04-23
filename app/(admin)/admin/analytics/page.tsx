@@ -8,6 +8,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
+import { LoadingAdmin } from "@/components/ui/loading"
 
 interface Summary {
   totalUsers: number
@@ -79,7 +80,7 @@ export default function AdminAnalyticsPage() {
 
   if (isLoading) {
     return (
-      <div className="text-center py-8 text-slate-500">Memuat analytics...</div>
+      <LoadingAdmin text="Memuat analytics..." />
     )
   }
 

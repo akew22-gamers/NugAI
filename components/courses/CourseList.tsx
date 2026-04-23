@@ -3,6 +3,7 @@
 import { Course, CourseCard } from "./CourseCard"
 import { cn } from "@/lib/utils"
 import { BookOpen, Loader2 } from "lucide-react"
+import { Loading } from "@/components/ui/loading"
 
 interface CourseListProps {
   courses: Course[]
@@ -21,12 +22,7 @@ export function CourseList({
 }: CourseListProps) {
   if (isLoading) {
     return (
-      <div className={cn("flex items-center justify-center py-20", className)}>
-        <div className="flex flex-col items-center gap-3 text-zinc-500">
-          <Loader2 className="w-8 h-8 animate-spin" />
-          <p className="text-sm">Memuat data mata kuliah...</p>
-        </div>
-      </div>
+      <Loading text="Memuat data mata kuliah..." />
     )
   }
 

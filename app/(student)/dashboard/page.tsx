@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button"
 import { QuotaDisplay } from "@/components/dashboard/QuotaDisplay"
 import { RecentTasks } from "@/components/dashboard/RecentTasks"
 import { QuickActions } from "@/components/dashboard/QuickActions"
+import { Loading } from "@/components/ui/loading"
 
 interface QuotaData {
   tier: "FREE" | "PREMIUM"
@@ -61,12 +62,7 @@ export default function DashboardPage() {
 
   if (status === "loading" || isLoading) {
     return (
-      <div className="flex h-full items-center justify-center">
-        <div className="text-center">
-          <div className="h-8 w-8 animate-spin rounded-full border-2 border-zinc-200 border-t-purple-500 mx-auto" />
-          <p className="mt-2 text-sm text-slate-500">Memuat dashboard...</p>
-        </div>
-      </div>
+      <Loading text="Memuat dashboard..." className="min-h-[50vh]" />
     )
   }
 

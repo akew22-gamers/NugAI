@@ -16,6 +16,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog"
+import { Loading } from "@/components/ui/loading"
 
 interface TaskSession {
   id: string
@@ -135,12 +136,7 @@ export default function TaskHistoryPage() {
 
   if (status === "loading" || isLoading) {
     return (
-      <div className="flex h-full items-center justify-center">
-        <div className="text-center">
-          <Loader2 className="h-8 w-8 animate-spin text-zinc-900 mx-auto" />
-          <p className="mt-2 text-sm text-zinc-500">Memuat tugas...</p>
-        </div>
-      </div>
+      <Loading text="Memuat tugas..." className="min-h-[50vh]" />
     )
   }
 

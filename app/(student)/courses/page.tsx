@@ -9,6 +9,7 @@ import { Course } from "@/components/courses/CourseCard"
 import { Plus, Loader2 } from "lucide-react"
 import { useSession } from "next-auth/react"
 import Link from "next/link"
+import { Loading } from "@/components/ui/loading"
 
 export default function CoursesPage() {
   const { status } = useSession()
@@ -154,12 +155,7 @@ export default function CoursesPage() {
 
   if (status === "loading" || (status === "authenticated" && isLoading && courses.length === 0)) {
     return (
-      <div className="flex h-full items-center justify-center">
-        <div className="text-center">
-          <Loader2 className="h-8 w-8 animate-spin text-zinc-900 mx-auto" />
-          <p className="mt-2 text-sm text-zinc-500">Memuat data...</p>
-        </div>
-      </div>
+      <Loading text="Memuat data..." className="min-h-[50vh]" />
     )
   }
 

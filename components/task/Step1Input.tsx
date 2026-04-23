@@ -19,6 +19,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { cn } from "@/lib/utils"
+import { Loading } from "@/components/ui/loading"
 
 interface Step1InputProps {
   initialData: TaskFormData
@@ -157,9 +158,7 @@ export function Step1Input({ initialData, onComplete, lockedTaskType }: Step1Inp
 
   if (status === "loading" || isLoadingCourses) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-8 h-8 animate-spin text-zinc-900" />
-      </div>
+      <Loading text="Memuat form..." />
     )
   }
 

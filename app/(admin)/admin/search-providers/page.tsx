@@ -13,6 +13,7 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 import { SearchProviderType } from "@prisma/client"
+import { LoadingAdmin } from "@/components/ui/loading"
 
 interface SearchProvider {
   id: string
@@ -192,9 +193,7 @@ export default function AdminSearchProvidersPage() {
       </div>
 
       {isLoading ? (
-        <div className="text-center py-8 text-slate-500">
-          Memuat search providers...
-        </div>
+        <LoadingAdmin text="Memuat search providers..." />
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <Card>

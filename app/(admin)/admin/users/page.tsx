@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/dialog"
 import { SubscriptionTier, UserRole } from "@prisma/client"
 import { Crown, User, Trash2, KeyRound } from "lucide-react"
+import { LoadingAdmin } from "@/components/ui/loading"
 
 interface User {
   id: string
@@ -284,7 +285,7 @@ export default function AdminUsersPage() {
       </Card>
 
       {isLoading ? (
-        <div className="text-center py-8 text-slate-500">Memuat pengguna...</div>
+        <LoadingAdmin text="Memuat pengguna..." />
       ) : users.length === 0 ? (
         <Card>
           <CardContent className="py-12 flex flex-col items-center justify-center text-center">
