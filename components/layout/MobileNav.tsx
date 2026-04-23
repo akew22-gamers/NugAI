@@ -11,6 +11,7 @@ interface NavItem {
   label: string
   href: string
   icon: React.ReactNode
+  children?: NavItem[]
 }
 
 const studentNavItems: NavItem[] = [
@@ -33,22 +34,33 @@ const studentNavItems: NavItem[] = [
     ),
   },
   {
-    label: "Tugas Diskusi",
-    href: "/task/diskusi/new",
+    label: "Tugas",
+    href: "/task",
     icon: (
       <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
       </svg>
     ),
-  },
-  {
-    label: "Tugas Soal",
-    href: "/task/soal/new",
-    icon: (
-      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
-      </svg>
-    ),
+    children: [
+      {
+        label: "Diskusi",
+        href: "/task/diskusi/new",
+        icon: (
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+          </svg>
+        ),
+      },
+      {
+        label: "Soal",
+        href: "/task/soal/new",
+        icon: (
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+          </svg>
+        ),
+      },
+    ],
   },
   {
     label: "Mata Kuliah",
@@ -139,6 +151,7 @@ const LogoutIcon = (
 
 export function MobileNav() {
   const [isOpen, setIsOpen] = useState(false)
+  const [expandedMenus, setExpandedMenus] = useState<string[]>([])
   const pathname = usePathname()
   const { data: session } = useSession()
 
@@ -158,13 +171,14 @@ export function MobileNav() {
     return name.charAt(0).toUpperCase()
   }
 
+  const toggleMenu = (label: string) => {
+    setExpandedMenus(prev =>
+      prev.includes(label) ? prev.filter(l => l !== label) : [...prev, label]
+    )
+  }
+
   const getIsActive = (href: string) => {
-    if (href === "/admin") {
-      return pathname === "/admin"
-    }
-    if (href === "/task") {
-      return pathname === href
-    }
+    if (href === "/admin") return pathname === "/admin"
     if (href === "/task/diskusi/new") {
       return pathname?.startsWith("/task/diskusi") ?? false
     }
@@ -221,8 +235,59 @@ export function MobileNav() {
           <nav className="lg:hidden fixed inset-x-0 top-[57px] z-50 bg-white border-b border-zinc-200 shadow-xl shadow-zinc-200/50">
             <div className="p-4 space-y-1">
               {navItems.map((item) => {
-                const isActive = getIsActive(item.href)
+                if (item.children) {
+                  const parentActive = item.children.some(c => getIsActive(c.href))
+                  const isExpanded = expandedMenus.includes(item.label)
 
+                  return (
+                    <div key={item.label}>
+                      <button
+                        onClick={() => toggleMenu(item.label)}
+                        className={cn(
+                          "flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 w-full text-left",
+                          parentActive
+                            ? isAdmin ? "text-red-700 font-medium" : "text-purple-700 font-medium"
+                            : "text-slate-600 hover:bg-zinc-50 hover:text-slate-900"
+                        )}
+                      >
+                        <span className={cn("shrink-0", parentActive ? isAdmin ? "text-red-600" : "text-purple-600" : "text-slate-400")}>
+                          {item.icon}
+                        </span>
+                        <span className="flex-1">{item.label}</span>
+                        <svg className={cn("w-4 h-4 transition-transform duration-200 text-slate-400", isExpanded && "rotate-180")} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                        </svg>
+                      </button>
+                      {isExpanded && (
+                        <div className="ml-6 pl-3 border-l border-zinc-200 mt-1 space-y-1">
+                          {item.children.map((child) => {
+                            const childActive = getIsActive(child.href)
+                            return (
+                              <Link
+                                key={child.href}
+                                href={child.href}
+                                onClick={() => setIsOpen(false)}
+                                className={cn(
+                                  "flex items-center gap-2.5 px-3 py-2.5 rounded-lg transition-all duration-200 text-sm",
+                                  childActive
+                                    ? isAdmin ? "bg-red-50 text-red-700 font-medium" : "bg-purple-50 text-purple-700 font-medium"
+                                    : "text-slate-500 hover:bg-zinc-50 hover:text-slate-900"
+                                )}
+                              >
+                                <span className={cn("shrink-0", childActive ? isAdmin ? "text-red-500" : "text-purple-500" : "text-slate-400")}>
+                                  {child.icon}
+                                </span>
+                                <span>{child.label}</span>
+                              </Link>
+                            )
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  )
+                }
+
+                const isActive = getIsActive(item.href)
                 return (
                   <Link
                     key={item.href}
@@ -233,7 +298,7 @@ export function MobileNav() {
                       isActive
                         ? isAdmin 
                           ? "bg-red-50 text-red-700 font-medium"
-                          : "bg-indigo-50 text-indigo-700 font-medium"
+                          : "bg-purple-50 text-purple-700 font-medium"
                         : "text-slate-600 hover:bg-zinc-50 hover:text-slate-900"
                     )}
                   >
@@ -241,7 +306,7 @@ export function MobileNav() {
                       className={cn(
                         "shrink-0",
                         isActive 
-                          ? isAdmin ? "text-red-600" : "text-indigo-600"
+                          ? isAdmin ? "text-red-600" : "text-purple-600"
                           : "text-slate-400"
                       )}
                     >

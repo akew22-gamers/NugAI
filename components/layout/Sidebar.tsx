@@ -11,6 +11,7 @@ interface NavItem {
   label: string
   href: string
   icon: React.ReactNode
+  children?: NavItem[]
 }
 
 const studentNavItems: NavItem[] = [
@@ -33,22 +34,33 @@ const studentNavItems: NavItem[] = [
     ),
   },
   {
-    label: "Tugas Diskusi",
-    href: "/task/diskusi/new",
+    label: "Tugas",
+    href: "/task",
     icon: (
       <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
       </svg>
     ),
-  },
-  {
-    label: "Tugas Soal",
-    href: "/task/soal/new",
-    icon: (
-      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
-      </svg>
-    ),
+    children: [
+      {
+        label: "Diskusi",
+        href: "/task/diskusi/new",
+        icon: (
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+          </svg>
+        ),
+      },
+      {
+        label: "Soal",
+        href: "/task/soal/new",
+        icon: (
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+          </svg>
+        ),
+      },
+    ],
   },
   {
     label: "Mata Kuliah",
@@ -146,6 +158,7 @@ export function Sidebar() {
   const pathname = usePathname()
   const { data: session, status, update } = useSession()
   const [isCollapsed, setIsCollapsed] = useState(false)
+  const [expandedMenus, setExpandedMenus] = useState<string[]>([])
 
   useEffect(() => {
     if (status === "authenticated" && !session?.user?.id) {
@@ -171,20 +184,32 @@ export function Sidebar() {
   }
 
   const getIsActive = (href: string) => {
-    if (href === "/admin") {
-      return pathname === "/admin"
-    }
-    if (href === "/task") {
-      return pathname === href
-    }
-    if (href === "/task/diskusi/new") {
-      return pathname?.startsWith("/task/diskusi") ?? false
-    }
-    if (href === "/task/soal/new") {
-      return pathname?.startsWith("/task/soal") ?? false
-    }
+    if (href === "/admin") return pathname === "/admin"
+    if (href === "/task/diskusi/new") return pathname?.startsWith("/task/diskusi") ?? false
+    if (href === "/task/soal/new") return pathname?.startsWith("/task/soal") ?? false
     return pathname === href
   }
+
+  const isParentActive = (item: NavItem) => {
+    if (item.children) {
+      return item.children.some(child => getIsActive(child.href))
+    }
+    return getIsActive(item.href)
+  }
+
+  const toggleMenu = (label: string) => {
+    setExpandedMenus(prev =>
+      prev.includes(label) ? prev.filter(l => l !== label) : [...prev, label]
+    )
+  }
+
+  useEffect(() => {
+    navItems.forEach(item => {
+      if (item.children && isParentActive(item) && !expandedMenus.includes(item.label)) {
+        setExpandedMenus(prev => [...prev, item.label])
+      }
+    })
+  }, [pathname])
 
   return (
     <aside
@@ -230,8 +255,62 @@ export function Sidebar() {
 
       <nav className="flex-1 p-4 space-y-1">
         {navItems.map((item) => {
-          const isActive = getIsActive(item.href)
+          if (item.children) {
+            const parentActive = isParentActive(item)
+            const isExpanded = expandedMenus.includes(item.label)
 
+            return (
+              <div key={item.label}>
+                <button
+                  onClick={() => toggleMenu(item.label)}
+                  className={cn(
+                    "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group w-full text-left",
+                    parentActive
+                      ? isAdmin ? "text-red-700 font-medium" : "text-purple-700 font-medium"
+                      : "text-slate-600 hover:bg-zinc-50 hover:text-slate-900"
+                  )}
+                >
+                  <span className={cn("shrink-0 transition-colors", parentActive ? isAdmin ? "text-red-600" : "text-purple-600" : "text-slate-400 group-hover:text-slate-600")}>
+                    {item.icon}
+                  </span>
+                  {!isCollapsed && (
+                    <>
+                      <span className="flex-1">{item.label}</span>
+                      <svg className={cn("w-4 h-4 transition-transform duration-200 text-slate-400", isExpanded && "rotate-180")} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </>
+                  )}
+                </button>
+                {isExpanded && !isCollapsed && (
+                  <div className="ml-4 pl-3 border-l border-zinc-200 mt-1 space-y-1">
+                    {item.children.map((child) => {
+                      const childActive = getIsActive(child.href)
+                      return (
+                        <Link
+                          key={child.href}
+                          href={child.href}
+                          className={cn(
+                            "flex items-center gap-2.5 px-3 py-2 rounded-lg transition-all duration-200 text-sm group",
+                            childActive
+                              ? isAdmin ? "bg-red-50 text-red-700 font-medium" : "bg-purple-50 text-purple-700 font-medium"
+                              : "text-slate-500 hover:bg-zinc-50 hover:text-slate-900"
+                          )}
+                        >
+                          <span className={cn("shrink-0", childActive ? isAdmin ? "text-red-500" : "text-purple-500" : "text-slate-400 group-hover:text-slate-500")}>
+                            {child.icon}
+                          </span>
+                          <span>{child.label}</span>
+                        </Link>
+                      )
+                    })}
+                  </div>
+                )}
+              </div>
+            )
+          }
+
+          const isActive = getIsActive(item.href)
           return (
             <Link
               key={item.href}
@@ -241,7 +320,7 @@ export function Sidebar() {
                 isActive
                   ? isAdmin 
                     ? "bg-red-50 text-red-700 font-medium"
-                    : "bg-indigo-50 text-indigo-700 font-medium"
+                    : "bg-purple-50 text-purple-700 font-medium"
                   : "text-slate-600 hover:bg-zinc-50 hover:text-slate-900"
               )}
             >
@@ -249,7 +328,7 @@ export function Sidebar() {
                 className={cn(
                   "shrink-0 transition-colors",
                   isActive 
-                    ? isAdmin ? "text-red-600" : "text-indigo-600"
+                    ? isAdmin ? "text-red-600" : "text-purple-600"
                     : "text-slate-400 group-hover:text-slate-600"
                 )}
               >
