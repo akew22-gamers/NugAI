@@ -2,6 +2,7 @@
 
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
+import { getCourseColor } from "@/lib/course-colors"
 import { BookOpen, GraduationCap, Pencil, Trash2, User } from "lucide-react"
 import { useState } from "react"
 
@@ -17,17 +18,20 @@ interface CourseCardProps {
   course: Course
   onEdit: (course: Course) => void
   onDelete: (course: Course) => void
+  colorIndex?: number
   className?: string
 }
 
-export function CourseCard({ course, onEdit, onDelete, className }: CourseCardProps) {
+export function CourseCard({ course, onEdit, onDelete, colorIndex = 0, className }: CourseCardProps) {
   const [showActions, setShowActions] = useState(false)
+  const color = getCourseColor(colorIndex)
 
   return (
     <div
       className={cn(
-        "group relative bg-white rounded-xl border border-zinc-200 p-6 shadow-sm",
-        "hover:shadow-md hover:border-zinc-300 transition-all duration-200",
+        "group relative rounded-xl border p-6 shadow-sm",
+        color.bg, color.border,
+        "hover:shadow-md transition-all duration-200",
         className
       )}
       onMouseEnter={() => setShowActions(true)}
@@ -35,7 +39,7 @@ export function CourseCard({ course, onEdit, onDelete, className }: CourseCardPr
     >
       <div className="flex items-start justify-between gap-4 mb-4">
         <div className="flex items-center gap-3 min-w-0">
-          <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-purple-600 flex items-center justify-center">
+          <div className={cn("flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center", color.icon)}>
             <BookOpen className="w-5 h-5 text-white" />
           </div>
           <div className="min-w-0">

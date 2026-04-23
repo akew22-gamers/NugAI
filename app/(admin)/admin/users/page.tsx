@@ -22,7 +22,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { SubscriptionTier, UserRole } from "@prisma/client"
-import { Crown, User, Trash2, KeyRound } from "lucide-react"
+import { Crown, User, Trash2, KeyRound, Pencil } from "lucide-react"
 import { LoadingAdmin } from "@/components/ui/loading"
 
 interface User {
@@ -53,6 +53,7 @@ export default function AdminUsersPage() {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
   const [isResetPasswordDialogOpen, setIsResetPasswordDialogOpen] = useState(false)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const [selectedUser, setSelectedUser] = useState<User | null>(null)
   const [newPassword, setNewPassword] = useState("")
   
@@ -60,6 +61,11 @@ export default function AdminUsersPage() {
   const [password, setPassword] = useState("")
   const [role, setRole] = useState<UserRole>("USER")
   const [subscriptionTier, setSubscriptionTier] = useState<SubscriptionTier>("FREE")
+
+  const [editUser, setEditUser] = useState<User | null>(null)
+  const [editUsername, setEditUsername] = useState("")
+  const [editPassword, setEditPassword] = useState("")
+  const [editSubscriptionTier, setEditSubscriptionTier] = useState<SubscriptionTier>("FREE")
 
   useEffect(() => {
     fetchUsers()
@@ -228,6 +234,57 @@ export default function AdminUsersPage() {
     setSubscriptionTier("FREE")
   }
 
+  const openEditDialog = (user: User) => {
+    setEditUser(user)
+    setEditUsername(user.username)
+    setEditPassword("")
+    setEditSubscriptionTier(user.subscription_tier)
+    setIsEditDialogOpen(true)
+  }
+
+  const handleEditUser = async () => {
+    if (!editUser) return
+    if (!editUsername || editUsername.length < 3) {
+      toast.error("Username minimal 3 karakter")
+      return
+    }
+    if (editPassword && editPassword.length < 8) {
+      toast.error("Password minimal 8 karakter")
+      return
+    }
+
+    setIsSaving(true)
+    try {
+      const body: Record<string, unknown> = {
+        id: editUser.id,
+        username: editUsername,
+        subscription_tier: editSubscriptionTier,
+      }
+      if (editPassword) body.password = editPassword
+
+      const response = await fetch("/api/admin/users", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      })
+
+      if (response.ok) {
+        setIsEditDialogOpen(false)
+        setEditUser(null)
+        fetchUsers()
+        toast.success("Pengguna berhasil diperbarui")
+      } else {
+        const error = await response.json()
+        toast.error(error.error || "Gagal memperbarui pengguna")
+      }
+    } catch (error) {
+      console.error("Failed to edit user:", error)
+      toast.error("Gagal memperbarui pengguna")
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
   const openNewUserDialog = () => {
     resetForm()
     setIsCreateDialogOpen(true)
@@ -344,6 +401,15 @@ export default function AdminUsersPage() {
                       {user.subscription_tier}
                     </span>
                     <div className="flex-1" />
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => openEditDialog(user)}
+                      className="gap-1 shrink-0"
+                    >
+                      <Pencil className="w-4 h-4" />
+                      <span className="hidden sm:inline">Edit</span>
+                    </Button>
                     <Button
                       variant="outline"
                       size="sm"
@@ -500,6 +566,58 @@ export default function AdminUsersPage() {
               disabled={isSaving}
             >
               {isSaving ? "Menghapus..." : "Hapus"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="sm:max-w-[400px]">
+          <DialogHeader>
+            <DialogTitle>Edit Pengguna</DialogTitle>
+            <DialogDescription>
+              Perbarui data pengguna {editUser?.username}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="edit_username">Username</Label>
+              <Input
+                id="edit_username"
+                value={editUsername}
+                onChange={(e) => setEditUsername(e.target.value)}
+                placeholder="Username (min 3 karakter)"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit_password">Password Baru</Label>
+              <Input
+                id="edit_password"
+                type="password"
+                value={editPassword}
+                onChange={(e) => setEditPassword(e.target.value)}
+                placeholder="Kosongkan jika tidak diubah"
+              />
+              <p className="text-xs text-slate-500">Kosongkan jika tidak ingin mengubah password</p>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit_tier">Subscription Tier</Label>
+              <Select
+                id="edit_tier"
+                options={[
+                  { value: "FREE", label: "FREE (5 tasks/day)" },
+                  { value: "PREMIUM", label: "PREMIUM (Unlimited)" },
+                ]}
+                value={editSubscriptionTier}
+                onChange={(e) => setEditSubscriptionTier(e.target.value as SubscriptionTier)}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
+              Batal
+            </Button>
+            <Button onClick={handleEditUser} disabled={isSaving}>
+              {isSaving ? "Menyimpan..." : "Simpan"}
             </Button>
           </DialogFooter>
         </DialogContent>

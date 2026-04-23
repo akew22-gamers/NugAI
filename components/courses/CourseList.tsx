@@ -51,12 +51,13 @@ export function CourseList({
         className
       )}
     >
-      {courses.map((course) => (
+      {courses.map((course, index) => (
         <CourseCard
           key={course.id}
           course={course}
           onEdit={onEdit}
           onDelete={onDelete}
+          colorIndex={index}
         />
       ))}
     </div>

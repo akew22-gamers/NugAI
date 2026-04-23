@@ -4,7 +4,7 @@ import { useEffect, useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useSession } from "next-auth/react"
-import { FileText, CheckCircle2, Loader2, Plus, Trash2 } from "lucide-react"
+import { FileText, CheckCircle2, BookOpen, Loader2, Plus, Trash2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { toast } from "sonner"
@@ -17,6 +17,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog"
 import { Loading } from "@/components/ui/loading"
+import { getCourseColorByName } from "@/lib/course-colors"
 
 interface TaskSession {
   id: string
@@ -189,48 +190,54 @@ export default function TaskHistoryPage() {
         </div>
       ) : (
         <div className="space-y-3">
-          {tasks.map((task) => (
-            <Card key={task.id} className="hover:border-zinc-300 transition-colors">
-              <CardContent className="p-0">
-                <div className="p-4">
-                  <Link
-                    href={`/task/${task.id}`}
-                    className="flex items-start gap-3"
-                  >
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-zinc-200 bg-white">
-                      <CheckCircle2 className="h-5 w-5 text-emerald-600" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-medium text-slate-900 hover:text-purple-600 leading-tight truncate">
-                        {task.course_name || "Tugas Tanpa Mata Kuliah"}
-                      </h3>
-                      <p className="text-sm text-slate-500 leading-tight mt-0.5">
-                        {getTaskTypeLabel(task.task_type)} • {task.items_count} soal • {getLengthLabel(task.min_words_target)}
-                      </p>
-                      {task.module_book_title && (
-                        <p className="text-xs text-slate-400 leading-tight mt-0.5 truncate">
-                          Modul: {task.module_book_title}
+          {tasks.map((task) => {
+            const color = getCourseColorByName(task.course_name || "")
+            return (
+              <Card key={task.id} className="hover:border-zinc-300 transition-colors overflow-hidden">
+                <CardContent className="p-0">
+                  <div className="flex">
+                    <div className={`w-1 shrink-0 ${color.dot}`} />
+                    <div className="flex-1 p-4">
+                      <Link
+                        href={`/task/${task.id}`}
+                        className="flex items-start gap-3"
+                      >
+                        <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${color.icon}`}>
+                          <BookOpen className="h-5 w-5 text-white" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <h3 className={`font-medium leading-tight truncate ${color.text}`}>
+                            {task.course_name || "Tugas Tanpa Mata Kuliah"}
+                          </h3>
+                          <p className="text-sm text-slate-500 leading-tight mt-0.5">
+                            {getTaskTypeLabel(task.task_type)} • {task.items_count} soal • {getLengthLabel(task.min_words_target)}
+                          </p>
+                          {task.module_book_title && (
+                            <p className="text-xs text-slate-400 leading-tight mt-0.5 truncate">
+                              Modul: {task.module_book_title}
+                            </p>
+                          )}
+                        </div>
+                      </Link>
+                      <div className="flex items-center justify-between mt-2 pt-2 border-t border-zinc-100">
+                        <p className="text-xs text-slate-400">
+                          {formatDate(task.created_at)}
                         </p>
-                      )}
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-red-600 hover:text-red-700 hover:bg-red-50 -mr-2"
+                          onClick={() => openDeleteDialog(task.id)}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
                     </div>
-                  </Link>
-                  <div className="flex items-center justify-between mt-2 pt-2 border-t border-zinc-100">
-                    <p className="text-xs text-slate-400">
-                      {formatDate(task.created_at)}
-                    </p>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="text-red-600 hover:text-red-700 hover:bg-red-50 -mr-2"
-                      onClick={() => openDeleteDialog(task.id)}
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+                </CardContent>
+              </Card>
+            )
+          })}
         </div>
       )}
 

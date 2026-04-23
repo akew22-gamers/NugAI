@@ -151,7 +151,7 @@ export async function PATCH(request: NextRequest) {
 
   try {
     const body = await request.json()
-    const { id, subscription_tier, password } = body
+    const { id, subscription_tier, password, username } = body
 
     if (!id) {
       return NextResponse.json(
@@ -161,6 +161,28 @@ export async function PATCH(request: NextRequest) {
     }
 
     const updateData: Record<string, unknown> = {}
+
+    if (username) {
+      if (username.length < 3 || username.length > 50) {
+        return NextResponse.json(
+          { error: 'Username must be 3-50 characters' },
+          { status: 400 }
+        )
+      }
+      
+      const existingUser = await prisma.user.findUnique({
+        where: { username },
+      })
+
+      if (existingUser && existingUser.id !== id) {
+        return NextResponse.json(
+          { error: 'Username already exists' },
+          { status: 400 }
+        )
+      }
+      
+      updateData.username = username
+    }
 
     if (subscription_tier && Object.values(SubscriptionTier).includes(subscription_tier as SubscriptionTier)) {
       updateData.subscription_tier = subscription_tier
