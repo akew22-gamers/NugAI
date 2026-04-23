@@ -179,13 +179,10 @@ export function MobileNav() {
 
   const getIsActive = (href: string) => {
     if (href === "/admin") return pathname === "/admin"
-    if (href === "/task/diskusi/new") {
-      return pathname?.startsWith("/task/diskusi") ?? false
-    }
-    if (href === "/task/soal/new") {
-      return pathname?.startsWith("/task/soal") ?? false
-    }
-    return pathname === href || (pathname?.startsWith(`${href}/`) ?? false)
+    if (href === "/task") return pathname === "/task"
+    if (href === "/task/diskusi/new") return pathname?.startsWith("/task/diskusi") ?? false
+    if (href === "/task/soal/new") return pathname?.startsWith("/task/soal") ?? false
+    return pathname === href
   }
 
   return (

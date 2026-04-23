@@ -184,27 +184,25 @@ export default function TaskDetailPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Link href="/task">
-            <Button variant="outline" size="sm" className="gap-2">
-              <ArrowLeft className="w-4 h-4" />
-              Kembali
-            </Button>
-          </Link>
-          <div>
-            <h1 className="text-2xl font-bold text-slate-900">
-              {task.course_name_snapshot || "Tugas Tanpa Mata Kuliah"}
-            </h1>
-            <p className="text-slate-600 mt-1">
-              {task.task_type === "DISCUSSION" ? "Tugas Diskusi" : "Tugas Soal"} • {formatDate(task.created_at)}
-            </p>
-          </div>
+      <div className="space-y-4">
+        <Link href="/task">
+          <Button variant="outline" size="sm" className="gap-2">
+            <ArrowLeft className="w-4 h-4" />
+            Kembali
+          </Button>
+        </Link>
+        <div>
+          <h1 className="text-xl sm:text-2xl font-bold text-slate-900">
+            {task.course_name_snapshot || "Tugas Tanpa Mata Kuliah"}
+          </h1>
+          <p className="text-sm text-slate-600 mt-1">
+            {task.task_type === "DISCUSSION" ? "Tugas Diskusi" : "Tugas Soal"} • {formatDate(task.created_at)}
+          </p>
         </div>
         <div className="flex items-center gap-2">
-          <Button onClick={handleDownloadPDF} className="gap-2 bg-emerald-600 hover:bg-emerald-700">
+          <Button onClick={handleDownloadPDF} size="sm" className="gap-2 bg-emerald-600 hover:bg-emerald-700 text-white">
             <Download className="w-4 h-4" />
-            Download PDF
+            <span className="hidden sm:inline">Download</span> PDF
           </Button>
           <Button
             variant="outline"
@@ -213,7 +211,7 @@ export default function TaskDetailPage() {
             onClick={() => setIsDeleteDialogOpen(true)}
           >
             <Trash2 className="w-4 h-4" />
-            Hapus
+            <span className="hidden sm:inline">Hapus</span>
           </Button>
         </div>
       </div>
@@ -223,7 +221,7 @@ export default function TaskDetailPage() {
           <CardTitle className="text-lg">Informasi Tugas</CardTitle>
         </CardHeader>
         <CardContent className="space-y-2">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
             <div>
               <p className="text-sm text-slate-500">Mata Kuliah</p>
               <p className="font-medium">{task.course_name_snapshot || "-"}</p>
