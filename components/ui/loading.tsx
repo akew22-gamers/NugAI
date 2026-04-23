@@ -17,7 +17,7 @@ export function Loading({ text = "Memuat...", className }: LoadingProps) {
   return (
     <>
       <style dangerouslySetInnerHTML={{ __html: keyframes }} />
-      <div className={cn("flex flex-col items-center justify-center", className)} style={{ minHeight: "calc(100vh - 120px)" }}>
+      <div className={cn("flex-1 flex flex-col items-center justify-center w-full", className)}>
         <div className="flex items-center gap-3">
           <span className="block w-3 h-3 rounded-full bg-purple-500" style={dotAnim("0s")} />
           <span className="block w-3 h-3 rounded-full bg-indigo-500" style={dotAnim("0.2s")} />
@@ -33,7 +33,7 @@ export function LoadingAdmin({ text = "Memuat...", className }: LoadingProps) {
   return (
     <>
       <style dangerouslySetInnerHTML={{ __html: keyframes }} />
-      <div className={cn("flex flex-col items-center justify-center", className)} style={{ minHeight: "calc(100vh - 120px)" }}>
+      <div className={cn("flex-1 flex flex-col items-center justify-center w-full", className)}>
         <div className="flex items-center gap-3">
           <span className="block w-3 h-3 rounded-full bg-red-500" style={dotAnim("0s")} />
           <span className="block w-3 h-3 rounded-full bg-orange-500" style={dotAnim("0.2s")} />
