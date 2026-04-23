@@ -9,7 +9,7 @@ interface LoadingProps {
 
 export function Loading({ text = "Memuat...", className }: LoadingProps) {
   return (
-    <div className={cn("flex flex-col items-center justify-center py-20", className)}>
+    <div className={cn("flex flex-col items-center justify-center w-full min-h-[60vh]", className)}>
       <style jsx>{`
         @keyframes bounce-dot {
           0%, 80%, 100% { transform: scale(0); opacity: 0.3; }
@@ -37,7 +37,7 @@ export function Loading({ text = "Memuat...", className }: LoadingProps) {
 
 export function LoadingAdmin({ text = "Memuat...", className }: LoadingProps) {
   return (
-    <div className={cn("flex flex-col items-center justify-center py-20", className)}>
+    <div className={cn("flex flex-col items-center justify-center w-full min-h-[60vh]", className)}>
       <style jsx>{`
         @keyframes bounce-dot {
           0%, 80%, 100% { transform: scale(0); opacity: 0.3; }
