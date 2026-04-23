@@ -57,7 +57,7 @@ const steps = [
   {
     number: "01",
     title: "Input Soal",
-    description: "Masukkan soal/tugas atau upload gambar untuk OCR. Pilih mata kuliah dan target kata.",
+    description: "Masukkan soal/tugas atau upload gambar untuk OCR. Pilih mata kuliah dan panjang jawaban.",
     icon: BookOpen,
   },
   {
@@ -100,7 +100,7 @@ const pricing = [
       "PDF export",
       "Referensi akademik",
       "Priority support",
-      "Custom word target",
+      "Panjang jawaban fleksibel",
     ],
     cta: "Upgrade Premium",
     highlight: true,
@@ -260,7 +260,6 @@ export default function LandingPage() {
               <Link href="/login">
                 <Button
                   variant="ghost"
-                  size="sm"
                   className="text-slate-700 hover:bg-zinc-100 transition-all duration-300 font-semibold"
                 >
                   Masuk
@@ -268,7 +267,6 @@ export default function LandingPage() {
               </Link>
               <Link href="/login">
                 <Button
-                  size="sm"
                   className="!bg-gradient-to-r from-indigo-500 to-purple-600 text-white hover:from-indigo-600 hover:to-purple-700 shadow-lg shadow-indigo-500/30 hover:shadow-indigo-500/50 transition-all duration-300 hover:scale-105 font-semibold"
                 >
                   <Rocket className="w-4 h-4 mr-1.5" />
@@ -310,7 +308,6 @@ export default function LandingPage() {
               <Link href="/login" className="flex-1">
                 <Button
                   variant="outline"
-                  size="sm"
                   className="w-full border-zinc-200 text-slate-700 hover:bg-zinc-50 font-medium"
                 >
                   Masuk
@@ -318,10 +315,9 @@ export default function LandingPage() {
               </Link>
               <Link href="/login" className="flex-1">
                 <Button
-                  size="sm"
                   className="w-full !bg-gradient-to-r from-indigo-500 to-purple-600 text-white hover:from-indigo-600 hover:to-purple-700 font-medium shadow-lg shadow-indigo-500/30"
                 >
-                  Mulai
+                  Mulai Gratis
                 </Button>
               </Link>
             </div>
@@ -354,14 +350,14 @@ export default function LandingPage() {
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-indigo-50 backdrop-blur-sm border border-indigo-200 shadow-sm mb-8 animate-fade-in-down">
               <span className="flex h-2.5 w-2.5 rounded-full bg-gradient-to-r from-indigo-500 to-purple-500 animate-pulse" />
               <Sparkles className="w-4 h-4 text-indigo-500" />
-              <span className="text-sm font-medium text-indigo-700">AI-Powered Academic Assistant</span>
+              <span className="text-sm font-medium text-indigo-700">Asisten Akademik Berbasis AI</span>
             </div>
 
             <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold text-slate-900 tracking-tight mb-8 animate-fade-in-down delay-100">
-              Nugas dengan{" "}
-              <span className="gradient-text">AI</span>,
+              Asisten Tugas{" "}
+              <span className="gradient-text">AI</span>
               <br />
-              <span className="text-slate-400 font-light">tidak ngegame</span>
+              <span className="text-slate-400 font-light">untuk Mahasiswa</span>
             </h1>
 
             <p className="text-xl sm:text-2xl text-slate-600 mb-10 max-w-2xl mx-auto leading-relaxed animate-fade-in-down delay-200">
@@ -412,7 +408,7 @@ export default function LandingPage() {
           <div className="text-center mb-16 lg:mb-20">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-50 text-indigo-600 text-sm font-medium mb-4 border border-indigo-200">
               <Zap className="w-4 h-4" />
-              Features
+              Fitur Unggulan
             </div>
             <h2 className="text-4xl sm:text-5xl font-bold text-slate-900 mb-6">
               Fitur <span className="gradient-text">Powerful</span> untuk<br />Tugas Akademik
@@ -457,7 +453,7 @@ export default function LandingPage() {
           <div className="text-center mb-16 lg:mb-20">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-50 text-indigo-600 text-sm font-medium mb-4 border border-indigo-200">
               <Rocket className="w-4 h-4" />
-              Simple Process
+              Cara Kerja
             </div>
             <h2 className="text-4xl sm:text-5xl font-bold text-zinc-900 mb-6">
               3 Langkah <span className="gradient-text">Mudah</span>
@@ -491,7 +487,7 @@ export default function LandingPage() {
                 size="lg"
                 className="group !bg-gradient-to-r from-indigo-600 to-purple-600 text-white hover:from-indigo-700 hover:to-purple-700 text-lg px-8 shadow-xl shadow-indigo-500/25 hover:shadow-indigo-500/40 transition-all duration-300 hover:scale-105 font-semibold"
               >
-                Coba Sekarang
+                Mulai Sekarang
                 <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
               </Button>
             </Link>
@@ -509,7 +505,7 @@ export default function LandingPage() {
           <div className="text-center mb-16 lg:mb-20">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-50 text-indigo-600 text-sm font-medium mb-4 shadow-sm border border-indigo-200">
               <Shield className="w-4 h-4" />
-              Pricing
+              Harga
             </div>
             <h2 className="text-4xl sm:text-5xl font-bold text-slate-900 mb-6">
               Pilih Paket <span className="gradient-text">Sesuai</span> Kebutuhan
@@ -637,7 +633,7 @@ export default function LandingPage() {
           </div>
 
           <h2 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white mb-6 animate-fade-in-up delay-100">
-            Siap Nugas dengan AI?
+            Siap Mengerjakan Tugas dengan AI?
           </h2>
           <p className="text-xl text-white/80 mb-10 max-w-2xl mx-auto leading-relaxed animate-fade-in-up delay-200">
             Mulai gratis hari ini. Generate jawaban tugas akademik dengan referensi kredibel dan PDF siap kumpul.
@@ -656,7 +652,7 @@ export default function LandingPage() {
           </div>
 
           <div className="flex flex-wrap items-center justify-center gap-6 mt-10 text-white/60 text-sm animate-fade-in-up delay-400">
-            {["Tanpa kartu kredit", "Cancel kapan saja", "Support 24/7"].map((text, index) => (
+            {["Tanpa kartu kredit", "Batalkan kapan saja", "Bantuan 24/7"].map((text, index) => (
               <div key={index} className="flex items-center gap-2">
                 <CheckCircle2 className="w-4 h-4 text-white/80" />
                 <span>{text}</span>
@@ -677,7 +673,7 @@ export default function LandingPage() {
                 <span className="font-bold text-xl text-slate-900">NugAI</span>
               </Link>
               <p className="text-slate-500 text-sm leading-relaxed mb-5">
-                AI-powered academic task assistant untuk mahasiswa Indonesia. Nugas lebih cepat dengan referensi kredibel.
+                Asisten tugas akademik berbasis AI untuk mahasiswa Indonesia. Kerjakan tugas lebih cepat dengan referensi kredibel.
               </p>
               <div className="flex items-center gap-4">
                 {[
@@ -699,7 +695,7 @@ export default function LandingPage() {
             <div>
               <h4 className="font-semibold text-slate-900 mb-5 flex items-center gap-2">
                 <div className="w-1 h-4 rounded-full bg-gradient-to-b from-indigo-500 to-purple-500" />
-                Product
+                Produk
               </h4>
               <ul className="space-y-3 text-sm">
                 {[
@@ -724,7 +720,7 @@ export default function LandingPage() {
             <div>
               <h4 className="font-semibold text-slate-900 mb-5 flex items-center gap-2">
                 <div className="w-1 h-4 rounded-full bg-gradient-to-b from-indigo-500 to-purple-500" />
-                Company
+                Perusahaan
               </h4>
               <ul className="space-y-3 text-sm">
                 {[
@@ -748,10 +744,10 @@ export default function LandingPage() {
             <div>
               <h4 className="font-semibold text-slate-900 mb-5 flex items-center gap-2">
                 <div className="w-1 h-4 rounded-full bg-gradient-to-b from-indigo-500 to-purple-500" />
-                Legal
+                Hukum
               </h4>
               <ul className="space-y-3 text-sm">
-                {["Privacy Policy", "Terms of Service"].map((item, index) => (
+                {["Kebijakan Privasi", "Syarat & Ketentuan"].map((item, index) => (
                   <li key={index} className="text-slate-500 hover:text-slate-900 transition-colors cursor-pointer">
                     {item}
                   </li>
