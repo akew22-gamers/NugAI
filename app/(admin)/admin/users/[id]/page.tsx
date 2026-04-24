@@ -12,7 +12,7 @@ import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
-import LoadingAdmin from "@/components/admin/loading-admin"
+import { LoadingAdmin } from "@/components/ui/loading"
 
 interface UserStatsData {
   user: {
