@@ -22,8 +22,9 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { SubscriptionTier, UserRole } from "@prisma/client"
-import { Crown, User, Trash2, KeyRound, Pencil } from "lucide-react"
+import { Crown, User, Trash2, KeyRound, Pencil, RotateCcw } from "lucide-react"
 import { LoadingAdmin } from "@/components/ui/loading"
+import Link from "next/link"
 
 interface User {
   id: string
@@ -227,6 +228,18 @@ export default function AdminUsersPage() {
     }
   }
 
+  const handleResetLimit = async (userId: string) => {
+    try {
+      const response = await fetch(`/api/admin/users/${userId}/reset-limit`, { method: "POST" })
+      if (response.ok) {
+        fetchUsers()
+        toast.success("Limit harian berhasil direset")
+      } else {
+        toast.error("Gagal mereset limit")
+      }
+    } catch { toast.error("Gagal mereset limit") }
+  }
+
   const resetForm = () => {
     setUsername("")
     setPassword("")
@@ -346,7 +359,7 @@ export default function AdminUsersPage() {
                       )}
                     </div>
                     
-                    <div className="flex-1 min-w-0">
+                    <Link href={`/admin/users/${user.id}`} className="flex-1 min-w-0 hover:opacity-80 transition-opacity">
                       <div className="flex items-center gap-2 flex-wrap">
                         <p className="font-semibold text-slate-900">{user.username}</p>
                         <span
@@ -375,8 +388,9 @@ export default function AdminUsersPage() {
                       )}
                       <p className="text-xs text-slate-400 mt-1">
                         {user._count.task_sessions} tugas • {new Date(user.created_at).toLocaleDateString("id-ID")}
+                        {user.subscription_tier === "FREE" && ` • Hari ini: ${user.daily_usage_count}/5`}
                       </p>
-                    </div>
+                    </Link>
                   </div>
                   
                   <div className="flex items-center gap-2 mt-3 pt-3 border-t border-slate-100">
@@ -401,6 +415,19 @@ export default function AdminUsersPage() {
                       {user.subscription_tier}
                     </span>
                     <div className="flex-1" />
+                    
+                    {user.subscription_tier === "FREE" && user.daily_usage_count > 0 && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleResetLimit(user.id)}
+                        className="gap-1 shrink-0 text-orange-600 hover:text-orange-700 hover:bg-orange-50"
+                      >
+                        <RotateCcw className="w-4 h-4" />
+                        <span className="hidden sm:inline">Reset</span>
+                      </Button>
+                    )}
+
                     <Button
                       variant="outline"
                       size="sm"
