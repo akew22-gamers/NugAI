@@ -8,6 +8,7 @@ import { TaskFormData } from "@/app/(student)/task/new/page"
 import { TaskResult } from "@/app/(student)/task/new/page"
 import { Download, RefreshCw, ArrowLeft, Loader2, Copy, Check } from "lucide-react"
 import { toast } from "sonner"
+import { Loading } from "@/components/ui/loading"
 
 interface Step3ResultProps {
   formData: TaskFormData
@@ -103,19 +104,7 @@ export function Step3Result({
   const regenCount = regenerateCounts[questionIndex] || 0
 
   return (
-    <div className="space-y-6 relative">
-      {isProcessing && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-white/80 backdrop-blur-sm">
-          <div className="flex flex-col items-center gap-3">
-            <div className="flex items-center gap-1.5">
-              <span className="w-2.5 h-2.5 rounded-full bg-zinc-800 animate-bounce" style={{ animationDelay: "0ms" }} />
-              <span className="w-2.5 h-2.5 rounded-full bg-zinc-800 animate-bounce" style={{ animationDelay: "150ms" }} />
-              <span className="w-2.5 h-2.5 rounded-full bg-zinc-800 animate-bounce" style={{ animationDelay: "300ms" }} />
-            </div>
-            <p className="text-sm font-medium text-zinc-600">Sedang regenerate jawaban...</p>
-          </div>
-        </div>
-      )}
+    <div className="space-y-6">
       <div className="flex gap-2">
         <Button variant="outline" onClick={onReset} className="gap-2">
           <ArrowLeft className="w-4 h-4" />
@@ -143,7 +132,12 @@ export function Step3Result({
         </div>
       )}
 
-      <Card className="rounded-xl border border-zinc-200 bg-white shadow-sm">
+      <Card className="rounded-xl border border-zinc-200 bg-white shadow-sm relative overflow-hidden">
+        {isProcessing && (
+          <div className="absolute inset-0 z-10 bg-white/80 backdrop-blur-sm">
+            <Loading text="Sedang regenerate jawaban..." className="h-full" />
+          </div>
+        )}
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle className="flex items-center gap-2">
