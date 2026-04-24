@@ -109,11 +109,11 @@ export default function UserStatsPage({ params }: { params: Promise<{ id: string
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4">
-        <Button variant="outline" size="icon" asChild>
-          <Link href="/admin/users">
+        <Link href="/admin/users">
+          <Button variant="outline" size="icon">
             <ArrowLeft className="w-4 h-4" />
-          </Link>
-        </Button>
+          </Button>
+        </Link>
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-slate-900">
             {user.username}
