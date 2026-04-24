@@ -6,6 +6,10 @@ import { buildRegenerationSystemPrompt, buildRegenerationUserPrompt } from '@/li
 
 const WEEKLY_REGENERATE_LIMIT = 3
 
+function sanitizeAnswer(text: string): string {
+  return text.replace(/\*/g, '')
+}
+
 function getWeekStart(): Date {
   const now = new Date()
   const day = now.getUTCDay()
@@ -143,11 +147,17 @@ export async function POST(request: NextRequest) {
       temperature: 0.7,
     })
 
+    const sanitizedAnswer = sanitizeAnswer(result.text)
+
+    const castResult = result as any
+    const usedModel = castResult.model || null
+    const usedProviderName = castResult.providerName || null
+
     await prisma.$transaction([
       prisma.taskItem.update({
         where: { id: taskItem.id },
         data: {
-          answer_text: result.text,
+          answer_text: sanitizedAnswer,
           regenerate_count: { increment: 1 },
         },
       }),
@@ -161,8 +171,10 @@ export async function POST(request: NextRequest) {
     ])
 
     return NextResponse.json({
-      answer: result.text,
+      answer: sanitizedAnswer,
       regenerateCount: taskItem.regenerate_count + 1,
+      providerName: usedProviderName,
+      model: usedModel,
     })
   } catch (error) {
     console.error('Regeneration failed:', error)

@@ -16,6 +16,7 @@ interface Step3ResultProps {
   onReset: () => void
   isProcessing: boolean
   providerName?: string
+  modelName?: string
   regenerateCounts?: {[key: number]: number}
   activeQuestion?: number
   setActiveQuestion?: (index: number) => void
@@ -28,6 +29,7 @@ export function Step3Result({
   onReset,
   isProcessing,
   providerName = "DeepSeek",
+  modelName,
   regenerateCounts = {},
   activeQuestion,
   setActiveQuestion,
@@ -101,7 +103,19 @@ export function Step3Result({
   const regenCount = regenerateCounts[questionIndex] || 0
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 relative">
+      {isProcessing && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-white/80 backdrop-blur-sm">
+          <div className="flex flex-col items-center gap-3">
+            <div className="flex items-center gap-1.5">
+              <span className="w-2.5 h-2.5 rounded-full bg-zinc-800 animate-bounce" style={{ animationDelay: "0ms" }} />
+              <span className="w-2.5 h-2.5 rounded-full bg-zinc-800 animate-bounce" style={{ animationDelay: "150ms" }} />
+              <span className="w-2.5 h-2.5 rounded-full bg-zinc-800 animate-bounce" style={{ animationDelay: "300ms" }} />
+            </div>
+            <p className="text-sm font-medium text-zinc-600">Sedang regenerate jawaban...</p>
+          </div>
+        </div>
+      )}
       <div className="flex gap-2">
         <Button variant="outline" onClick={onReset} className="gap-2">
           <ArrowLeft className="w-4 h-4" />
@@ -140,7 +154,7 @@ export function Step3Result({
               </span>
               {providerName && (
                 <span className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-purple-100 text-purple-700">
-                  {providerName}
+                  {providerName}{modelName ? ` · ${modelName}` : ""}
                 </span>
               )}
               {regenCount > 0 && (

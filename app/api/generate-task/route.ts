@@ -25,6 +25,10 @@ function getConfigForLength(length: 'SHORT' | 'MEDIUM' | 'LONG') {
   }
 }
 
+function sanitizeAnswer(text: string): string {
+  return text.replace(/\*/g, '')
+}
+
 const WEEKLY_TASK_LIMIT = 3
 
 function getWeekStart(): Date {
@@ -190,7 +194,7 @@ export async function POST(request: NextRequest) {
       })
 
       const result = await generate({ systemPrompt, userPrompt, maxTokens, temperature: 0.7 })
-      answers.push(result.text)
+      answers.push(sanitizeAnswer(result.text))
       totalTokens += result.usage?.totalTokens || 0
 
       const castResult = result as any
@@ -247,7 +251,7 @@ export async function POST(request: NextRequest) {
         })
 
         const result = await generate({ systemPrompt, userPrompt, maxTokens, temperature: 0.7 })
-        answers.push(result.text)
+        answers.push(sanitizeAnswer(result.text))
         totalTokens += result.usage?.totalTokens || 0
 
         const castResult = result as any
@@ -331,6 +335,7 @@ export async function POST(request: NextRequest) {
         : [],
       providerName: usedProviderName,
       providerType: usedProviderType,
+      model: usedModel,
     })
   } catch (error) {
     console.error('Task generation failed:', error)

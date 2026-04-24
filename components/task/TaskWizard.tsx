@@ -29,6 +29,7 @@ export function TaskWizard({ defaultTaskType, title, subtitle }: TaskWizardProps
   const [regenerateCounts, setRegenerateCounts] = useState<{[key: number]: number}>({})
   const [activeQuestion, setActiveQuestion] = useState(0)
   const [providerName, setProviderName] = useState<string>("")
+  const [modelName, setModelName] = useState<string>("")
 
   const handleStep1Complete = (data: TaskFormData) => {
     setFormData(data)
@@ -53,6 +54,9 @@ export function TaskWizard({ defaultTaskType, title, subtitle }: TaskWizardProps
       setResult(resultData)
       if (resultData.providerName) {
         setProviderName(resultData.providerName)
+      }
+      if (resultData.model) {
+        setModelName(resultData.model)
       }
       setStep(3)
     } catch (error) {
@@ -95,6 +99,12 @@ export function TaskWizard({ defaultTaskType, title, subtitle }: TaskWizardProps
         ...prev,
         [questionIndex]: (prev[questionIndex] || 0) + 1
       }))
+      if (newData.providerName) {
+        setProviderName(newData.providerName)
+      }
+      if (newData.model) {
+        setModelName(newData.model)
+      }
     } catch (error) {
       console.error("Regeneration failed:", error)
     } finally {
@@ -171,6 +181,7 @@ export function TaskWizard({ defaultTaskType, title, subtitle }: TaskWizardProps
           onReset={handleReset}
           isProcessing={isProcessing}
           providerName={providerName}
+          modelName={modelName}
           regenerateCounts={regenerateCounts}
           activeQuestion={activeQuestion}
           setActiveQuestion={setActiveQuestion}
