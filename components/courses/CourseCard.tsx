@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
-import { getCourseColor } from "@/lib/course-colors"
+import { getCourseColorByName } from "@/lib/course-colors"
 import { BookOpen, GraduationCap, Pencil, Trash2, User } from "lucide-react"
 import { useState } from "react"
 
@@ -18,13 +18,12 @@ interface CourseCardProps {
   course: Course
   onEdit: (course: Course) => void
   onDelete: (course: Course) => void
-  colorIndex?: number
   className?: string
 }
 
-export function CourseCard({ course, onEdit, onDelete, colorIndex = 0, className }: CourseCardProps) {
+export function CourseCard({ course, onEdit, onDelete, className }: CourseCardProps) {
   const [showActions, setShowActions] = useState(false)
-  const color = getCourseColor(colorIndex)
+  const color = getCourseColorByName(course.course_name)
 
   return (
     <div

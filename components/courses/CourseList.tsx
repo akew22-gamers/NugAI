@@ -57,7 +57,7 @@ export function CourseList({
           course={course}
           onEdit={onEdit}
           onDelete={onDelete}
-          colorIndex={index}
+         
         />
       ))}
     </div>
