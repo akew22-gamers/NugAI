@@ -26,15 +26,16 @@ export function QuotaDisplay({ quota, isLoading }: QuotaDisplayProps) {
 
   const isPremium = quota?.tier === "PREMIUM"
   const remaining = quota?.remaining ?? 0
-  const limit = quota?.limit ?? 5
+  const limit = quota?.limit ?? 3
   const percentage = isPremium ? 100 : Math.max(0, (remaining / limit) * 100)
 
-  const formatResetTime = (resetAt: string | undefined) => {
+  const formatResetDate = (resetAt: string | undefined) => {
     if (!resetAt) return "-"
     const date = new Date(resetAt)
-    return date.toLocaleTimeString("id-ID", {
-      hour: "2-digit",
-      minute: "2-digit",
+    return date.toLocaleDateString("id-ID", {
+      weekday: "long",
+      day: "numeric",
+      month: "short",
     })
   }
 
@@ -113,7 +114,7 @@ export function QuotaDisplay({ quota, isLoading }: QuotaDisplayProps) {
 
       <div className="mt-4 flex items-center gap-2 text-sm text-slate-400">
         <Clock className="h-4 w-4" />
-        <span>Reset pukul {formatResetTime(quota?.resetAt)}</span>
+        <span>Reset {formatResetDate(quota?.resetAt)}</span>
       </div>
     </div>
   )

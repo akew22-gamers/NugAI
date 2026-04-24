@@ -15,7 +15,7 @@ export async function POST(
 
   await prisma.user.update({
     where: { id },
-    data: { daily_usage_count: 0, daily_regenerate_count: 0 },
+    data: { weekly_usage_count: 0, weekly_regenerate_count: 0, week_start_date: null },
   })
 
   return NextResponse.json({ success: true })

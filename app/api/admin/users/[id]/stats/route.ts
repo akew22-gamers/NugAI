@@ -42,7 +42,8 @@ export async function GET(
     where: { id },
     select: {
       id: true, username: true, role: true, subscription_tier: true,
-      daily_usage_count: true, daily_regenerate_count: true, last_usage_date: true,
+      weekly_usage_count: true, weekly_regenerate_count: true, week_start_date: true,
+      premium_started_at: true, premium_expires_at: true, premium_duration_months: true, premium_is_lifetime: true,
       student_profile: { select: { full_name: true, nim: true } },
     },
   })
@@ -96,7 +97,7 @@ export async function GET(
       totalTokens, totalTavilyCalls, totalExaCalls, totalCost,
       providerUsage,
       dailyBreakdown,
-      dailyLimit: user.subscription_tier === 'FREE' ? { used: user.daily_usage_count, limit: 5 } : null,
+      weeklyLimit: user.subscription_tier === 'FREE' ? { used: user.weekly_usage_count, limit: 3 } : null,
     },
     period: { from: fromDate.toISOString(), to: toDate.toISOString() },
   })

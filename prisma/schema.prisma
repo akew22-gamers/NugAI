@@ -66,10 +66,15 @@ model User {
   password          String          @db.VarChar(255) // bcrypt hashed
   role              UserRole        @default(USER)
   subscription_tier SubscriptionTier @default(FREE)
-  daily_usage_count Int             @default(0) // Daily generate count
-  daily_regenerate_count Int        @default(0) // Daily regenerate count
-  last_usage_date   DateTime?       @db.Date
+  weekly_usage_count Int            @default(0)
+  weekly_regenerate_count Int       @default(0)
+  week_start_date   DateTime?       @db.Date
   created_at        DateTime        @default(now())
+
+  premium_started_at  DateTime?
+  premium_expires_at  DateTime?
+  premium_duration_months Int?
+  premium_is_lifetime Boolean       @default(false)
 
   // Rate limiting fields for admin login protection
   admin_login_attempts Int          @default(0)
@@ -83,7 +88,8 @@ model User {
 
   @@index([role])
   @@index([subscription_tier])
-  @@index([last_usage_date])
+  @@index([week_start_date])
+  @@index([premium_expires_at])
   @@map("users")
 }
 

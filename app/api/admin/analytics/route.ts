@@ -31,12 +31,12 @@ export async function GET() {
       where: { role: 'USER', subscription_tier: 'PREMIUM' },
     })
 
-    const activeUsersToday = await prisma.user.count({
+    const activeUsersToday = await prisma.dailyUsageLog.groupBy({
+      by: ['user_id'],
       where: {
-        role: 'USER',
-        last_usage_date: today,
+        date: { gte: today },
       },
-    })
+    }).then(result => result.length)
 
     const tasksToday = await prisma.taskSession.count({
       where: {

@@ -25,18 +25,28 @@ function getConfigForLength(length: 'SHORT' | 'MEDIUM' | 'LONG') {
   }
 }
 
+const WEEKLY_TASK_LIMIT = 3
+
+function getWeekStart(): Date {
+  const now = new Date()
+  const day = now.getUTCDay()
+  const diff = day === 0 ? 6 : day - 1
+  const monday = new Date(now)
+  monday.setUTCDate(now.getUTCDate() - diff)
+  monday.setUTCHours(0, 0, 0, 0)
+  return monday
+}
+
 async function checkQuota(userId: string): Promise<{ canProceed: boolean; error?: string }> {
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
-  const todayStr = today.toISOString().split('T')[0]
+  const currentWeekStart = getWeekStart()
 
   const user = await prisma.user.findUnique({
     where: { id: userId },
     select: {
       subscription_tier: true,
-      daily_usage_count: true,
-      daily_regenerate_count: true,
-      last_usage_date: true,
+      weekly_usage_count: true,
+      weekly_regenerate_count: true,
+      week_start_date: true,
     },
   })
 
@@ -44,26 +54,33 @@ async function checkQuota(userId: string): Promise<{ canProceed: boolean; error?
     return { canProceed: false, error: 'User not found' }
   }
 
-  const lastUsageStr = user.last_usage_date?.toISOString().split('T')[0]
-
-  if (lastUsageStr !== todayStr) {
-    await prisma.user.update({
-      where: { id: userId },
-      data: {
-        daily_usage_count: 0,
-        daily_regenerate_count: 0,
-        last_usage_date: today,
-      },
-    })
-    return { canProceed: true }
-  }
-
   if (user.subscription_tier === 'PREMIUM') {
     return { canProceed: true }
   }
 
-  if (user.daily_usage_count >= 5) {
-    return { canProceed: false, error: 'Kuota harian generate tugas habis (maks 5). Upgrade ke Premium untuk akses unlimited.' }
+  let weeklyUsageCount = user.weekly_usage_count
+
+  if (user.week_start_date) {
+    const userWeekStart = new Date(user.week_start_date)
+    userWeekStart.setUTCHours(0, 0, 0, 0)
+
+    if (userWeekStart.getTime() < currentWeekStart.getTime()) {
+      await prisma.user.update({
+        where: { id: userId },
+        data: {
+          weekly_usage_count: 0,
+          weekly_regenerate_count: 0,
+          week_start_date: currentWeekStart,
+        },
+      })
+      return { canProceed: true }
+    }
+  } else {
+    weeklyUsageCount = 0
+  }
+
+  if (weeklyUsageCount >= WEEKLY_TASK_LIMIT) {
+    return { canProceed: false, error: 'Kuota mingguan generate tugas habis (maks 3/minggu). Upgrade ke Premium untuk akses unlimited.' }
   }
 
   return { canProceed: true }
@@ -283,8 +300,8 @@ export async function POST(request: NextRequest) {
       prisma.user.update({
         where: { id: session.user.id },
         data: {
-          daily_usage_count: { increment: 1 },
-          last_usage_date: new Date(),
+          weekly_usage_count: { increment: 1 },
+          week_start_date: getWeekStart(),
         },
       }),
       prisma.dailyUsageLog.create({

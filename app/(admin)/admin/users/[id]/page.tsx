@@ -20,9 +20,9 @@ interface UserStatsData {
     username: string
     role: string
     subscription_tier: string
-    daily_usage_count: number
-    daily_regenerate_count: number
-    last_usage_date: string | null
+    weekly_usage_count: number
+    weekly_regenerate_count: number
+    week_start_date: string | null
     student_profile: {
       full_name: string
       nim: string
@@ -38,7 +38,7 @@ interface UserStatsData {
     totalCost: number
     providerUsage: Record<string, number>
     dailyBreakdown: Record<string, { tasks: number; tokens: number; tavily: number; exa: number }>
-    dailyLimit: { used: number; limit: number } | null
+    weeklyLimit: { used: number; limit: number } | null
   }
   period: {
     from: string
@@ -91,7 +91,7 @@ export default function UserStatsPage({ params }: { params: Promise<{ id: string
     try {
       const response = await fetch(`/api/admin/users/${id}/reset-limit`, { method: "POST" })
       if (response.ok) {
-        toast.success("Limit harian berhasil direset")
+        toast.success("Limit mingguan berhasil direset")
         fetchStats()
       } else {
         toast.error("Gagal mereset limit")
@@ -235,11 +235,11 @@ export default function UserStatsPage({ params }: { params: Promise<{ id: string
               <div className="text-center py-6 text-slate-500">Tidak ada data</div>
             )}
             
-            {stats.dailyLimit && (
+            {stats.weeklyLimit && (
               <div className="mt-8 pt-6 border-t border-slate-100">
-                <h4 className="text-sm font-medium text-slate-700 mb-3">Status Limit Hari Ini (FREE)</h4>
+                <h4 className="text-sm font-medium text-slate-700 mb-3">Status Limit Minggu Ini (FREE)</h4>
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm text-slate-600">Terpakai: {stats.dailyLimit.used} / {stats.dailyLimit.limit}</span>
+                  <span className="text-sm text-slate-600">Terpakai: {stats.weeklyLimit.used} / {stats.weeklyLimit.limit}</span>
                   <Button 
                     size="sm" 
                     variant="outline" 
@@ -251,8 +251,8 @@ export default function UserStatsPage({ params }: { params: Promise<{ id: string
                 </div>
                 <div className="w-full bg-slate-100 rounded-full h-2 mt-2">
                   <div 
-                    className={`h-2 rounded-full ${stats.dailyLimit.used >= stats.dailyLimit.limit ? 'bg-red-500' : 'bg-orange-500'}`} 
-                    style={{ width: `${Math.min(100, (stats.dailyLimit.used / stats.dailyLimit.limit) * 100)}%` }}
+                    className={`h-2 rounded-full ${stats.weeklyLimit.used >= stats.weeklyLimit.limit ? 'bg-red-500' : 'bg-orange-500'}`} 
+                    style={{ width: `${Math.min(100, (stats.weeklyLimit.used / stats.weeklyLimit.limit) * 100)}%` }}
                   ></div>
                 </div>
               </div>

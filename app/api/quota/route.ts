@@ -2,6 +2,19 @@ import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { NextResponse } from "next/server"
 
+const WEEKLY_TASK_LIMIT = 3
+const WEEKLY_REGENERATE_LIMIT = 3
+
+function getWeekStart(): Date {
+  const now = new Date()
+  const day = now.getUTCDay()
+  const diff = day === 0 ? 6 : day - 1
+  const monday = new Date(now)
+  monday.setUTCDate(now.getUTCDate() - diff)
+  monday.setUTCHours(0, 0, 0, 0)
+  return monday
+}
+
 export async function GET() {
   try {
     const session = await auth()
@@ -17,9 +30,9 @@ export async function GET() {
       where: { id: session.user.id },
       select: {
         subscription_tier: true,
-        daily_usage_count: true,
-        daily_regenerate_count: true,
-        last_usage_date: true,
+        weekly_usage_count: true,
+        weekly_regenerate_count: true,
+        week_start_date: true,
       },
     })
 
@@ -30,32 +43,32 @@ export async function GET() {
       )
     }
 
-    const today = new Date()
-    today.setHours(0, 0, 0, 0)
+    const currentWeekStart = getWeekStart()
 
-    let dailyUsageCount = user.daily_usage_count
-    let dailyRegenerateCount = user.daily_regenerate_count
+    let weeklyUsageCount = user.weekly_usage_count
+    let weeklyRegenerateCount = user.weekly_regenerate_count
 
-    if (user.last_usage_date) {
-      const lastUsageDate = new Date(user.last_usage_date)
-      lastUsageDate.setHours(0, 0, 0, 0)
-      
-      if (lastUsageDate.getTime() < today.getTime()) {
-        dailyUsageCount = 0
-        dailyRegenerateCount = 0
+    if (user.week_start_date) {
+      const userWeekStart = new Date(user.week_start_date)
+      userWeekStart.setUTCHours(0, 0, 0, 0)
+
+      if (userWeekStart.getTime() < currentWeekStart.getTime()) {
+        weeklyUsageCount = 0
+        weeklyRegenerateCount = 0
       }
+    } else {
+      weeklyUsageCount = 0
+      weeklyRegenerateCount = 0
     }
 
     const isPremium = user.subscription_tier === "PREMIUM"
-    const limit = isPremium ? null : 5
-    const remaining = isPremium ? null : Math.max(0, 5 - dailyUsageCount)
-    const regenerateRemaining = isPremium ? null : Math.max(0, 5 - dailyRegenerateCount)
+    const limit = isPremium ? null : WEEKLY_TASK_LIMIT
+    const remaining = isPremium ? null : Math.max(0, WEEKLY_TASK_LIMIT - weeklyUsageCount)
+    const regenerateRemaining = isPremium ? null : Math.max(0, WEEKLY_REGENERATE_LIMIT - weeklyRegenerateCount)
 
-    const now = new Date()
-    const tomorrow = new Date(now)
-    tomorrow.setUTCDate(tomorrow.getUTCDate() + 1)
-    tomorrow.setUTCHours(0, 0, 0, 0)
-    const resetAt = tomorrow.toISOString()
+    const nextMonday = new Date(currentWeekStart)
+    nextMonday.setUTCDate(nextMonday.getUTCDate() + 7)
+    const resetAt = nextMonday.toISOString()
 
     return NextResponse.json({
       tier: user.subscription_tier,

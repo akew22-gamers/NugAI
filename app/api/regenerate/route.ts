@@ -4,6 +4,18 @@ import { prisma } from '@/lib/prisma'
 import { generate } from '@/lib/ai'
 import { buildRegenerationSystemPrompt, buildRegenerationUserPrompt } from '@/lib/prompts/regeneration'
 
+const WEEKLY_REGENERATE_LIMIT = 3
+
+function getWeekStart(): Date {
+  const now = new Date()
+  const day = now.getUTCDay()
+  const diff = day === 0 ? 6 : day - 1
+  const monday = new Date(now)
+  monday.setUTCDate(now.getUTCDate() - diff)
+  monday.setUTCHours(0, 0, 0, 0)
+  return monday
+}
+
 interface RegenerateRequest {
   sessionId: string
   questionIndex: number
@@ -51,13 +63,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Regenerate limit reached (max 5)' }, { status: 403 })
     }
 
-    const today = new Date().toISOString().split('T')[0]
+    const currentWeekStart = getWeekStart()
     const user = await prisma.user.findUnique({
       where: { id: session.user.id },
       select: {
         subscription_tier: true,
-        daily_regenerate_count: true,
-        last_usage_date: true,
+        weekly_regenerate_count: true,
+        week_start_date: true,
       },
     })
 
@@ -65,17 +77,29 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 })
     }
 
-    if (user.last_usage_date?.toISOString().split('T')[0] !== today) {
-      await prisma.user.update({
-        where: { id: session.user.id },
-        data: {
-          daily_usage_count: 0,
-          daily_regenerate_count: 0,
-          last_usage_date: today,
-        },
-      })
-    } else if (user.subscription_tier === 'FREE' && user.daily_regenerate_count >= 5) {
-      return NextResponse.json({ error: 'Kuota harian regenerate habis (maks 5). Upgrade ke Premium untuk akses unlimited.' }, { status: 403 })
+    let weeklyRegenerateCount = user.weekly_regenerate_count
+
+    if (user.week_start_date) {
+      const userWeekStart = new Date(user.week_start_date)
+      userWeekStart.setUTCHours(0, 0, 0, 0)
+
+      if (userWeekStart.getTime() < currentWeekStart.getTime()) {
+        await prisma.user.update({
+          where: { id: session.user.id },
+          data: {
+            weekly_usage_count: 0,
+            weekly_regenerate_count: 0,
+            week_start_date: currentWeekStart,
+          },
+        })
+        weeklyRegenerateCount = 0
+      }
+    } else {
+      weeklyRegenerateCount = 0
+    }
+
+    if (user.subscription_tier === 'FREE' && weeklyRegenerateCount >= WEEKLY_REGENERATE_LIMIT) {
+      return NextResponse.json({ error: 'Kuota mingguan regenerate habis (maks 3/minggu). Upgrade ke Premium untuk akses unlimited.' }, { status: 403 })
     }
 
     const profile = taskSession.user.student_profile
@@ -129,7 +153,10 @@ export async function POST(request: NextRequest) {
       }),
       prisma.user.update({
         where: { id: session.user.id },
-        data: { daily_regenerate_count: { increment: 1 } },
+        data: {
+          weekly_regenerate_count: { increment: 1 },
+          week_start_date: currentWeekStart,
+        },
       }),
     ])
 

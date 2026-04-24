@@ -43,8 +43,12 @@ export async function GET(request: NextRequest) {
         username: true,
         role: true,
         subscription_tier: true,
-        daily_usage_count: true,
-        last_usage_date: true,
+        weekly_usage_count: true,
+        week_start_date: true,
+        premium_started_at: true,
+        premium_expires_at: true,
+        premium_duration_months: true,
+        premium_is_lifetime: true,
         created_at: true,
         student_profile: {
           select: {
@@ -151,7 +155,7 @@ export async function PATCH(request: NextRequest) {
 
   try {
     const body = await request.json()
-    const { id, subscription_tier, password, username } = body
+    const { id, subscription_tier, password, username, premium_duration_months, premium_is_lifetime } = body
 
     if (!id) {
       return NextResponse.json(
@@ -186,6 +190,28 @@ export async function PATCH(request: NextRequest) {
 
     if (subscription_tier && Object.values(SubscriptionTier).includes(subscription_tier as SubscriptionTier)) {
       updateData.subscription_tier = subscription_tier
+
+      if (subscription_tier === 'PREMIUM') {
+        const now = new Date()
+        updateData.premium_started_at = now
+
+        if (premium_is_lifetime) {
+          updateData.premium_is_lifetime = true
+          updateData.premium_expires_at = null
+          updateData.premium_duration_months = null
+        } else if (premium_duration_months && premium_duration_months > 0) {
+          const expiresAt = new Date(now)
+          expiresAt.setMonth(expiresAt.getMonth() + premium_duration_months)
+          updateData.premium_expires_at = expiresAt
+          updateData.premium_duration_months = premium_duration_months
+          updateData.premium_is_lifetime = false
+        }
+      } else if (subscription_tier === 'FREE') {
+        updateData.premium_started_at = null
+        updateData.premium_expires_at = null
+        updateData.premium_duration_months = null
+        updateData.premium_is_lifetime = false
+      }
     }
 
     if (password) {
@@ -213,6 +239,10 @@ export async function PATCH(request: NextRequest) {
         username: true,
         role: true,
         subscription_tier: true,
+        premium_started_at: true,
+        premium_expires_at: true,
+        premium_duration_months: true,
+        premium_is_lifetime: true,
       },
     })
 

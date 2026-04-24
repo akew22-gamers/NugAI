@@ -80,7 +80,7 @@ const pricing = [
     price: "Rp 0",
     period: "/bulan",
     features: [
-      "5 tugas per hari",
+      "3 tugas per minggu",
       "All AI providers",
       "OCR support",
       "PDF export",
@@ -113,8 +113,8 @@ const faqs = [
     answer: "NugAI (Nugas sama AI) adalah aplikasi web yang membantu mahasiswa generate jawaban tugas akademik dengan AI. Sistem mencari referensi kredibel, menerapkan gaya bahasa akademik, dan export ke PDF siap kumpul.",
   },
   {
-    question: "Berapa kuota harian untuk user FREE?",
-    answer: "User FREE dapat generate 5 tugas per hari. Kuota reset setiap midnight UTC. Upgrade Premium untuk unlimited access.",
+    question: "Berapa kuota untuk user FREE?",
+    answer: "User FREE dapat generate 3 tugas per minggu. Kuota reset setiap hari Senin (UTC). Upgrade Premium untuk unlimited access.",
   },
   {
     question: "Referensi dari mana?",
@@ -383,7 +383,7 @@ export default function LandingPage() {
 
             <p className="text-xl sm:text-2xl text-slate-600 mb-10 max-w-2xl mx-auto leading-relaxed animate-fade-in-down delay-200">
               Generate jawaban tugas akademik dengan referensi kredibel, gaya bahasa akademik, dan PDF siap kumpul.{" "}
-              <span className="font-semibold text-indigo-600">5 tugas gratis per hari.</span>
+              <span className="font-semibold text-indigo-600">3 tugas gratis per minggu.</span>
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12 animate-fade-in-down delay-300">
@@ -404,7 +404,7 @@ export default function LandingPage() {
 
             <div className="flex flex-wrap items-center justify-center gap-6 sm:gap-10 text-sm animate-fade-in-down delay-400">
               {[
-                { icon: CheckCircle2, text: "5 gratis/hari" },
+                { icon: CheckCircle2, text: "3 gratis/minggu" },
                 { icon: CheckCircle2, text: "Referensi kredibel" },
                 { icon: CheckCircle2, text: "PDF akademik" },
               ].map((item, index) => (

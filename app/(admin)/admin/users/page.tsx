@@ -31,8 +31,12 @@ interface User {
   username: string
   role: UserRole
   subscription_tier: SubscriptionTier
-  daily_usage_count: number
-  last_usage_date: string | null
+  weekly_usage_count: number
+  week_start_date: string | null
+  premium_started_at: string | null
+  premium_expires_at: string | null
+  premium_duration_months: number | null
+  premium_is_lifetime: boolean
   created_at: string
   student_profile: {
     full_name: string
@@ -55,6 +59,7 @@ export default function AdminUsersPage() {
   const [isResetPasswordDialogOpen, setIsResetPasswordDialogOpen] = useState(false)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
+  const [isPremiumDialogOpen, setIsPremiumDialogOpen] = useState(false)
   const [selectedUser, setSelectedUser] = useState<User | null>(null)
   const [newPassword, setNewPassword] = useState("")
   
@@ -67,6 +72,10 @@ export default function AdminUsersPage() {
   const [editUsername, setEditUsername] = useState("")
   const [editPassword, setEditPassword] = useState("")
   const [editSubscriptionTier, setEditSubscriptionTier] = useState<SubscriptionTier>("FREE")
+
+  const [premiumUser, setPremiumUser] = useState<User | null>(null)
+  const [premiumDuration, setPremiumDuration] = useState<string>("1")
+  const [premiumIsLifetime, setPremiumIsLifetime] = useState(false)
 
   useEffect(() => {
     fetchUsers()
@@ -133,20 +142,81 @@ export default function AdminUsersPage() {
     }
   }
 
-  const handleUpdateTier = async (userId: string, newTier: SubscriptionTier) => {
+  const handleToggleTier = (user: User) => {
+    if (user.subscription_tier === "PREMIUM") {
+      handleDowngradeToFree(user.id)
+    } else {
+      openPremiumDialog(user)
+    }
+  }
+
+  const openPremiumDialog = (user: User) => {
+    setPremiumUser(user)
+    setPremiumDuration("1")
+    setPremiumIsLifetime(false)
+    setIsPremiumDialogOpen(true)
+  }
+
+  const handleUpgradeToPremium = async () => {
+    if (!premiumUser) return
+
+    setIsSaving(true)
+    try {
+      const body: Record<string, unknown> = {
+        id: premiumUser.id,
+        subscription_tier: "PREMIUM",
+        premium_is_lifetime: premiumIsLifetime,
+      }
+
+      if (!premiumIsLifetime) {
+        const months = parseInt(premiumDuration)
+        if (isNaN(months) || months < 1) {
+          toast.error("Durasi harus minimal 1 bulan")
+          setIsSaving(false)
+          return
+        }
+        body.premium_duration_months = months
+      }
+
+      const response = await fetch("/api/admin/users", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      })
+
+      if (response.ok) {
+        setIsPremiumDialogOpen(false)
+        setPremiumUser(null)
+        fetchUsers()
+        toast.success(premiumIsLifetime
+          ? "User berhasil diupgrade ke Premium Lifetime"
+          : `User berhasil diupgrade ke Premium (${premiumDuration} bulan)`)
+      } else {
+        const error = await response.json()
+        toast.error(error.error || "Gagal mengupgrade subscription")
+      }
+    } catch (error) {
+      console.error("Failed to upgrade tier:", error)
+      toast.error("Gagal mengupgrade subscription")
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
+  const handleDowngradeToFree = async (userId: string) => {
     try {
       const response = await fetch("/api/admin/users", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           id: userId,
-          subscription_tier: newTier,
+          subscription_tier: "FREE",
         }),
       })
 
       if (response.ok) {
         fetchUsers()
-        toast.success("Subscription berhasil diperbarui")
+        toast.success("Subscription berhasil diubah ke FREE")
       } else {
         const error = await response.json()
         toast.error(error.error || "Gagal memperbarui subscription")
@@ -233,7 +303,7 @@ export default function AdminUsersPage() {
       const response = await fetch(`/api/admin/users/${userId}/reset-limit`, { method: "POST" })
       if (response.ok) {
         fetchUsers()
-        toast.success("Limit harian berhasil direset")
+        toast.success("Limit mingguan berhasil direset")
       } else {
         toast.error("Gagal mereset limit")
       }
@@ -275,6 +345,13 @@ export default function AdminUsersPage() {
       }
       if (editPassword) body.password = editPassword
 
+      if (editSubscriptionTier === "PREMIUM" && editUser.subscription_tier === "FREE") {
+        body.premium_duration_months = 1
+        body.premium_is_lifetime = false
+      } else if (editSubscriptionTier === "FREE") {
+        body.premium_is_lifetime = false
+      }
+
       const response = await fetch("/api/admin/users", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -301,6 +378,20 @@ export default function AdminUsersPage() {
   const openNewUserDialog = () => {
     resetForm()
     setIsCreateDialogOpen(true)
+  }
+
+  const formatPremiumStatus = (user: User) => {
+    if (user.subscription_tier !== "PREMIUM") return null
+    if (user.premium_is_lifetime) return "Lifetime"
+    if (user.premium_expires_at) {
+      const expires = new Date(user.premium_expires_at)
+      const now = new Date()
+      const diffDays = Math.ceil((expires.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
+      if (diffDays <= 0) return "Expired"
+      if (diffDays <= 7) return `${diffDays} hari lagi`
+      return `s/d ${expires.toLocaleDateString("id-ID")}`
+    }
+    return null
   }
 
   return (
@@ -371,6 +462,11 @@ export default function AdminUsersPage() {
                         >
                           {user.subscription_tier}
                         </span>
+                        {user.subscription_tier === "PREMIUM" && (
+                          <span className="text-xs font-medium px-2 py-0.5 rounded-full text-emerald-700 bg-emerald-100">
+                            {formatPremiumStatus(user)}
+                          </span>
+                        )}
                         <span
                           className={`text-xs font-medium px-2 py-0.5 rounded-full ${
                             user.role === "ADMIN"
@@ -388,14 +484,14 @@ export default function AdminUsersPage() {
                       )}
                       <p className="text-xs text-slate-400 mt-1">
                         {user._count.task_sessions} tugas • {new Date(user.created_at).toLocaleDateString("id-ID")}
-                        {user.subscription_tier === "FREE" && ` • Hari ini: ${user.daily_usage_count}/5`}
+                        {user.subscription_tier === "FREE" && ` • Minggu ini: ${user.weekly_usage_count}/3`}
                       </p>
                     </Link>
                   </div>
                   
                   <div className="flex items-center gap-2 mt-3 pt-3 border-t border-slate-100">
                     <button
-                      onClick={() => handleUpdateTier(user.id, user.subscription_tier === "FREE" ? "PREMIUM" : "FREE")}
+                      onClick={() => handleToggleTier(user)}
                       className={cn(
                         "relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 shrink-0",
                         user.subscription_tier === "PREMIUM" ? "bg-amber-500" : "bg-slate-200"
@@ -416,7 +512,7 @@ export default function AdminUsersPage() {
                     </span>
                     <div className="flex-1" />
                     
-                    {user.subscription_tier === "FREE" && user.daily_usage_count > 0 && (
+                    {user.subscription_tier === "FREE" && user.weekly_usage_count > 0 && (
                       <Button
                         variant="outline"
                         size="sm"
@@ -510,7 +606,7 @@ export default function AdminUsersPage() {
               <Select
                 id="subscription_tier"
                 options={[
-                  { value: "FREE", label: "FREE (5 tasks/day)" },
+                  { value: "FREE", label: "FREE (3 tasks/minggu)" },
                   { value: "PREMIUM", label: "PREMIUM (Unlimited)" },
                 ]}
                 value={subscriptionTier}
@@ -597,6 +693,7 @@ export default function AdminUsersPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent className="sm:max-w-[400px]">
           <DialogHeader>
@@ -631,7 +728,7 @@ export default function AdminUsersPage() {
               <Select
                 id="edit_tier"
                 options={[
-                  { value: "FREE", label: "FREE (5 tasks/day)" },
+                  { value: "FREE", label: "FREE (3 tasks/minggu)" },
                   { value: "PREMIUM", label: "PREMIUM (Unlimited)" },
                 ]}
                 value={editSubscriptionTier}
@@ -645,6 +742,78 @@ export default function AdminUsersPage() {
             </Button>
             <Button onClick={handleEditUser} disabled={isSaving}>
               {isSaving ? "Menyimpan..." : "Simpan"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isPremiumDialogOpen} onOpenChange={setIsPremiumDialogOpen}>
+        <DialogContent className="sm:max-w-[450px]">
+          <DialogHeader>
+            <DialogTitle>Upgrade ke Premium</DialogTitle>
+            <DialogDescription>
+              Atur durasi langganan Premium untuk <strong>{premiumUser?.username}</strong>
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="flex items-center gap-3">
+              <input
+                type="checkbox"
+                id="premium_lifetime"
+                checked={premiumIsLifetime}
+                onChange={(e) => setPremiumIsLifetime(e.target.checked)}
+                className="h-4 w-4 rounded border-slate-300 text-amber-600 focus:ring-amber-500"
+              />
+              <Label htmlFor="premium_lifetime" className="cursor-pointer">
+                Lifetime (tanpa batas waktu)
+              </Label>
+            </div>
+
+            {!premiumIsLifetime && (
+              <div className="space-y-2">
+                <Label htmlFor="premium_duration">Durasi (bulan)</Label>
+                <Input
+                  id="premium_duration"
+                  type="number"
+                  min="1"
+                  max="120"
+                  value={premiumDuration}
+                  onChange={(e) => setPremiumDuration(e.target.value)}
+                  placeholder="Masukkan jumlah bulan"
+                />
+                <p className="text-xs text-slate-500">
+                  Langganan akan berakhir pada{" "}
+                  <strong>
+                    {(() => {
+                      const months = parseInt(premiumDuration)
+                      if (isNaN(months) || months < 1) return "-"
+                      const d = new Date()
+                      d.setMonth(d.getMonth() + months)
+                      return d.toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })
+                    })()}
+                  </strong>
+                </p>
+              </div>
+            )}
+
+            <div className="rounded-lg bg-amber-50 border border-amber-200 p-3">
+              <p className="text-sm text-amber-800 font-medium">
+                {premiumIsLifetime
+                  ? "✨ User akan mendapat akses Premium tanpa batas waktu."
+                  : `📅 User akan mendapat akses Premium selama ${premiumDuration || 0} bulan. Setelah habis, otomatis kembali ke FREE.`}
+              </p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsPremiumDialogOpen(false)}>
+              Batal
+            </Button>
+            <Button
+              onClick={handleUpgradeToPremium}
+              disabled={isSaving || (!premiumIsLifetime && (!premiumDuration || parseInt(premiumDuration) < 1))}
+              className="bg-amber-600 hover:bg-amber-700"
+            >
+              {isSaving ? "Memproses..." : "Upgrade Premium"}
             </Button>
           </DialogFooter>
         </DialogContent>
