@@ -343,7 +343,7 @@ export default function TaskHistoryPage() {
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="text-red-400 hover:text-red-600 hover:bg-red-50 h-9 w-9 p-0 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                          className="text-red-400 hover:text-red-600 hover:bg-red-50 h-9 w-9 p-0 shrink-0"
                           onClick={(e) => {
                             e.stopPropagation()
                             openDeleteDialog(task.id)
