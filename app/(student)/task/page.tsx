@@ -292,13 +292,13 @@ export default function TaskHistoryPage() {
                           <Button
                             variant="ghost"
                             size="sm"
-                            className="text-red-500 hover:text-red-700 hover:bg-red-50 h-8 w-8 p-0"
+                            className="text-red-500 hover:text-red-700 hover:bg-red-50 h-9 w-9 p-0"
                             onClick={(e) => {
                               e.stopPropagation()
                               openDeleteDialog(task.id)
                             }}
                           >
-                            <Trash2 className="w-4 h-4" />
+                            <Trash2 className="w-5 h-5" />
                           </Button>
                         </TableCell>
                       </TableRow>
@@ -342,7 +342,7 @@ export default function TaskHistoryPage() {
                           variant={currentPage === page ? "default" : "outline"}
                           size="sm"
                           onClick={() => setCurrentPage(page)}
-                          className="h-8 w-8 p-0"
+                          className={`h-8 w-8 p-0 ${currentPage === page ? "text-white" : ""}`}
                         >
                           {page}
                         </Button>
