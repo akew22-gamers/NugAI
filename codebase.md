@@ -71,14 +71,14 @@ NugAI/
 │   ├── task/                     # TaskWizard (Step1Input, Step2Processing, Step3Result, OCRDropzone)
 │   └── ui/                       # Reusable UI primitives (button, card, dialog, input, table, etc.)
 ├── hooks/
-│   └── useInactivityLogout.ts    # Auto-logout hook
+│   └── useInactivityLogout.ts    # Auto-logout hook (localStorage timestamp for mobile support)
 ├── lib/
 │   ├── pdf/                      # PDF generation (font-loader, generator, styles)
 │   ├── prompts/                  # AI prompt templates (task-generation, regeneration)
 │   ├── types/                    # TypeScript type extensions (next-auth.d.ts)
 │   ├── ai.ts                     # AI model creation & generation (multi-provider)
 │   ├── ai-failover.ts            # AI provider failover with health tracking
-│   ├── auth.ts                   # NextAuth configuration (Credentials + JWT)
+│   ├── auth.ts                   # NextAuth configuration (Credentials + JWT, session includes name)
 │   ├── course-colors.ts          # Course color utilities
 │   ├── encryption.ts             # AES-256-GCM encryption for API keys
 │   ├── ocr.ts                    # Tesseract.js OCR processing

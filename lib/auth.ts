@@ -18,7 +18,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         }
 
         const user = await prisma.user.findUnique({
-          where: { username: credentials.username as string }
+          where: { username: credentials.username as string },
+          include: { student_profile: { select: { full_name: true } } }
         })
 
         if (!user || !user.password) {
@@ -65,6 +66,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         return {
           id: user.id,
           username: user.username,
+          name: user.student_profile?.full_name || user.username,
           role: user.role,
           subscriptionTier: user.subscription_tier
         }
@@ -77,6 +79,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (user) {
         token.id = user.id
         token.username = user.username
+        token.name = user.name
         token.role = user.role
         token.subscriptionTier = user.subscriptionTier
       }
@@ -86,6 +89,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (token) {
         session.user.id = token.id as string
         session.user.username = token.username as string
+        session.user.name = token.name as string
         session.user.role = token.role as "ADMIN" | "USER"
         session.user.subscriptionTier = token.subscriptionTier as "FREE" | "PREMIUM"
       }

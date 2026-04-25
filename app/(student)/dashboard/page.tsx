@@ -79,7 +79,7 @@ export default function DashboardPage() {
     )
   }
 
-  const userName = session?.user?.username || "Pengguna"
+  const userName = session?.user?.name || session?.user?.username || "Pengguna"
   const subscriptionTier = session?.user?.subscriptionTier || "FREE"
 
   return (
