@@ -148,7 +148,12 @@ export function Step3Result({
               </span>
               {providerName && (
                 <span className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-purple-100 text-purple-700">
-                  {providerName}{modelName ? ` · ${modelName}` : ""}
+                  {providerName}
+                </span>
+              )}
+              {modelName && (
+                <span className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-indigo-100 text-indigo-700">
+                  {modelName}
                 </span>
               )}
               {regenCount > 0 && (

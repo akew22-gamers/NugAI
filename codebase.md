@@ -40,11 +40,11 @@ NugAI/
 │   │   ├── dashboard/            # Student dashboard (quota, recent tasks)
 │   │   ├── settings/             # Profile & password settings
 │   │   ├── task/                 # Task management
-│   │   │   ├── [id]/             # Task detail view
+│   │   │   ├── [id]/             # Task detail view (with AI provider & model labels)
 │   │   │   ├── diskusi/new/      # New discussion task wizard
 │   │   │   ├── soal/new/         # New assignment task wizard
 │   │   │   ├── new/              # General new task
-│   │   │   └── page.tsx          # Task list (history)
+│   │   │   └── page.tsx          # Task list (table with search & pagination)
 │   │   └── layout.tsx            # Student layout (Sidebar + InactivityGuard 20min + ProfileGuard)
 │   ├── api/                      # API Routes
 │   │   ├── admin/                # Admin APIs (analytics, providers, users)
@@ -69,7 +69,7 @@ NugAI/
 │   ├── onboarding/               # OnboardingWizard (Welcome, Profile, Course, Complete steps)
 │   ├── settings/                 # PasswordForm, ProfileForm
 │   ├── task/                     # TaskWizard (Step1Input, Step2Processing, Step3Result, OCRDropzone)
-│   └── ui/                       # Reusable UI primitives (button, card, dialog, input, etc.)
+│   └── ui/                       # Reusable UI primitives (button, card, dialog, input, table, etc.)
 ├── hooks/
 │   └── useInactivityLogout.ts    # Auto-logout hook
 ├── lib/

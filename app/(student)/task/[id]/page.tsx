@@ -34,6 +34,9 @@ interface TaskSession {
   course_name_snapshot: string | null
   module_book_title_snapshot: string | null
   tutor_name_snapshot: string | null
+  ai_provider_name: string | null
+  ai_provider_type: string | null
+  ai_model: string | null
   task_items: TaskItem[]
 }
 
@@ -221,7 +224,7 @@ export default function TaskDetailPage() {
           <CardTitle className="text-lg">Informasi Tugas</CardTitle>
         </CardHeader>
         <CardContent className="space-y-2">
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
             <div>
               <p className="text-sm text-slate-500">Mata Kuliah</p>
               <p className="font-medium">{task.course_name_snapshot || "-"}</p>
@@ -237,6 +240,26 @@ export default function TaskDetailPage() {
             <div>
               <p className="text-sm text-slate-500">Panjang Jawaban</p>
               <p className="font-medium">{getLengthLabel(task.min_words_target)}</p>
+            </div>
+            <div>
+              <p className="text-sm text-slate-500">Provider AI</p>
+              <p className="font-medium">
+                {task.ai_provider_name ? (
+                  <span className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-purple-100 text-purple-700">
+                    {task.ai_provider_name}
+                  </span>
+                ) : "-"}
+              </p>
+            </div>
+            <div>
+              <p className="text-sm text-slate-500">Model AI</p>
+              <p className="font-medium">
+                {task.ai_model ? (
+                  <span className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-indigo-100 text-indigo-700">
+                    {task.ai_model}
+                  </span>
+                ) : "-"}
+              </p>
             </div>
           </div>
         </CardContent>

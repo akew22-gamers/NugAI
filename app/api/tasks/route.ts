@@ -73,6 +73,8 @@ export async function GET(request: Request) {
         course_name_snapshot: true,
         module_book_title_snapshot: true,
         tutor_name_snapshot: true,
+        ai_provider_name: true,
+        ai_model: true,
         _count: {
           select: {
             task_items: true,
@@ -94,6 +96,8 @@ export async function GET(request: Request) {
         course_name: task.course_name_snapshot,
         module_book_title: task.module_book_title_snapshot,
         tutor_name: task.tutor_name_snapshot,
+        ai_provider_name: task.ai_provider_name,
+        ai_model: task.ai_model,
         items_count: task._count.task_items,
       })),
     })

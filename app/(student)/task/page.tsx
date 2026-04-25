@@ -1,12 +1,12 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useMemo } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useSession } from "next-auth/react"
-import { FileText, CheckCircle2, BookOpen, Loader2, Plus, Trash2 } from "lucide-react"
+import { FileText, Plus, Trash2, Search, ChevronLeft, ChevronRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
 import { toast } from "sonner"
 import {
   Dialog,
@@ -16,6 +16,14 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog"
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
 import { Loading } from "@/components/ui/loading"
 import { getCourseColorByName } from "@/lib/course-colors"
 
@@ -27,8 +35,12 @@ interface TaskSession {
   course_name: string | null
   module_book_title: string | null
   tutor_name: string | null
+  ai_provider_name: string | null
+  ai_model: string | null
   items_count: number
 }
+
+const ITEMS_PER_PAGE = 10
 
 export default function TaskHistoryPage() {
   const { status } = useSession()
@@ -40,6 +52,8 @@ export default function TaskHistoryPage() {
   const [isDeleting, setIsDeleting] = useState(false)
   const [isDeleteAllDialogOpen, setIsDeleteAllDialogOpen] = useState(false)
   const [isDeletingAll, setIsDeletingAll] = useState(false)
+  const [searchQuery, setSearchQuery] = useState("")
+  const [currentPage, setCurrentPage] = useState(1)
 
   useEffect(() => {
     if (status === "authenticated") {
@@ -49,7 +63,7 @@ export default function TaskHistoryPage() {
 
   const fetchTasks = async () => {
     try {
-      const response = await fetch("/api/tasks?limit=50")
+      const response = await fetch("/api/tasks?limit=100")
       if (response.ok) {
         const data = await response.json()
         setTasks(data.tasks || [])
@@ -60,6 +74,28 @@ export default function TaskHistoryPage() {
       setIsLoading(false)
     }
   }
+
+  const filteredTasks = useMemo(() => {
+    if (!searchQuery.trim()) return tasks
+    const q = searchQuery.toLowerCase()
+    return tasks.filter(
+      (task) =>
+        (task.course_name && task.course_name.toLowerCase().includes(q)) ||
+        (task.module_book_title && task.module_book_title.toLowerCase().includes(q)) ||
+        (task.tutor_name && task.tutor_name.toLowerCase().includes(q)) ||
+        getTaskTypeLabel(task.task_type).toLowerCase().includes(q)
+    )
+  }, [tasks, searchQuery])
+
+  const totalPages = Math.max(1, Math.ceil(filteredTasks.length / ITEMS_PER_PAGE))
+  const paginatedTasks = useMemo(() => {
+    const start = (currentPage - 1) * ITEMS_PER_PAGE
+    return filteredTasks.slice(start, start + ITEMS_PER_PAGE)
+  }, [filteredTasks, currentPage])
+
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [searchQuery])
 
   const openDeleteDialog = (taskId: string) => {
     setDeleteTaskId(taskId)
@@ -91,12 +127,12 @@ export default function TaskHistoryPage() {
   }
 
   const formatDate = (dateString: string) => {
-    if (!dateString) return "Tanggal tidak valid"
+    if (!dateString) return "-"
     const date = new Date(dateString)
-    if (isNaN(date.getTime())) return "Tanggal tidak valid"
+    if (isNaN(date.getTime())) return "-"
     return date.toLocaleDateString("id-ID", {
       day: "numeric",
-      month: "long",
+      month: "short",
       year: "numeric",
       hour: "2-digit",
       minute: "2-digit",
@@ -104,7 +140,7 @@ export default function TaskHistoryPage() {
   }
 
   const getTaskTypeLabel = (type: "DISCUSSION" | "ASSIGNMENT") => {
-    return type === "DISCUSSION" ? "Tugas Diskusi" : "Tugas Soal"
+    return type === "DISCUSSION" ? "Diskusi" : "Soal"
   }
 
   const getLengthLabel = (minWords: number) => {
@@ -136,9 +172,7 @@ export default function TaskHistoryPage() {
   const getTaskToDelete = () => tasks.find((t) => t.id === deleteTaskId)
 
   if (status === "loading" || isLoading) {
-    return (
-      <Loading text="Memuat tugas..." />
-    )
+    return <Loading text="Memuat tugas..." />
   }
 
   return (
@@ -189,55 +223,144 @@ export default function TaskHistoryPage() {
           </div>
         </div>
       ) : (
-        <div className="space-y-3">
-          {tasks.map((task) => {
-            const color = getCourseColorByName(task.course_name || "")
-            return (
-              <Card key={task.id} className="hover:border-zinc-300 transition-colors overflow-hidden">
-                <CardContent className="p-0">
-                  <div className="flex">
-                    <div className={`w-1 shrink-0 ${color.dot}`} />
-                    <div className="flex-1 p-4">
-                      <Link
-                        href={`/task/${task.id}`}
-                        className="flex items-start gap-3"
+        <div className="space-y-4">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+            <Input
+              placeholder="Cari mata kuliah, modul, atau tutor..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-9"
+            />
+          </div>
+
+          <div className="rounded-xl border border-zinc-200 bg-white shadow-sm overflow-hidden">
+            <Table>
+              <TableHeader>
+                <TableRow className="bg-slate-50/80">
+                  <TableHead className="w-[30%]">Mata Kuliah</TableHead>
+                  <TableHead>Tipe</TableHead>
+                  <TableHead>Soal</TableHead>
+                  <TableHead>Panjang</TableHead>
+                  <TableHead>Tanggal</TableHead>
+                  <TableHead className="w-[50px]"></TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {paginatedTasks.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={6} className="h-24 text-center text-slate-500">
+                      {searchQuery ? "Tidak ada tugas yang cocok dengan pencarian." : "Tidak ada tugas."}
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  paginatedTasks.map((task) => {
+                    const color = getCourseColorByName(task.course_name || "")
+                    return (
+                      <TableRow
+                        key={task.id}
+                        className="cursor-pointer"
+                        onClick={() => router.push(`/task/${task.id}`)}
                       >
-                        <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${color.icon}`}>
-                          <BookOpen className="h-5 w-5 text-white" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <h3 className={`font-medium leading-tight truncate ${color.text}`}>
-                            {task.course_name || "Tugas Tanpa Mata Kuliah"}
-                          </h3>
-                          <p className="text-sm text-slate-500 leading-tight mt-0.5">
-                            {getTaskTypeLabel(task.task_type)} • {task.items_count} soal • {getLengthLabel(task.min_words_target)}
-                          </p>
-                          {task.module_book_title && (
-                            <p className="text-xs text-slate-400 leading-tight mt-0.5 truncate">
-                              Modul: {task.module_book_title}
-                            </p>
-                          )}
-                        </div>
-                      </Link>
-                      <div className="flex items-center justify-between mt-2 pt-2 border-t border-zinc-100">
-                        <p className="text-xs text-slate-400">
+                        <TableCell>
+                          <div className="flex items-center gap-2.5">
+                            <div className={`w-2 h-2 rounded-full shrink-0 ${color.dot}`} />
+                            <span className={`font-medium truncate max-w-[200px] ${color.text}`}>
+                              {task.course_name || "Tanpa Mata Kuliah"}
+                            </span>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
+                            task.task_type === "DISCUSSION"
+                              ? "bg-blue-50 text-blue-700"
+                              : "bg-amber-50 text-amber-700"
+                          }`}>
+                            {getTaskTypeLabel(task.task_type)}
+                          </span>
+                        </TableCell>
+                        <TableCell className="text-slate-600">
+                          {task.items_count}
+                        </TableCell>
+                        <TableCell className="text-slate-600">
+                          {getLengthLabel(task.min_words_target)}
+                        </TableCell>
+                        <TableCell className="text-slate-500 text-xs">
                           {formatDate(task.created_at)}
-                        </p>
+                        </TableCell>
+                        <TableCell>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-red-500 hover:text-red-700 hover:bg-red-50 h-8 w-8 p-0"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              openDeleteDialog(task.id)
+                            }}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    )
+                  })
+                )}
+              </TableBody>
+            </Table>
+          </div>
+
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between">
+              <p className="text-sm text-slate-500">
+                Menampilkan {((currentPage - 1) * ITEMS_PER_PAGE) + 1}–{Math.min(currentPage * ITEMS_PER_PAGE, filteredTasks.length)} dari {filteredTasks.length} tugas
+              </p>
+              <div className="flex items-center gap-1">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                  disabled={currentPage === 1}
+                  className="h-8 w-8 p-0"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </Button>
+                {Array.from({ length: totalPages }, (_, i) => i + 1)
+                  .filter((page) => {
+                    if (totalPages <= 5) return true
+                    if (page === 1 || page === totalPages) return true
+                    return Math.abs(page - currentPage) <= 1
+                  })
+                  .map((page, idx, arr) => {
+                    const prev = arr[idx - 1]
+                    const showEllipsis = prev && page - prev > 1
+                    return (
+                      <span key={page} className="flex items-center">
+                        {showEllipsis && (
+                          <span className="px-1 text-slate-400 text-sm">…</span>
+                        )}
                         <Button
-                          variant="ghost"
+                          variant={currentPage === page ? "default" : "outline"}
                           size="sm"
-                          className="text-red-600 hover:text-red-700 hover:bg-red-50 -mr-2"
-                          onClick={() => openDeleteDialog(task.id)}
+                          onClick={() => setCurrentPage(page)}
+                          className="h-8 w-8 p-0"
                         >
-                          <Trash2 className="w-4 h-4" />
+                          {page}
                         </Button>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            )
-          })}
+                      </span>
+                    )
+                  })}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                  disabled={currentPage === totalPages}
+                  className="h-8 w-8 p-0"
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </Button>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
