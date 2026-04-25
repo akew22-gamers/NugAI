@@ -13,6 +13,10 @@ const spaceGrotesk = Space_Grotesk({
 export const metadata: Metadata = {
   title: "NugAI - AI Task Generator",
   description: "Generate academic tasks with AI assistance",
+  icons: {
+    icon: "/favicon.ico",
+    apple: "/apple-touch-icon.png",
+  },
 };
 
 export default function RootLayout({

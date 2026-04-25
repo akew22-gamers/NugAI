@@ -91,7 +91,10 @@ NugAI/
 │   ├── schema.prisma             # Database schema
 │   └── seed.ts                   # Database seeder
 ├── public/
-│   └── fonts/                    # Liberation Sans fonts (PDF fallback)
+│   ├── fonts/                    # Liberation Sans fonts (PDF fallback)
+│   ├── apple-touch-icon.png      # Apple touch icon (180x180, circular)
+│   ├── nugai-icon-192.png        # PWA icon 192x192 (circular)
+│   └── nugai-icon-512.png        # PWA icon 512x512 (circular)
 ├── tests/
 │   └── landing-page.spec.ts      # Playwright tests
 ├── docs/                         # Documentation (deployment, cron, testing)
