@@ -4,7 +4,7 @@ import { useEffect, useState, useMemo } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useSession } from "next-auth/react"
-import { FileText, Plus, Trash2, Search, ChevronLeft, ChevronRight } from "lucide-react"
+import { FileText, Plus, Trash2, Search, ChevronLeft, ChevronRight, Calendar, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { toast } from "sonner"
@@ -16,14 +16,6 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog"
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
 import { Loading } from "@/components/ui/loading"
 import { getCourseColorByName } from "@/lib/course-colors"
 
@@ -53,6 +45,9 @@ export default function TaskHistoryPage() {
   const [isDeleteAllDialogOpen, setIsDeleteAllDialogOpen] = useState(false)
   const [isDeletingAll, setIsDeletingAll] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
+  const [dateFrom, setDateFrom] = useState("")
+  const [dateTo, setDateTo] = useState("")
+  const [showDateFilter, setShowDateFilter] = useState(false)
   const [currentPage, setCurrentPage] = useState(1)
 
   useEffect(() => {
@@ -76,16 +71,33 @@ export default function TaskHistoryPage() {
   }
 
   const filteredTasks = useMemo(() => {
-    if (!searchQuery.trim()) return tasks
-    const q = searchQuery.toLowerCase()
-    return tasks.filter(
-      (task) =>
-        (task.course_name && task.course_name.toLowerCase().includes(q)) ||
-        (task.module_book_title && task.module_book_title.toLowerCase().includes(q)) ||
-        (task.tutor_name && task.tutor_name.toLowerCase().includes(q)) ||
-        getTaskTypeLabel(task.task_type).toLowerCase().includes(q)
-    )
-  }, [tasks, searchQuery])
+    let result = tasks
+
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase()
+      result = result.filter(
+        (task) =>
+          (task.course_name && task.course_name.toLowerCase().includes(q)) ||
+          (task.module_book_title && task.module_book_title.toLowerCase().includes(q)) ||
+          (task.tutor_name && task.tutor_name.toLowerCase().includes(q)) ||
+          getTaskTypeLabel(task.task_type).toLowerCase().includes(q)
+      )
+    }
+
+    if (dateFrom) {
+      const from = new Date(dateFrom)
+      from.setHours(0, 0, 0, 0)
+      result = result.filter((task) => new Date(task.created_at) >= from)
+    }
+
+    if (dateTo) {
+      const to = new Date(dateTo)
+      to.setHours(23, 59, 59, 999)
+      result = result.filter((task) => new Date(task.created_at) <= to)
+    }
+
+    return result
+  }, [tasks, searchQuery, dateFrom, dateTo])
 
   const totalPages = Math.max(1, Math.ceil(filteredTasks.length / ITEMS_PER_PAGE))
   const paginatedTasks = useMemo(() => {
@@ -95,7 +107,7 @@ export default function TaskHistoryPage() {
 
   useEffect(() => {
     setCurrentPage(1)
-  }, [searchQuery])
+  }, [searchQuery, dateFrom, dateTo])
 
   const openDeleteDialog = (taskId: string) => {
     setDeleteTaskId(taskId)
@@ -169,6 +181,14 @@ export default function TaskHistoryPage() {
     }
   }
 
+  const clearDateFilter = () => {
+    setDateFrom("")
+    setDateTo("")
+    setShowDateFilter(false)
+  }
+
+  const hasDateFilter = dateFrom || dateTo
+
   const getTaskToDelete = () => tasks.find((t) => t.id === deleteTaskId)
 
   if (status === "loading" || isLoading) {
@@ -224,142 +244,172 @@ export default function TaskHistoryPage() {
         </div>
       ) : (
         <div className="space-y-4">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-            <Input
-              placeholder="Cari mata kuliah, modul, atau tutor..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9"
-            />
+          <div className="flex gap-2">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+              <Input
+                placeholder="Cari mata kuliah, modul, atau tutor..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9"
+              />
+            </div>
+            <Button
+              variant={showDateFilter || hasDateFilter ? "default" : "outline"}
+              size="icon"
+              onClick={() => setShowDateFilter(!showDateFilter)}
+              className={`shrink-0 ${hasDateFilter ? "bg-purple-600 hover:bg-purple-700" : ""}`}
+            >
+              <Calendar className="w-4 h-4" />
+            </Button>
           </div>
 
-          <div className="rounded-xl border border-zinc-200 bg-white shadow-sm overflow-hidden">
-            <Table>
-              <TableHeader>
-                <TableRow className="bg-slate-50/80">
-                  <TableHead className="w-[30%]">Mata Kuliah</TableHead>
-                  <TableHead>Tipe</TableHead>
-                  <TableHead>Soal</TableHead>
-                  <TableHead>Panjang</TableHead>
-                  <TableHead>Tanggal</TableHead>
-                  <TableHead className="w-[50px]"></TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {paginatedTasks.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={6} className="h-24 text-center text-slate-500">
-                      {searchQuery ? "Tidak ada tugas yang cocok dengan pencarian." : "Tidak ada tugas."}
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  paginatedTasks.map((task) => {
-                    const color = getCourseColorByName(task.course_name || "")
-                    return (
-                      <TableRow
-                        key={task.id}
-                        className="cursor-pointer"
-                        onClick={() => router.push(`/task/${task.id}`)}
-                      >
-                        <TableCell>
-                          <div className="flex items-center gap-2.5">
-                            <div className={`w-2 h-2 rounded-full shrink-0 ${color.dot}`} />
-                            <span className={`font-medium truncate max-w-[200px] ${color.text}`}>
+          {showDateFilter && (
+            <div className="flex flex-col sm:flex-row gap-2 p-3 rounded-lg border border-zinc-200 bg-slate-50">
+              <div className="flex-1 space-y-1">
+                <label className="text-xs font-medium text-slate-500">Dari tanggal</label>
+                <input
+                  type="date"
+                  value={dateFrom}
+                  onChange={(e) => setDateFrom(e.target.value)}
+                  className="flex h-9 w-full rounded-md border border-slate-200 bg-white px-3 py-1 text-sm text-slate-900 shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-slate-400"
+                />
+              </div>
+              <div className="flex-1 space-y-1">
+                <label className="text-xs font-medium text-slate-500">Sampai tanggal</label>
+                <input
+                  type="date"
+                  value={dateTo}
+                  onChange={(e) => setDateTo(e.target.value)}
+                  className="flex h-9 w-full rounded-md border border-slate-200 bg-white px-3 py-1 text-sm text-slate-900 shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-slate-400"
+                />
+              </div>
+              {hasDateFilter && (
+                <div className="flex items-end">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={clearDateFilter}
+                    className="text-slate-500 hover:text-slate-700 gap-1"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                    Reset
+                  </Button>
+                </div>
+              )}
+            </div>
+          )}
+
+          {filteredTasks.length === 0 ? (
+            <div className="text-center py-12 text-slate-500">
+              <FileText className="w-10 h-10 mx-auto text-slate-300 mb-3" />
+              <p className="font-medium">Tidak ada tugas yang cocok</p>
+              <p className="text-sm mt-1">Coba ubah kata kunci atau filter tanggal.</p>
+            </div>
+          ) : (
+            <>
+              <div className="space-y-3">
+                {paginatedTasks.map((task) => {
+                  const color = getCourseColorByName(task.course_name || "")
+                  return (
+                    <div
+                      key={task.id}
+                      onClick={() => router.push(`/task/${task.id}`)}
+                      className={`group relative rounded-xl border ${color.border} ${color.bg} p-4 cursor-pointer transition-all hover:shadow-md`}
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <div className={`w-2.5 h-2.5 rounded-full shrink-0 ${color.dot}`} />
+                            <h3 className={`font-semibold truncate ${color.text}`}>
                               {task.course_name || "Tanpa Mata Kuliah"}
+                            </h3>
+                            <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
+                              task.task_type === "DISCUSSION"
+                                ? "bg-blue-100 text-blue-700"
+                                : "bg-amber-100 text-amber-700"
+                            }`}>
+                              {getTaskTypeLabel(task.task_type)}
                             </span>
                           </div>
-                        </TableCell>
-                        <TableCell>
-                          <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
-                            task.task_type === "DISCUSSION"
-                              ? "bg-blue-50 text-blue-700"
-                              : "bg-amber-50 text-amber-700"
-                          }`}>
-                            {getTaskTypeLabel(task.task_type)}
-                          </span>
-                        </TableCell>
-                        <TableCell className="text-slate-600">
-                          {task.items_count}
-                        </TableCell>
-                        <TableCell className="text-slate-600">
-                          {getLengthLabel(task.min_words_target)}
-                        </TableCell>
-                        <TableCell className="text-slate-500 text-xs">
-                          {formatDate(task.created_at)}
-                        </TableCell>
-                        <TableCell>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="text-red-500 hover:text-red-700 hover:bg-red-50 h-9 w-9 p-0"
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              openDeleteDialog(task.id)
-                            }}
-                          >
-                            <Trash2 className="w-5 h-5" />
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    )
-                  })
-                )}
-              </TableBody>
-            </Table>
-          </div>
-
-          {totalPages > 1 && (
-            <div className="flex items-center justify-between">
-              <p className="text-sm text-slate-500">
-                Menampilkan {((currentPage - 1) * ITEMS_PER_PAGE) + 1}–{Math.min(currentPage * ITEMS_PER_PAGE, filteredTasks.length)} dari {filteredTasks.length} tugas
-              </p>
-              <div className="flex items-center gap-1">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                  disabled={currentPage === 1}
-                  className="h-8 w-8 p-0"
-                >
-                  <ChevronLeft className="w-4 h-4" />
-                </Button>
-                {Array.from({ length: totalPages }, (_, i) => i + 1)
-                  .filter((page) => {
-                    if (totalPages <= 5) return true
-                    if (page === 1 || page === totalPages) return true
-                    return Math.abs(page - currentPage) <= 1
-                  })
-                  .map((page, idx, arr) => {
-                    const prev = arr[idx - 1]
-                    const showEllipsis = prev && page - prev > 1
-                    return (
-                      <span key={page} className="flex items-center">
-                        {showEllipsis && (
-                          <span className="px-1 text-slate-400 text-sm">…</span>
-                        )}
+                          <div className="flex items-center gap-3 mt-2 text-xs text-slate-500">
+                            <span>{task.items_count} soal</span>
+                            <span>•</span>
+                            <span>{getLengthLabel(task.min_words_target)}</span>
+                            <span>•</span>
+                            <span>{formatDate(task.created_at)}</span>
+                          </div>
+                        </div>
                         <Button
-                          variant={currentPage === page ? "default" : "outline"}
+                          variant="ghost"
                           size="sm"
-                          onClick={() => setCurrentPage(page)}
-                          className={`h-8 w-8 p-0 ${currentPage === page ? "text-white" : ""}`}
+                          className="text-red-400 hover:text-red-600 hover:bg-red-50 h-9 w-9 p-0 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            openDeleteDialog(task.id)
+                          }}
                         >
-                          {page}
+                          <Trash2 className="w-4.5 h-4.5" />
                         </Button>
-                      </span>
-                    )
-                  })}
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                  disabled={currentPage === totalPages}
-                  className="h-8 w-8 p-0"
-                >
-                  <ChevronRight className="w-4 h-4" />
-                </Button>
+                      </div>
+                    </div>
+                  )
+                })}
               </div>
-            </div>
+
+              {totalPages > 1 && (
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2">
+                  <p className="text-sm text-slate-500">
+                    {((currentPage - 1) * ITEMS_PER_PAGE) + 1}–{Math.min(currentPage * ITEMS_PER_PAGE, filteredTasks.length)} dari {filteredTasks.length} tugas
+                  </p>
+                  <div className="flex items-center gap-1">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                      disabled={currentPage === 1}
+                      className="h-8 w-8 p-0"
+                    >
+                      <ChevronLeft className="w-4 h-4" />
+                    </Button>
+                    {Array.from({ length: totalPages }, (_, i) => i + 1)
+                      .filter((page) => {
+                        if (totalPages <= 5) return true
+                        if (page === 1 || page === totalPages) return true
+                        return Math.abs(page - currentPage) <= 1
+                      })
+                      .map((page, idx, arr) => {
+                        const prev = arr[idx - 1]
+                        const showEllipsis = prev && page - prev > 1
+                        return (
+                          <span key={page} className="flex items-center">
+                            {showEllipsis && (
+                              <span className="px-1 text-slate-400 text-sm">…</span>
+                            )}
+                            <Button
+                              variant={currentPage === page ? "default" : "outline"}
+                              size="sm"
+                              onClick={() => setCurrentPage(page)}
+                              className={`h-8 w-8 p-0 ${currentPage === page ? "text-white" : ""}`}
+                            >
+                              {page}
+                            </Button>
+                          </span>
+                        )
+                      })}
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                      disabled={currentPage === totalPages}
+                      className="h-8 w-8 p-0"
+                    >
+                      <ChevronRight className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </>
           )}
         </div>
       )}

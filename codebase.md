@@ -44,7 +44,7 @@ NugAI/
 │   │   │   ├── diskusi/new/      # New discussion task wizard
 │   │   │   ├── soal/new/         # New assignment task wizard
 │   │   │   ├── new/              # General new task
-│   │   │   └── page.tsx          # Task list (table with search & pagination)
+│   │   │   └── page.tsx          # Task list (cards with search, date filter & pagination)
 │   │   └── layout.tsx            # Student layout (Sidebar + InactivityGuard 20min + ProfileGuard)
 │   ├── api/                      # API Routes
 │   │   ├── admin/                # Admin APIs (analytics, providers, users)
