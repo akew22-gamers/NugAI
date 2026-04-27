@@ -220,7 +220,6 @@ const styles = StyleSheet.create({
   utCoverIdentityValue: {
     fontSize: 12,
     fontWeight: 'bold',
-    flex: 1,
   },
 })
 
@@ -335,7 +334,7 @@ function UTCoverPage({ data }: { data: PDFData }) {
       <View style={{ height: 12 }} />
       <Text style={styles.utCoverBody}>DISUSUN OLEH</Text>
       {/* Tabel rata kiri teks, tapi posisi tabel di center dokumen */}
-      <View style={{ width: 250, alignSelf: 'center', marginTop: 4, marginBottom: 4 }}>
+      <View style={{ alignSelf: 'center', marginTop: 4, marginBottom: 4 }}>
         <View style={styles.utCoverIdentityRow}>
           <Text style={styles.utCoverIdentityLabel}>NAMA</Text>
           <Text style={styles.utCoverIdentitySeparator}>:</Text>
