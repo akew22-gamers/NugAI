@@ -320,7 +320,10 @@ function UTCoverPage({ data }: { data: PDFData }) {
       <Text style={styles.utCoverHeader}>MATA KULIAH</Text>
       <Text style={styles.utCoverHeader}>{courseLabel}</Text>
 
-      {/* Logo: ukuran dan posisi tetap */}
+      {/* Spacer atas: dorong logo ke tengah vertikal */}
+      <View style={{ flex: 1 }} />
+
+      {/* Logo: di tengah-tengah dokumen (vertikal) */}
       {/* eslint-disable-next-line jsx-a11y/alt-text */}
       <Image src={UT_LOGO_BASE64} style={styles.utCoverLogo} />
 
@@ -332,21 +335,26 @@ function UTCoverPage({ data }: { data: PDFData }) {
       {/* Data mahasiswa: font 12 bold, 1 baris dari tutor */}
       <View style={{ height: 12 }} />
       <Text style={styles.utCoverBody}>DISUSUN OLEH</Text>
-      <View style={{ width: 280, marginTop: 4, marginBottom: 4 }}>
-        <View style={styles.utCoverIdentityRow}>
-          <Text style={styles.utCoverIdentityLabel}>NAMA</Text>
-          <Text style={styles.utCoverIdentitySeparator}>:</Text>
-          <Text style={styles.utCoverIdentityValue}>{data.studentName.toUpperCase()}</Text>
-        </View>
-        <View style={styles.utCoverIdentityRow}>
-          <Text style={styles.utCoverIdentityLabel}>NIM</Text>
-          <Text style={styles.utCoverIdentitySeparator}>:</Text>
-          <Text style={styles.utCoverIdentityValue}>{data.studentNim}</Text>
+      {/* Tabel rata kiri teks, tapi posisi tabel di center dokumen */}
+      <View style={{ alignItems: 'center', marginTop: 4, marginBottom: 4 }}>
+        <View style={{ width: 250 }}>
+          <View style={styles.utCoverIdentityRow}>
+            <Text style={styles.utCoverIdentityLabel}>NAMA</Text>
+            <Text style={styles.utCoverIdentitySeparator}>:</Text>
+            <Text style={styles.utCoverIdentityValue}>{data.studentName.toUpperCase()}</Text>
+          </View>
+          <View style={styles.utCoverIdentityRow}>
+            <Text style={styles.utCoverIdentityLabel}>NIM</Text>
+            <Text style={styles.utCoverIdentitySeparator}>:</Text>
+            <Text style={styles.utCoverIdentityValue}>{data.studentNim}</Text>
+          </View>
         </View>
       </View>
 
-      {/* Kaki cover: font 14 bold rata tengah, mepet ke batas bawah margin */}
+      {/* Spacer bawah: dorong kaki ke bawah */}
       <View style={{ flex: 1 }} />
+
+      {/* Kaki cover: font 14 bold rata tengah, mepet ke batas bawah margin */}
       <Text style={styles.utCoverFooter}>
         PROGRAM STUDI {data.studyProgram.toUpperCase()}
       </Text>
