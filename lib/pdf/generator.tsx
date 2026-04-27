@@ -328,7 +328,7 @@ function UTCoverPage({ data }: { data: PDFData }) {
       {/* Data tutor: font 12 bold rata tengah, 1 baris dari logo */}
       <View style={{ height: 12 }} />
       <Text style={styles.utCoverBody}>TUTOR PEMBIMBING</Text>
-      <Text style={styles.utCoverBody}>{data.tutorName.toUpperCase()}</Text>
+      <Text style={styles.utCoverBody}>{data.tutorName}</Text>
 
       {/* Data mahasiswa: font 12 bold, 1 baris dari tutor */}
       <View style={{ height: 12 }} />
