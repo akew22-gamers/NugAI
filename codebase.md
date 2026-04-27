@@ -117,7 +117,7 @@ NugAI/
 | **User** | User account (ADMIN/USER), subscription tier (FREE/PREMIUM), weekly quota tracking, premium subscription duration (monthly/lifetime), admin login rate limiting |
 | **StudentProfile** | Profil mahasiswa (nama, NIM, universitas, fakultas, prodi, logo URL, default settings) |
 | **Course** | Mata kuliah per-user (nama, kode mata kuliah (opsional, khusus UT), buku modul, nama tutor) |
-| **TaskSession** | Sesi pembuatan tugas (tipe, target kata, AI provider tracking, course snapshot termasuk course_code) |
+| **TaskSession** | Sesi pembuatan tugas (tipe, target kata, AI provider tracking, course snapshot termasuk course_code, task_description_snapshot, answer_style) |
 | **TaskItem** | Item soal/jawaban per sesi (question, answer, references, status, regenerate count) |
 | **DailyUsageLog** | Log penggunaan harian (tokens, search calls, estimated cost, provider info) |
 | **DataPurgeLog** | Audit trail untuk data purging |
@@ -145,6 +145,9 @@ NugAI/
 - Streaming response via Vercel AI SDK
 - Prompt engineering khusus Bahasa Indonesia akademik
 - Deteksi otomatis soal matematika → format penyelesaian bertahap
+- **Answer Style Settings**: 4 opsi gaya jawaban (Paragraf, Poin/Numbering, Langkah Matematika, Kombinasi) — dipilih user di Step 1, disimpan di DB, digunakan sebagai instruksi AI prompt
+- **AI Preamble Stripping**: sanitizeAnswer() menghapus kalimat pembuka/konfirmasi AI (misal "Baik, berikut jawaban...") + strip markdown bold/italic formatting marks
+- Prompt regenerasi melarang AI menulis preamble/konfirmasi
 
 ### 2. Web Search (Referensi)
 - Tavily API: General & advanced web search
@@ -162,6 +165,8 @@ NugAI/
 - Cover page dengan logo universitas
 - **Cover page khusus Universitas Terbuka**: Layout sesuai template UT (sesi tutorial, kode mata kuliah, logo UT, identitas mahasiswa, program studi, fakultas, UPBJJ)
 - Modal download PDF: pilihan dengan/tanpa cover (khusus user UT) + input nomor sesi
+- **Switch deskripsi di PDF**: Toggle untuk menyertakan/mengecualikan deskripsi soal dari PDF (hanya untuk ASSIGNMENT). Default ON. Tersedia di Step3Result dan halaman detail task
+- **Formatted text rendering**: renderFormattedText() parser yang mendukung numbered lists, sub-items, section headers (Diketahui/Ditanyakan/Penyelesaian/Kesimpulan), dan paragraf — menggantikan plain text rendering
 - Liberation Sans fonts (fallback)
 - Support custom font upload per user
 

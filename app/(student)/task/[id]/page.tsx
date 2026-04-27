@@ -35,6 +35,7 @@ interface TaskSession {
   course_name_snapshot: string | null
   module_book_title_snapshot: string | null
   tutor_name_snapshot: string | null
+  task_description_snapshot: string | null
   ai_provider_name: string | null
   ai_provider_type: string | null
   ai_model: string | null
@@ -54,6 +55,7 @@ export default function TaskDetailPage() {
   const [isDeleting, setIsDeleting] = useState(false)
   const [showPDFModal, setShowPDFModal] = useState(false)
   const [isUT, setIsUT] = useState(false)
+  const [includeDescription, setIncludeDescription] = useState(true)
 
   useEffect(() => {
     if (status === "authenticated" && taskId) {
@@ -138,8 +140,10 @@ export default function TaskDetailPage() {
         body: JSON.stringify({
           sessionId: taskId,
           taskType: task?.task_type,
+          taskDescription: task?.task_description_snapshot || "",
           withCover: options?.withCover || false,
           sessionNumber: options?.sessionNumber || undefined,
+          includeDescription: includeDescription,
         }),
       })
 
@@ -222,7 +226,7 @@ export default function TaskDetailPage() {
             {task.task_type === "DISCUSSION" ? "Tugas Diskusi" : "Tugas Soal"} • {formatDate(task.created_at)}
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <Button onClick={() => setShowPDFModal(true)} size="sm" className="gap-2 bg-emerald-600 hover:bg-emerald-700 text-white">
             <Download className="w-4 h-4" />
             <span className="hidden sm:inline">Download</span> PDF
@@ -236,6 +240,20 @@ export default function TaskDetailPage() {
             <Trash2 className="w-4 h-4" />
             <span className="hidden sm:inline">Hapus</span>
           </Button>
+          {task.task_description_snapshot && task.task_type === "ASSIGNMENT" && (
+            <button
+              type="button"
+              onClick={() => setIncludeDescription(!includeDescription)}
+              className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-zinc-200 hover:bg-zinc-50 transition-colors text-sm"
+              title={includeDescription ? "Deskripsi akan disertakan di PDF" : "Deskripsi hanya sebagai referensi AI, tidak masuk PDF"}
+            >
+              <FileText className="w-3.5 h-3.5 text-zinc-500" />
+              <span className="text-zinc-600">Deskripsi di PDF</span>
+              <div className={`relative w-8 h-4.5 rounded-full transition-colors ${includeDescription ? 'bg-emerald-500' : 'bg-zinc-300'}`}>
+                <div className={`absolute top-0.5 w-3.5 h-3.5 rounded-full bg-white shadow transition-transform ${includeDescription ? 'translate-x-4' : 'translate-x-0.5'}`} />
+              </div>
+            </button>
+          )}
         </div>
       </div>
 

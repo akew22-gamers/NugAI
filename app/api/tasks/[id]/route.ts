@@ -30,6 +30,7 @@ export async function GET(
         course_name_snapshot: true,
         module_book_title_snapshot: true,
         tutor_name_snapshot: true,
+        task_description_snapshot: true,
         ai_provider_name: true,
         ai_provider_type: true,
         ai_model: true,

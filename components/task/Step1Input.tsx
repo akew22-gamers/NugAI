@@ -38,6 +38,7 @@ export function Step1Input({ initialData, onComplete, lockedTaskType }: Step1Inp
   const [moduleBookTitle, setModuleBookTitle] = useState(initialData.module_book_title)
   const [tutorName, setTutorName] = useState(initialData.tutor_name)
   const [answerLength, setAnswerLength] = useState<"SHORT" | "MEDIUM" | "LONG">(initialData.answer_length || "MEDIUM")
+  const [answerStyle, setAnswerStyle] = useState<"paragraph" | "bullet" | "math_steps" | "combination">(initialData.answer_style || "paragraph")
   const [taskDescription, setTaskDescription] = useState(initialData.task_description || "")
   const [questions, setQuestions] = useState<string[]>(initialData.questions.length > 0 ? initialData.questions : [""])
   const [errors, setErrors] = useState<Record<string, string>>({})
@@ -152,6 +153,7 @@ export function Step1Input({ initialData, onComplete, lockedTaskType }: Step1Inp
       module_book_title: moduleBookTitle,
       tutor_name: tutorName,
       answer_length: answerLength,
+      answer_style: answerStyle,
       questions: questions.filter((q) => q.trim()),
     })
   }
@@ -296,6 +298,33 @@ export function Step1Input({ initialData, onComplete, lockedTaskType }: Step1Inp
                 ))}
               </div>
             </div>
+
+            <div>
+              <Label>Gaya Jawaban</Label>
+              <div className="grid grid-cols-2 gap-2 mt-2">
+                {([
+                  { value: "paragraph", label: "Paragraf", desc: "Narasi mengalir dalam paragraf" },
+                  { value: "bullet", label: "Poin/Numbering", desc: "Jawaban terstruktur dengan poin" },
+                  { value: "math_steps", label: "Langkah Matematika", desc: "Diketahui → Ditanya → Jawab" },
+                  { value: "combination", label: "Kombinasi", desc: "Campuran paragraf dan poin" },
+                ] as const).map((opt) => (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    onClick={() => setAnswerStyle(opt.value)}
+                    className={cn(
+                      "p-3 rounded-lg border text-left transition-all",
+                      answerStyle === opt.value
+                        ? "border-purple-500 bg-purple-50 ring-1 ring-purple-500"
+                        : "border-zinc-200 hover:border-zinc-300"
+                    )}
+                  >
+                    <p className={cn("text-sm font-medium", answerStyle === opt.value ? "text-purple-700" : "text-slate-900")}>{opt.label}</p>
+                    <p className="text-xs text-slate-500 mt-0.5">{opt.desc}</p>
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -384,6 +413,12 @@ export function Step1Input({ initialData, onComplete, lockedTaskType }: Step1Inp
                 <p className="text-slate-500">Panjang Jawaban</p>
                 <p className="font-medium text-slate-900">
                   {answerLength === "SHORT" ? "Singkat" : answerLength === "LONG" ? "Panjang" : "Sedang"}
+                </p>
+              </div>
+              <div>
+                <p className="text-slate-500">Gaya Jawaban</p>
+                <p className="font-medium text-slate-900">
+                  {answerStyle === "paragraph" ? "Paragraf" : answerStyle === "bullet" ? "Poin/Numbering" : answerStyle === "math_steps" ? "Langkah Matematika" : "Kombinasi"}
                 </p>
               </div>
               <div>

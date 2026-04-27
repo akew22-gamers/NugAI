@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Textarea } from "@/components/ui/textarea"
 import { TaskFormData } from "@/app/(student)/task/new/page"
 import { TaskResult } from "@/app/(student)/task/new/page"
-import { Download, RefreshCw, ArrowLeft, Loader2, Copy, Check } from "lucide-react"
+import { Download, RefreshCw, ArrowLeft, Loader2, Copy, Check, FileText } from "lucide-react"
 import { toast } from "sonner"
 import { Loading } from "@/components/ui/loading"
 import { PDFDownloadModal } from "./PDFDownloadModal"
@@ -42,6 +42,7 @@ export function Step3Result({
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null)
   const [showPDFModal, setShowPDFModal] = useState(false)
   const [isUT, setIsUT] = useState(false)
+  const [includeDescription, setIncludeDescription] = useState(true)
 
   const questionIndex = setActiveQuestion !== undefined ? activeQuestion ?? 0 : internalActiveQuestion
   const setQuestionIndex = setActiveQuestion || setInternalActiveQuestion
@@ -93,6 +94,7 @@ export function Step3Result({
           taskDescription: formData.task_description || "",
           withCover: options?.withCover || false,
           sessionNumber: options?.sessionNumber || undefined,
+          includeDescription: includeDescription,
         }),
       })
 
@@ -127,7 +129,7 @@ export function Step3Result({
 
   return (
     <div className="space-y-6">
-      <div className="flex gap-2">
+      <div className="flex flex-wrap items-center gap-2">
         <Button variant="outline" onClick={onReset} className="gap-2">
           <ArrowLeft className="w-4 h-4" />
           Buat Tugas Baru
@@ -136,6 +138,20 @@ export function Step3Result({
           <Download className="w-4 h-4" />
           Download PDF
         </Button>
+        {formData.task_description && formData.task_type === "ASSIGNMENT" && (
+          <button
+            type="button"
+            onClick={() => setIncludeDescription(!includeDescription)}
+            className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-zinc-200 hover:bg-zinc-50 transition-colors text-sm"
+            title={includeDescription ? "Deskripsi akan disertakan di PDF" : "Deskripsi hanya sebagai referensi AI, tidak masuk PDF"}
+          >
+            <FileText className="w-3.5 h-3.5 text-zinc-500" />
+            <span className="text-zinc-600">Deskripsi di PDF</span>
+            <div className={`relative w-8 h-4.5 rounded-full transition-colors ${includeDescription ? 'bg-emerald-500' : 'bg-zinc-300'}`}>
+              <div className={`absolute top-0.5 w-3.5 h-3.5 rounded-full bg-white shadow transition-transform ${includeDescription ? 'translate-x-4' : 'translate-x-0.5'}`} />
+            </div>
+          </button>
+        )}
       </div>
 
       {formData.task_type === "ASSIGNMENT" && formData.questions.length > 1 && (

@@ -48,6 +48,7 @@ interface PDFData {
   universityLogoUrl: string
   taskItems: TaskItemData[]
   taskDescription?: string
+  includeDescription?: boolean
   createdAt: Date
   withCover?: boolean
   sessionNumber?: number
@@ -304,6 +305,101 @@ function parseDiscussionAnswer(answerText: string): {
   return { identityLines, body: bodyText, references }
 }
 
+// Parser untuk render teks berformat (bullet/numbering) di PDF
+function renderFormattedText(text: string) {
+  const lines = text.split('\n')
+  const elements: Array<{ type: 'paragraph' | 'list_item' | 'sub_item' | 'section_header' | 'empty'; content: string; marker?: string }> = []
+
+  for (const line of lines) {
+    const trimmed = line.trim()
+    if (!trimmed) {
+      elements.push({ type: 'empty', content: '' })
+      continue
+    }
+
+    // Deteksi section header (Diketahui, Ditanyakan, Penyelesaian, Kesimpulan)
+    const sectionMatch = trimmed.match(/^(Diketahui|Ditanyakan|Penyelesaian|Jawab|Kesimpulan)\s*[:.]?\s*$/i)
+    if (sectionMatch) {
+      elements.push({ type: 'section_header', content: sectionMatch[1] })
+      continue
+    }
+
+    // Deteksi numbered list: "1.", "2.", "a.", "b.", "1)", "a)"
+    const numberedMatch = trimmed.match(/^(\d+[.)]\s*|[a-z][.)]\s*)(.+)$/i)
+    if (numberedMatch) {
+      elements.push({ type: 'list_item', marker: numberedMatch[1].trim(), content: numberedMatch[2].trim() })
+      continue
+    }
+
+    // Deteksi sub-item: "- text" atau "  - text"
+    const subItemMatch = trimmed.match(/^[-–]\s+(.+)$/)
+    if (subItemMatch) {
+      elements.push({ type: 'sub_item', marker: '-', content: subItemMatch[1].trim() })
+      continue
+    }
+
+    // Default: paragraf biasa
+    elements.push({ type: 'paragraph', content: trimmed })
+  }
+
+  // Merge consecutive paragraphs
+  const merged: typeof elements = []
+  for (const el of elements) {
+    if (el.type === 'paragraph' && merged.length > 0 && merged[merged.length - 1].type === 'paragraph') {
+      merged[merged.length - 1].content += ' ' + el.content
+    } else if (el.type === 'empty') {
+      // Skip empty lines but don't merge across them
+      if (merged.length > 0 && merged[merged.length - 1].type !== 'empty') {
+        merged.push(el)
+      }
+    } else {
+      merged.push(el)
+    }
+  }
+
+  // Filter trailing empties
+  while (merged.length > 0 && merged[merged.length - 1].type === 'empty') {
+    merged.pop()
+  }
+
+  return merged.map((el, idx) => {
+    if (el.type === 'empty') return null
+
+    if (el.type === 'section_header') {
+      return (
+        <Text key={idx} style={{ fontSize: 12, fontWeight: 'bold', lineHeight: 1.15, marginTop: idx > 0 ? 8 : 0, marginBottom: 4 }}>
+          {el.content}
+        </Text>
+      )
+    }
+
+    if (el.type === 'list_item') {
+      return (
+        <View key={idx} style={{ flexDirection: 'row', marginBottom: 3, paddingLeft: 0 }}>
+          <Text style={{ fontSize: 12, lineHeight: 1.15, width: 22 }}>{el.marker}</Text>
+          <Text style={{ fontSize: 12, lineHeight: 1.15, flex: 1, textAlign: 'justify' }}>{el.content}</Text>
+        </View>
+      )
+    }
+
+    if (el.type === 'sub_item') {
+      return (
+        <View key={idx} style={{ flexDirection: 'row', marginBottom: 2, paddingLeft: 22 }}>
+          <Text style={{ fontSize: 12, lineHeight: 1.15, width: 15 }}>{el.marker}</Text>
+          <Text style={{ fontSize: 12, lineHeight: 1.15, flex: 1, textAlign: 'justify' }}>{el.content}</Text>
+        </View>
+      )
+    }
+
+    // paragraph
+    return (
+      <Text key={idx} style={{ fontSize: 12, lineHeight: 1.15, textAlign: 'justify', marginBottom: 6 }}>
+        {el.content}
+      </Text>
+    )
+  }).filter(Boolean)
+}
+
 function UTCoverPage({ data }: { data: PDFData }) {
   const courseLabel = data.courseCode
     ? `${data.courseName.toUpperCase()} (${data.courseCode})`
@@ -389,7 +485,7 @@ function DiscussionTemplate({ data }: { data: PDFData }) {
                   ))}
                 </View>
               )}
-              <Text style={styles.discussionBody}>{body}</Text>
+              <View>{renderFormattedText(body)}</View>
               {references.length > 0 && (
                 <View style={styles.referenceSection}>
                   <Text style={styles.referenceHeader}>Referensi:</Text>
@@ -460,7 +556,7 @@ function AssignmentTemplate({ data }: { data: PDFData }) {
       {data.withCover && <UTCoverPage data={data} />}
       <Page size={PAGE_SIZE} style={styles.page}>
         <Text style={styles.soalListHeader}>SOAL</Text>
-        {data.taskDescription && (
+        {data.includeDescription !== false && data.taskDescription && (
           <Text style={{ fontSize: 12, lineHeight: 1.15, textAlign: 'justify', marginBottom: 15 }}>
             {data.taskDescription}
           </Text>
@@ -485,7 +581,7 @@ function AssignmentTemplate({ data }: { data: PDFData }) {
           return (
             <View>
               <Text style={styles.questionHeader}>Jawaban No. 1</Text>
-              <Text style={styles.discussionBody}>{cleanBody}</Text>
+              <View>{renderFormattedText(cleanBody)}</View>
               {references.length > 0 && (
                 <View style={styles.referenceSection}>
                   <Text style={styles.referenceHeader}>Referensi:</Text>
@@ -508,7 +604,7 @@ function AssignmentTemplate({ data }: { data: PDFData }) {
         return (
           <Page key={idx + 1} size={PAGE_SIZE} style={styles.page}>
             <Text style={styles.questionHeader}>Jawaban No. {idx + 2}</Text>
-            <Text style={styles.discussionBody}>{cleanBody}</Text>
+            <View>{renderFormattedText(cleanBody)}</View>
             {references.length > 0 && (
               <View style={styles.referenceSection}>
                 <Text style={styles.referenceHeader}>Referensi:</Text>

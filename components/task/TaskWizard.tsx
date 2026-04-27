@@ -22,6 +22,7 @@ export function TaskWizard({ defaultTaskType, title, subtitle }: TaskWizardProps
     module_book_title: "",
     tutor_name: "",
     answer_length: "MEDIUM",
+    answer_style: "paragraph",
     questions: [],
   })
   const [result, setResult] = useState<TaskResult | null>(null)
@@ -122,6 +123,7 @@ export function TaskWizard({ defaultTaskType, title, subtitle }: TaskWizardProps
       module_book_title: "",
       tutor_name: "",
       answer_length: "MEDIUM",
+      answer_style: "paragraph",
       questions: [],
     })
     setResult(null)

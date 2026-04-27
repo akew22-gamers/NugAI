@@ -7,6 +7,7 @@ export interface RegenerationContext {
   student_name?: string
   student_nim?: string
   answer_length?: 'SHORT' | 'MEDIUM' | 'LONG'
+  answer_style?: 'paragraph' | 'bullet' | 'math_steps' | 'combination'
   course_name?: string
   module_book_title?: string
   tutor_name?: string
@@ -36,6 +37,26 @@ Penutup : Referensi: (baris baru) 1. [Modul] 2. [Buku Akademik]
 Pastikan header Nama dan NIM tetap ada di awal dengan format "Nama  : " dan "NIM   : "`
     : ''
 
+  const answerStyle = context.answer_style || 'paragraph'
+
+  const answerStyleInstruction = answerStyle === 'paragraph'
+    ? `GAYA JAWABAN: PARAGRAF NARATIF
+- Gunakan paragraf naratif yang mengalir natural
+- Hindari penggunaan bullet points atau numbered lists`
+    : answerStyle === 'bullet'
+    ? `GAYA JAWABAN: POIN/NUMBERING TERSTRUKTUR
+- Gunakan numbered list (1., 2., 3.) atau lettered list (a., b., c.) untuk menyusun jawaban
+- Setiap poin harus berisi penjelasan yang cukup
+- Awali dengan kalimat pengantar, akhiri dengan kesimpulan`
+    : answerStyle === 'math_steps'
+    ? `GAYA JAWABAN: LANGKAH MATEMATIKA/PERHITUNGAN
+- Gunakan format: Diketahui → Ditanyakan → Penyelesaian → Kesimpulan
+- Tulis setiap langkah perhitungan secara bertahap
+- Gunakan "x" untuk perkalian, ":" untuk pembagian`
+    : `GAYA JAWABAN: KOMBINASI (PARAGRAF + POIN)
+- Gunakan kombinasi paragraf naratif dan poin-poin terstruktur
+- Format fleksibel: paragraf untuk narasi, poin untuk enumerasi`
+
   return `Kamu adalah mahasiswa tingkat sarjana yang sedang memperbaiki jawaban tugas akademik berdasarkan feedback/instruksi perbaikan.
 
 WAJIB menggunakan Bahasa Indonesia Bako Semi-Formal.
@@ -43,13 +64,9 @@ WAJIB menggunakan Bahasa Indonesia Bako Semi-Formal.
 LARANGAN:
 - Hindari kata-kata robotik atau transisi klise AI seperti: "Selain itu", "Kesimpulannya", "Dalam era modern ini"
 - Hindari bahasa gaul/slang: "gon", "sih", "nih", "banget"
-- Hindari penggunaan berlebihan bullet points atau numbered lists
 - JANGAN PERNAH memotong jawaban di tengah kalimat - jawaban harus LENGKAP dan UTUH
 
-GAYA YANG DIHARAPKAN:
-- Gunakan paragraf naratif yang mengalir natural
-- Variasi struktur kalimat (tidak monoton)
-- Argumentasi dengan contoh konkret dan analogi
+${answerStyleInstruction}
 
 ATURAN PANJANG JAWABAN:
 ${lengthInstruction}
@@ -71,7 +88,13 @@ INSTRUKSI REGENERASI:
 - Jangan membuat jawaban baru dari awal, tapi REVISE jawaban existing
 - Preserve context dan konten yang sudah benar
 - Focus pada bagian yang perlu diperbaiki sesuai feedback
-- JAWABAN HARUS LENGKAP - tidak boleh terpotong`
+- JAWABAN HARUS LENGKAP - tidak boleh terpotong
+
+LARANGAN KRITIS:
+- JANGAN PERNAH menulis kalimat pembuka/konfirmasi seperti "Baik, berikut jawaban yang sudah diperbaiki", "Tentu, saya akan memperbaiki", "Berikut revisi jawaban", "Ini adalah jawaban yang telah diperbarui", atau kalimat serupa
+- JANGAN menulis kalimat yang mengkonfirmasi instruksi user seperti "Sesuai permintaan Anda", "Berdasarkan feedback", "Seperti yang diminta"
+- LANGSUNG tulis jawaban yang sudah diperbaiki tanpa kalimat pengantar apapun
+- Jawaban harus dimulai PERSIS seperti format yang diminta (Header Nama/NIM untuk Discussion, atau langsung body untuk Assignment)`
 }
 
 export function buildRegenerationUserPrompt(context: RegenerationContext): string {

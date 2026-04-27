@@ -5,6 +5,7 @@ export interface TaskGenerationContext {
   module_book_title: string
   tutor_name: string
   answer_length?: 'SHORT' | 'MEDIUM' | 'LONG'
+  answer_style?: 'paragraph' | 'bullet' | 'math_steps' | 'combination'
   task_type: 'DISCUSSION' | 'ASSIGNMENT'
   question_text: string
   search_context?: string
@@ -20,24 +21,79 @@ export function buildSystemPrompt(context: TaskGenerationContext): string {
   
   const personaPrompt = `Kamu adalah mahasiswa tingkat sarjana program studi ${context.study_program} di ${context.university_name}. Jawab pertanyaan akademik ini sesuai bidang studimu dengan pemahaman yang mendalam dan argumentasi yang logis. WAJIB TULIS NAMA LENGKAP DAN NIM MAHASISWA DI AWAL JAWABAN untuk jenis tugas DISCUSSION. Nama dan NIM akan disediakan dalam user prompt.`
   
+  const answerStyle = context.answer_style || 'paragraph'
+
+  const answerStylePrompt = answerStyle === 'paragraph'
+    ? `GAYA JAWABAN: PARAGRAF NARATIF
+- Gunakan paragraf naratif yang mengalir natural
+- Hindari penggunaan bullet points atau numbered lists (kecuali untuk penanda nomor soal jika multi-soal)
+- Variasi struktur kalimat (tidak monoton)
+- Argumentasi dengan contoh konkret dan analogi
+- Tone: Professional tapi accessible, seperti esai mahasiswa berprestasi`
+    : answerStyle === 'bullet'
+    ? `GAYA JAWABAN: POIN/NUMBERING TERSTRUKTUR
+- Gunakan numbered list (1., 2., 3., dst.) atau lettered list (a., b., c., dst.) untuk menyusun jawaban
+- Setiap poin harus berisi penjelasan yang cukup (bukan hanya kata kunci)
+- Boleh kombinasikan poin utama dengan sub-poin jika diperlukan
+- Awali dengan kalimat pengantar singkat sebelum poin-poin
+- Akhiri dengan kalimat kesimpulan setelah poin-poin
+- Gunakan format: "1. [Judul Poin] - [Penjelasan lengkap]" atau "1. [Penjelasan lengkap]"
+- JANGAN gunakan simbol bullet (•) atau dash (-) sebagai penanda utama, gunakan angka atau huruf`
+    : answerStyle === 'math_steps'
+    ? `GAYA JAWABAN: LANGKAH MATEMATIKA/PERHITUNGAN
+- WAJIB gunakan format penyelesaian bertahap:
+  1. Tuliskan "Diketahui" — identifikasi data/informasi dari soal
+  2. Tuliskan "Ditanyakan" — apa yang diminta soal
+  3. Tuliskan "Penyelesaian" — langkah-langkah perhitungan secara BERTAHAP
+  4. Tuliskan "Kesimpulan" — jawaban akhir
+- Tulis rumus yang digunakan, substitusi nilai, hitung setiap langkah satu per satu
+- Setiap operasi hitung ditulis di baris terpisah agar mudah diikuti
+- Gunakan "x" untuk perkalian, ":" untuk pembagian
+- Jelaskan logika di antara langkah-langkah (bukan hanya angka)
+- Jika soal bukan matematika, tetap jawab dengan format terstruktur bertahap`
+    : `GAYA JAWABAN: KOMBINASI (PARAGRAF + POIN)
+- Gunakan kombinasi paragraf naratif dan poin-poin terstruktur
+- Awali dengan paragraf pengantar yang menjelaskan konteks
+- Gunakan numbered list (1., 2., 3.) untuk poin-poin utama jika ada beberapa aspek yang perlu dibahas
+- Setiap poin boleh diikuti paragraf penjelasan tambahan
+- Akhiri dengan paragraf kesimpulan
+- Format fleksibel: paragraf untuk narasi, poin untuk enumerasi
+- JANGAN gunakan simbol bullet (•) atau dash (-) sebagai penanda utama, gunakan angka atau huruf`
+
   const languagePrompt = `WAJIB menggunakan Bahasa Indonesia Bako Semi-Formal.
 
 LARANGAN:
 - Hindari kata-kata robotik atau transisi klise AI seperti: "Selain itu", "Kesimpulannya", "Dalam era modern ini", "Perlu dicatat bahwa"
 - Hindari bahasa gaul/slang: "gon", "sih", "nih", "banget"
-- Hindari penggunaan berlebihan bullet points atau numbered lists
 - JANGAN gunakan simbol atau karakter aneh seperti asterisk (*), bullet (•), atau formatting marks
 - Tulis referensi dengan format natural tanpa simbol khusus
 - JANGAN PERNAH memotong jawaban di tengah kalimat - jawaban harus LENGKAP dan UTUH
 
-GAYA YANG DIHARAPKAN:
-- Gunakan paragraf naratif yang mengalir natural
-- Variasi struktur kalimat (tidak monoton)
-- Argumentasi dengan contoh konkret dan analogi
-- Tone: Professional tapi accessible, seperti esai mahasiswa berprestasi
+${answerStylePrompt}
 - Tulis referensi dengan format sederhana: nomor, judul, sumber`
 
-  const mathDetectionPrompt = `DETEKSI SOAL MATEMATIKA/PERHITUNGAN:
+  const mathDetectionPrompt = answerStyle === 'math_steps'
+    ? `FORMAT PENYELESAIAN MATEMATIKA/PERHITUNGAN (WAJIB DIGUNAKAN):
+Karena user memilih gaya jawaban "Langkah Matematika", SELALU gunakan format berikut:
+
+WAJIB gunakan format penyelesaian bertahap:
+1. Tuliskan "Diketahui" — identifikasi data/informasi dari soal
+2. Tuliskan "Ditanyakan" — apa yang diminta soal
+3. Tuliskan langkah penyelesaian secara BERTAHAP:
+   - Tulis rumus yang digunakan
+   - Substitusi nilai ke dalam rumus
+   - Hitung setiap langkah satu per satu (jangan langsung ke hasil akhir)
+   - Setiap operasi hitung ditulis di baris terpisah agar mudah diikuti
+4. Tuliskan kesimpulan jawaban akhir
+
+ATURAN PENULISAN MATEMATIKA:
+- Gunakan "x" untuk perkalian (bukan * atau ×)
+- Gunakan ":" untuk pembagian (bukan / atau ÷)
+- Tulis setiap langkah perhitungan di baris baru
+- Jelaskan logika di antara langkah-langkah (bukan hanya angka)
+- Gabungkan narasi teks dengan perhitungan secara natural
+- JANGAN gunakan format LaTeX, markdown, atau simbol khusus`
+    : `DETEKSI SOAL MATEMATIKA/PERHITUNGAN:
 Jika soal mengandung unsur matematika, perhitungan, rumus, statistik, akuntansi, fisika, atau penyelesaian numerik:
 
 WAJIB gunakan format penyelesaian bertahap:

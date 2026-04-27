@@ -14,6 +14,7 @@ interface GenerateTaskRequest {
   module_book_title: string
   tutor_name: string
   answer_length: 'SHORT' | 'MEDIUM' | 'LONG'
+  answer_style: 'paragraph' | 'bullet' | 'math_steps' | 'combination'
   questions: string[]
 }
 
@@ -26,7 +27,22 @@ function getConfigForLength(length: 'SHORT' | 'MEDIUM' | 'LONG') {
 }
 
 function sanitizeAnswer(text: string): string {
-  return text.replace(/\*/g, '')
+  let cleaned = text.trim()
+
+  // Strip AI preamble/confirmation phrases (baris pertama yang merupakan konfirmasi AI)
+  const preamblePatterns = [
+    /^(?:Baik|Tentu|Berikut|Dengan senang hati|Saya akan|Ini adalah|Berikut adalah|Berikut ini|Di bawah ini|Saya sudah|Jawaban sudah|Revisi sudah|Sesuai permintaan|Berdasarkan feedback|Seperti yang diminta|Tentu saja)[^\n]*[.:]\s*\n*/i,
+  ]
+  for (const pattern of preamblePatterns) {
+    cleaned = cleaned.replace(pattern, '').trim()
+  }
+
+  // Strip asterisks yang merupakan formatting marks (bold/italic markdown)
+  // Tapi pertahankan asterisks yang merupakan bagian dari konten matematika (misal: *)
+  cleaned = cleaned.replace(/\*{1,3}([^*]+)\*{1,3}/g, '$1') // **bold** atau *italic* → plain text
+  cleaned = cleaned.replace(/\*/g, '') // sisa asterisks yang tidak berpasangan
+
+  return cleaned
 }
 
 const WEEKLY_TASK_LIMIT = 3
@@ -166,6 +182,7 @@ export async function POST(request: NextRequest) {
         module_book_title: body.module_book_title,
         tutor_name: body.tutor_name,
         answer_length: body.answer_length,
+        answer_style: body.answer_style || 'paragraph',
         task_type: body.task_type,
         question_text: combinedQuestions,
         search_context: searchContext,
@@ -182,6 +199,7 @@ export async function POST(request: NextRequest) {
         module_book_title: body.module_book_title,
         tutor_name: body.tutor_name,
         answer_length: body.answer_length,
+        answer_style: body.answer_style || 'paragraph',
         task_type: body.task_type,
         question_text: combinedQuestions,
         search_context: searchContext,
@@ -223,6 +241,7 @@ export async function POST(request: NextRequest) {
           module_book_title: body.module_book_title,
           tutor_name: body.tutor_name,
           answer_length: body.answer_length,
+          answer_style: body.answer_style || 'paragraph',
           task_type: body.task_type,
           question_text: question,
           search_context: searchContext,
@@ -239,6 +258,7 @@ export async function POST(request: NextRequest) {
           module_book_title: body.module_book_title,
           tutor_name: body.tutor_name,
           answer_length: body.answer_length,
+          answer_style: body.answer_style || 'paragraph',
           task_type: body.task_type,
           question_text: question,
           search_context: searchContext,
@@ -275,6 +295,8 @@ export async function POST(request: NextRequest) {
           : null,
         module_book_title_snapshot: body.module_book_title,
         tutor_name_snapshot: body.tutor_name,
+        task_description_snapshot: body.task_description || null,
+        answer_style: body.answer_style || 'paragraph',
         ai_provider_name: usedProviderName,
         ai_provider_type: usedProviderType,
         ai_model: usedModel,

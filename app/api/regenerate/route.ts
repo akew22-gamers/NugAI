@@ -7,7 +7,21 @@ import { buildRegenerationSystemPrompt, buildRegenerationUserPrompt } from '@/li
 const WEEKLY_REGENERATE_LIMIT = 3
 
 function sanitizeAnswer(text: string): string {
-  return text.replace(/\*/g, '')
+  let cleaned = text.trim()
+
+  // Strip AI preamble/confirmation phrases (baris pertama yang merupakan konfirmasi AI)
+  const preamblePatterns = [
+    /^(?:Baik|Tentu|Berikut|Dengan senang hati|Saya akan|Ini adalah|Berikut adalah|Berikut ini|Di bawah ini|Saya sudah|Jawaban sudah|Revisi sudah|Sesuai permintaan|Berdasarkan feedback|Seperti yang diminta|Tentu saja)[^\n]*[.:]\s*\n*/i,
+  ]
+  for (const pattern of preamblePatterns) {
+    cleaned = cleaned.replace(pattern, '').trim()
+  }
+
+  // Strip asterisks yang merupakan formatting marks (bold/italic markdown)
+  cleaned = cleaned.replace(/\*{1,3}([^*]+)\*{1,3}/g, '$1') // **bold** atau *italic* → plain text
+  cleaned = cleaned.replace(/\*/g, '') // sisa asterisks yang tidak berpasangan
+
+  return cleaned
 }
 
 function getWeekStart(): Date {
@@ -127,6 +141,7 @@ export async function POST(request: NextRequest) {
       student_name: profile.full_name,
       student_nim: profile.nim,
       answer_length: answer_length,
+      answer_style: (taskSession.answer_style as 'paragraph' | 'bullet' | 'math_steps' | 'combination') || 'paragraph',
       course_name: taskSession.course_name_snapshot || undefined,
       module_book_title: taskSession.module_book_title_snapshot || undefined,
       tutor_name: taskSession.tutor_name_snapshot || undefined,
