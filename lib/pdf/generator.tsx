@@ -176,20 +176,26 @@ const styles = StyleSheet.create({
   utCoverPage: {
     fontFamily: getFontFamily(),
     padding: PAGE_MARGIN,
-    justifyContent: 'center',
+    justifyContent: 'flex-start',
     alignItems: 'center',
   },
-  utCoverTitleLarge: {
-    fontSize: 21,
+  utCoverHeader: {
+    fontSize: 14,
     fontWeight: 'bold',
     textAlign: 'center',
-    marginBottom: 4,
+    marginBottom: 2,
   },
-  utCoverTitleMedium: {
-    fontSize: 18,
+  utCoverBody: {
+    fontSize: 12,
     fontWeight: 'bold',
     textAlign: 'center',
-    marginBottom: 4,
+    marginBottom: 2,
+  },
+  utCoverFooter: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    marginBottom: 2,
   },
   utCoverLogo: {
     width: 180,
@@ -202,23 +208,20 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   utCoverIdentityLabel: {
-    fontSize: 18,
+    fontSize: 12,
     fontWeight: 'bold',
-    width: 70,
+    width: 55,
   },
   utCoverIdentitySeparator: {
-    fontSize: 18,
+    fontSize: 12,
     fontWeight: 'bold',
-    width: 20,
+    width: 15,
     textAlign: 'center',
   },
   utCoverIdentityValue: {
-    fontSize: 18,
+    fontSize: 12,
     fontWeight: 'bold',
     flex: 1,
-  },
-  utCoverSpacer: {
-    height: 15,
   },
 })
 
@@ -308,32 +311,28 @@ function UTCoverPage({ data }: { data: PDFData }) {
     ? `${data.courseName.toUpperCase()} (${data.courseCode})`
     : data.courseName.toUpperCase()
 
-  // Use base64 embedded logo to ensure it works in all environments
-
   return (
     <Page size={PAGE_SIZE} style={styles.utCoverPage}>
-      <View style={{ height: 60 }} />
-
-      <Text style={styles.utCoverTitleLarge}>
+      {/* Kepala cover: font 14 bold rata tengah, mulai dari batas margin atas */}
+      <Text style={styles.utCoverHeader}>
         TUGAS TUTORIAL SESI {data.sessionNumber || 1}
       </Text>
-      <Text style={styles.utCoverTitleLarge}>MATA KULIAH</Text>
-      <Text style={styles.utCoverTitleLarge}>{courseLabel}</Text>
+      <Text style={styles.utCoverHeader}>MATA KULIAH</Text>
+      <Text style={styles.utCoverHeader}>{courseLabel}</Text>
 
-      <View style={{ height: 25 }} />
-
+      {/* Logo: ukuran dan posisi tetap */}
       {/* eslint-disable-next-line jsx-a11y/alt-text */}
       <Image src={UT_LOGO_BASE64} style={styles.utCoverLogo} />
 
-      <View style={{ height: 25 }} />
+      {/* Data tutor: font 12 bold rata tengah, 1 baris dari logo */}
+      <View style={{ height: 12 }} />
+      <Text style={styles.utCoverBody}>TUTOR PEMBIMBING</Text>
+      <Text style={styles.utCoverBody}>{data.tutorName.toUpperCase()}</Text>
 
-      <Text style={styles.utCoverTitleMedium}>TUTOR PEMBIMBING</Text>
-      <Text style={styles.utCoverTitleMedium}>{data.tutorName.toUpperCase()}</Text>
-
-      <View style={{ height: 20 }} />
-
-      <Text style={styles.utCoverTitleMedium}>DISUSUN OLEH</Text>
-      <View style={{ width: 300, marginTop: 6, marginBottom: 6 }}>
+      {/* Data mahasiswa: font 12 bold, 1 baris dari tutor */}
+      <View style={{ height: 12 }} />
+      <Text style={styles.utCoverBody}>DISUSUN OLEH</Text>
+      <View style={{ width: 280, marginTop: 4, marginBottom: 4 }}>
         <View style={styles.utCoverIdentityRow}>
           <Text style={styles.utCoverIdentityLabel}>NAMA</Text>
           <Text style={styles.utCoverIdentitySeparator}>:</Text>
@@ -346,20 +345,20 @@ function UTCoverPage({ data }: { data: PDFData }) {
         </View>
       </View>
 
-      <View style={{ height: 20 }} />
-
-      <Text style={styles.utCoverTitleLarge}>
+      {/* Kaki cover: font 14 bold rata tengah, mepet ke batas bawah margin */}
+      <View style={{ flex: 1 }} />
+      <Text style={styles.utCoverFooter}>
         PROGRAM STUDI {data.studyProgram.toUpperCase()}
       </Text>
-      <Text style={styles.utCoverTitleLarge}>
+      <Text style={styles.utCoverFooter}>
         FAKULTAS {data.faculty.toUpperCase()}
       </Text>
       {data.upbjjBranch && (
-        <Text style={styles.utCoverTitleLarge}>
+        <Text style={styles.utCoverFooter}>
           UPBJJ UT {data.upbjjBranch.toUpperCase()}
         </Text>
       )}
-      <Text style={styles.utCoverTitleLarge}>UNIVERSITAS TERBUKA</Text>
+      <Text style={styles.utCoverFooter}>UNIVERSITAS TERBUKA</Text>
     </Page>
   )
 }
