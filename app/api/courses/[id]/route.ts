@@ -6,6 +6,7 @@ import { z } from "zod"
 
 const updateCourseSchema = z.object({
   course_name: z.string().min(3).optional(),
+  course_code: z.string().optional(),
   module_book_title: z.string().min(3).optional(),
   tutor_name: z.string().min(3).optional(),
 })
@@ -38,6 +39,12 @@ export async function PATCH(
     }
 
     const updateData = validationResult.data
+    
+    // Convert empty course_code to null
+    const dataToUpdate = {
+      ...updateData,
+      ...(updateData.course_code !== undefined && { course_code: updateData.course_code || null }),
+    }
 
     const existingCourse = await prisma.course.findUnique({
       where: { id },
@@ -59,7 +66,7 @@ export async function PATCH(
 
     const course = await prisma.course.update({
       where: { id },
-      data: updateData,
+      data: dataToUpdate,
     })
 
     return NextResponse.json({
@@ -119,6 +126,7 @@ export async function DELETE(
           where: { id: session.id },
           data: {
             course_name_snapshot: existingCourse.course_name,
+            course_code_snapshot: existingCourse.course_code,
             module_book_title_snapshot: existingCourse.module_book_title,
             tutor_name_snapshot: existingCourse.tutor_name,
             course_id: null,

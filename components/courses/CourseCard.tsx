@@ -9,6 +9,7 @@ import { useState } from "react"
 export interface Course {
   id: string
   course_name: string
+  course_code?: string | null
   module_book_title: string
   tutor_name: string
   created_at: string

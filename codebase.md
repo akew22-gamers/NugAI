@@ -68,7 +68,7 @@ NugAI/
 │   ├── layout/                   # Sidebar, MobileNav, InactivityGuard, ProfileGuard
 │   ├── onboarding/               # OnboardingWizard (Welcome, Profile, Course, Complete steps)
 │   ├── settings/                 # PasswordForm, ProfileForm
-│   ├── task/                     # TaskWizard (Step1Input, Step2Processing, Step3Result, OCRDropzone)
+│   ├── task/                     # TaskWizard (Step1Input, Step2Processing, Step3Result, OCRDropzone, PDFDownloadModal)
 │   └── ui/                       # Reusable UI primitives (button, card, dialog, input, table, etc.)
 ├── hooks/
 │   └── useInactivityLogout.ts    # Auto-logout hook (localStorage timestamp for mobile support)
@@ -93,6 +93,7 @@ NugAI/
 ├── public/
 │   ├── fonts/                    # Liberation Sans fonts (PDF fallback)
 │   ├── apple-touch-icon.png      # Apple touch icon (180x180, circular)
+│   ├── ut.png                    # Logo Universitas Terbuka (untuk cover page PDF)
 │   ├── nugai-icon-192.png        # PWA icon 192x192 (circular)
 │   └── nugai-icon-512.png        # PWA icon 512x512 (circular)
 ├── tests/
@@ -115,8 +116,8 @@ NugAI/
 |-------|-----------|
 | **User** | User account (ADMIN/USER), subscription tier (FREE/PREMIUM), weekly quota tracking, premium subscription duration (monthly/lifetime), admin login rate limiting |
 | **StudentProfile** | Profil mahasiswa (nama, NIM, universitas, fakultas, prodi, logo URL, default settings) |
-| **Course** | Mata kuliah per-user (nama, buku modul, nama tutor) |
-| **TaskSession** | Sesi pembuatan tugas (tipe, target kata, AI provider tracking, course snapshot) |
+| **Course** | Mata kuliah per-user (nama, kode mata kuliah (opsional, khusus UT), buku modul, nama tutor) |
+| **TaskSession** | Sesi pembuatan tugas (tipe, target kata, AI provider tracking, course snapshot termasuk course_code) |
 | **TaskItem** | Item soal/jawaban per sesi (question, answer, references, status, regenerate count) |
 | **DailyUsageLog** | Log penggunaan harian (tokens, search calls, estimated cost, provider info) |
 | **DataPurgeLog** | Audit trail untuk data purging |
@@ -159,6 +160,8 @@ NugAI/
 ### 4. PDF Export
 - @react-pdf/renderer (server-side)
 - Cover page dengan logo universitas
+- **Cover page khusus Universitas Terbuka**: Layout sesuai template UT (sesi tutorial, kode mata kuliah, logo UT, identitas mahasiswa, program studi, fakultas, UPBJJ)
+- Modal download PDF: pilihan dengan/tanpa cover (khusus user UT) + input nomor sesi
 - Liberation Sans fonts (fallback)
 - Support custom font upload per user
 

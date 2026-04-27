@@ -18,6 +18,7 @@ export default function CoursesPage() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingCourse, setEditingCourse] = useState<Course | null>(null)
+  const [isUT, setIsUT] = useState(false)
 
   const fetchCourses = async () => {
     setIsLoading(true)
@@ -37,9 +38,24 @@ export default function CoursesPage() {
     }
   }
 
+  const fetchProfile = async () => {
+    try {
+      const response = await fetch("/api/profile")
+      if (response.ok) {
+        const data = await response.json()
+        if (data.data?.university_name?.toLowerCase().includes("universitas terbuka")) {
+          setIsUT(true)
+        }
+      }
+    } catch {
+      // ignore
+    }
+  }
+
   useEffect(() => {
     if (status === "authenticated") {
       fetchCourses()
+      fetchProfile()
     }
   }, [status])
 
@@ -53,6 +69,7 @@ export default function CoursesPage() {
         },
         body: JSON.stringify({
           course_name: formData.course_name,
+          course_code: formData.course_code || "",
           module_book_title: formData.module_book_title,
           tutor_name: formData.tutor_name,
         }),
@@ -86,6 +103,7 @@ export default function CoursesPage() {
         },
         body: JSON.stringify({
           course_name: formData.course_name,
+          course_code: formData.course_code || "",
           module_book_title: formData.module_book_title,
           tutor_name: formData.tutor_name,
         }),
@@ -199,6 +217,7 @@ export default function CoursesPage() {
         onClose={closeModal}
         onSubmit={editingCourse ? handleEditCourse : handleAddCourse}
         course={editingCourse}
+        isUT={isUT}
       />
     </div>
   )

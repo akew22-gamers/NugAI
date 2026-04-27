@@ -17,6 +17,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog"
 import { Loading } from "@/components/ui/loading"
+import { PDFDownloadModal } from "@/components/task/PDFDownloadModal"
 
 interface TaskItem {
   id: string
@@ -51,12 +52,29 @@ export default function TaskDetailPage() {
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
+  const [showPDFModal, setShowPDFModal] = useState(false)
+  const [isUT, setIsUT] = useState(false)
 
   useEffect(() => {
     if (status === "authenticated" && taskId) {
       fetchTask()
+      checkUT()
     }
   }, [status, taskId])
+
+  const checkUT = async () => {
+    try {
+      const res = await fetch("/api/profile")
+      if (res.ok) {
+        const data = await res.json()
+        if (data.data?.university_name?.toLowerCase().includes("universitas terbuka")) {
+          setIsUT(true)
+        }
+      }
+    } catch {
+      // ignore
+    }
+  }
 
   const fetchTask = async () => {
     try {
@@ -112,7 +130,7 @@ export default function TaskDetailPage() {
     }
   }
 
-  const handleDownloadPDF = async () => {
+  const handleDownloadPDF = async (options?: { withCover: boolean; sessionNumber?: number }) => {
     try {
       const response = await fetch("/api/generate-pdf", {
         method: "POST",
@@ -120,6 +138,8 @@ export default function TaskDetailPage() {
         body: JSON.stringify({
           sessionId: taskId,
           taskType: task?.task_type,
+          withCover: options?.withCover || false,
+          sessionNumber: options?.sessionNumber || undefined,
         }),
       })
 
@@ -203,7 +223,7 @@ export default function TaskDetailPage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Button onClick={handleDownloadPDF} size="sm" className="gap-2 bg-emerald-600 hover:bg-emerald-700 text-white">
+          <Button onClick={() => setShowPDFModal(true)} size="sm" className="gap-2 bg-emerald-600 hover:bg-emerald-700 text-white">
             <Download className="w-4 h-4" />
             <span className="hidden sm:inline">Download</span> PDF
           </Button>
@@ -341,6 +361,14 @@ export default function TaskDetailPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <PDFDownloadModal
+        isOpen={showPDFModal}
+        onClose={() => setShowPDFModal(false)}
+        onDownload={handleDownloadPDF}
+        isUT={isUT}
+        courseName={task.course_name_snapshot || undefined}
+      />
     </div>
   )
 }

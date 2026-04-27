@@ -6,6 +6,7 @@ import { z } from "zod"
 
 const createCourseSchema = z.object({
   course_name: z.string().min(3, "Nama mata kuliah minimal 3 karakter"),
+  course_code: z.string().optional().default(""),
   module_book_title: z.string().min(3, "Judul modul/buku minimal 3 karakter"),
   tutor_name: z.string().min(3, "Nama tutor minimal 3 karakter"),
 })
@@ -62,11 +63,12 @@ export async function POST(request: Request) {
       )
     }
 
-    const { course_name, module_book_title, tutor_name } = validationResult.data
+    const { course_name, course_code, module_book_title, tutor_name } = validationResult.data
 
     const course = await prisma.course.create({
       data: {
         course_name,
+        course_code: course_code || null,
         module_book_title,
         tutor_name,
         user_id: session.user.id,

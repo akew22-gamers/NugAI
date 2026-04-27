@@ -5,11 +5,12 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { cn } from "@/lib/utils"
-import { X, Loader2, BookOpen, GraduationCap, User } from "lucide-react"
+import { X, Loader2, BookOpen, GraduationCap, User, Hash } from "lucide-react"
 import { Course } from "./CourseCard"
 
 export interface CourseFormData {
   course_name: string
+  course_code: string
   module_book_title: string
   tutor_name: string
 }
@@ -19,6 +20,7 @@ interface CourseModalProps {
   onClose: () => void
   onSubmit: (data: CourseFormData) => Promise<void>
   course?: Course | null
+  isUT?: boolean
   className?: string
 }
 
@@ -27,10 +29,12 @@ export function CourseModal({
   onClose,
   onSubmit,
   course,
+  isUT = false,
   className,
 }: CourseModalProps) {
   const [formData, setFormData] = useState<CourseFormData>({
     course_name: "",
+    course_code: "",
     module_book_title: "",
     tutor_name: "",
   })
@@ -44,12 +48,14 @@ export function CourseModal({
     if (course) {
       setFormData({
         course_name: course.course_name,
+        course_code: course.course_code || "",
         module_book_title: course.module_book_title,
         tutor_name: course.tutor_name,
       })
     } else if (isOpen) {
       setFormData({
         course_name: "",
+        course_code: "",
         module_book_title: "",
         tutor_name: "",
       })
@@ -99,6 +105,7 @@ export function CourseModal({
     if (!isSubmitting) {
       setFormData({
         course_name: "",
+        course_code: "",
         module_book_title: "",
         tutor_name: "",
       })
@@ -182,6 +189,30 @@ export function CourseModal({
               <p className="text-sm text-red-600">{errors.course_name}</p>
             )}
           </div>
+
+          {isUT && (
+            <div className="space-y-2">
+              <Label htmlFor="course_code" className="flex items-center gap-2">
+                <Hash className="w-4 h-4 text-zinc-400" />
+                Kode Mata Kuliah
+              </Label>
+              <Input
+                id="course_code"
+                type="text"
+                value={formData.course_code}
+                onChange={handleChange("course_code")}
+                placeholder="Contoh: MSIM4101"
+                disabled={isSubmitting}
+                className={cn(
+                  errors.course_code &&
+                    "border-red-500 focus-visible:ring-red-500"
+                )}
+              />
+              {errors.course_code && (
+                <p className="text-sm text-red-600">{errors.course_code}</p>
+              )}
+            </div>
+          )}
 
           <div className="space-y-2">
             <Label

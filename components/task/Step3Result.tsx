@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Textarea } from "@/components/ui/textarea"
@@ -9,6 +9,7 @@ import { TaskResult } from "@/app/(student)/task/new/page"
 import { Download, RefreshCw, ArrowLeft, Loader2, Copy, Check } from "lucide-react"
 import { toast } from "sonner"
 import { Loading } from "@/components/ui/loading"
+import { PDFDownloadModal } from "./PDFDownloadModal"
 
 interface Step3ResultProps {
   formData: TaskFormData
@@ -39,9 +40,28 @@ export function Step3Result({
   const [regenerateInstructions, setRegenerateInstructions] = useState("")
   const [showRegenerateInput, setShowRegenerateInput] = useState(false)
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null)
+  const [showPDFModal, setShowPDFModal] = useState(false)
+  const [isUT, setIsUT] = useState(false)
 
   const questionIndex = setActiveQuestion !== undefined ? activeQuestion ?? 0 : internalActiveQuestion
   const setQuestionIndex = setActiveQuestion || setInternalActiveQuestion
+
+  useEffect(() => {
+    const checkUT = async () => {
+      try {
+        const res = await fetch("/api/profile")
+        if (res.ok) {
+          const data = await res.json()
+          if (data.data?.university_name?.toLowerCase().includes("universitas terbuka")) {
+            setIsUT(true)
+          }
+        }
+      } catch {
+        // ignore
+      }
+    }
+    checkUT()
+  }, [])
 
   const countWords = (text: string): number => {
     return text.trim().split(/\s+/).filter((w) => w.length > 0).length
@@ -62,7 +82,7 @@ export function Step3Result({
     }
   }
 
-  const handleDownloadPDF = async () => {
+  const handleDownloadPDF = async (options?: { withCover: boolean; sessionNumber?: number }) => {
     try {
       const response = await fetch("/api/generate-pdf", {
         method: "POST",
@@ -71,6 +91,8 @@ export function Step3Result({
           sessionId: result.sessionId,
           taskType: formData.task_type,
           taskDescription: formData.task_description || "",
+          withCover: options?.withCover || false,
+          sessionNumber: options?.sessionNumber || undefined,
         }),
       })
 
@@ -110,7 +132,7 @@ export function Step3Result({
           <ArrowLeft className="w-4 h-4" />
           Buat Tugas Baru
         </Button>
-        <Button onClick={handleDownloadPDF} className="gap-2 bg-emerald-600 hover:bg-emerald-700">
+        <Button onClick={() => setShowPDFModal(true)} className="gap-2 bg-emerald-600 hover:bg-emerald-700">
           <Download className="w-4 h-4" />
           Download PDF
         </Button>
@@ -237,6 +259,14 @@ export function Step3Result({
           )}
         </CardContent>
       </Card>
+
+      <PDFDownloadModal
+        isOpen={showPDFModal}
+        onClose={() => setShowPDFModal(false)}
+        onDownload={handleDownloadPDF}
+        isUT={isUT}
+        courseName={formData.course_name}
+      />
     </div>
   )
 }

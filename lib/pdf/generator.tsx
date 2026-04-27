@@ -35,6 +35,7 @@ interface TaskItemData {
 interface PDFData {
   taskType: 'DISCUSSION' | 'ASSIGNMENT'
   courseName: string
+  courseCode?: string | null
   moduleName: string
   tutorName: string
   studentName: string
@@ -47,6 +48,8 @@ interface PDFData {
   taskItems: TaskItemData[]
   taskDescription?: string
   createdAt: Date
+  withCover?: boolean
+  sessionNumber?: number
 }
 
 const styles = StyleSheet.create({
@@ -168,6 +171,54 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginBottom: 15,
   },
+  // UT Cover Page styles
+  utCoverPage: {
+    fontFamily: getFontFamily(),
+    padding: PAGE_MARGIN,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  utCoverTitleLarge: {
+    fontSize: 21,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    marginBottom: 4,
+  },
+  utCoverTitleMedium: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    marginBottom: 4,
+  },
+  utCoverLogo: {
+    width: 180,
+    marginTop: 20,
+    marginBottom: 20,
+  },
+  utCoverIdentityRow: {
+    flexDirection: 'row',
+    marginBottom: 2,
+    justifyContent: 'center',
+  },
+  utCoverIdentityLabel: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    width: 70,
+  },
+  utCoverIdentitySeparator: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    width: 20,
+    textAlign: 'center',
+  },
+  utCoverIdentityValue: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    flex: 1,
+  },
+  utCoverSpacer: {
+    height: 15,
+  },
 })
 
 function formatReference(ref: ReferenceData): string {
@@ -251,11 +302,68 @@ function parseDiscussionAnswer(answerText: string): {
   return { identityLines, body: bodyText, references }
 }
 
+function UTCoverPage({ data }: { data: PDFData }) {
+  const courseLabel = data.courseCode
+    ? `${data.courseName.toUpperCase()} (${data.courseCode})`
+    : data.courseName.toUpperCase()
+
+  // Use local ut.png from public folder
+  const utLogoPath = `${process.cwd()}/public/ut.png`
+
+  return (
+    <Page size={PAGE_SIZE} style={styles.utCoverPage}>
+      <View style={styles.utCoverSpacer} />
+      <Text style={styles.utCoverTitleLarge}>
+        TUGAS TUTORIAL SESI {data.sessionNumber || 1}
+      </Text>
+      <Text style={styles.utCoverTitleLarge}>MATA KULIAH</Text>
+      <Text style={styles.utCoverTitleLarge}>{courseLabel}</Text>
+
+      <Image src={utLogoPath} style={styles.utCoverLogo} />
+
+      <Text style={styles.utCoverTitleMedium}>TUTOR PEMBIMBING</Text>
+      <Text style={styles.utCoverTitleMedium}>{data.tutorName.toUpperCase()}</Text>
+
+      <View style={styles.utCoverSpacer} />
+
+      <Text style={styles.utCoverTitleMedium}>DISUSUN OLEH</Text>
+      <View style={{ width: 300, marginTop: 4, marginBottom: 4 }}>
+        <View style={styles.utCoverIdentityRow}>
+          <Text style={styles.utCoverIdentityLabel}>NAMA</Text>
+          <Text style={styles.utCoverIdentitySeparator}>:</Text>
+          <Text style={styles.utCoverIdentityValue}>{data.studentName.toUpperCase()}</Text>
+        </View>
+        <View style={styles.utCoverIdentityRow}>
+          <Text style={styles.utCoverIdentityLabel}>NIM</Text>
+          <Text style={styles.utCoverIdentitySeparator}>:</Text>
+          <Text style={styles.utCoverIdentityValue}>{data.studentNim}</Text>
+        </View>
+      </View>
+
+      <View style={styles.utCoverSpacer} />
+
+      <Text style={styles.utCoverTitleLarge}>
+        PROGRAM STUDI {data.studyProgram.toUpperCase()}
+      </Text>
+      <Text style={styles.utCoverTitleLarge}>
+        FAKULTAS {data.faculty.toUpperCase()}
+      </Text>
+      {data.upbjjBranch && (
+        <Text style={styles.utCoverTitleLarge}>
+          UPBJJ UT {data.upbjjBranch.toUpperCase()}
+        </Text>
+      )}
+      <Text style={styles.utCoverTitleLarge}>UNIVERSITAS TERBUKA</Text>
+    </Page>
+  )
+}
+
 function DiscussionTemplate({ data }: { data: PDFData }) {
   const allAnswers = data.taskItems.map(item => item.answer_text)
   
   return (
     <Document>
+      {data.withCover && <UTCoverPage data={data} />}
       <Page size={PAGE_SIZE} style={styles.page}>
         {allAnswers.map((answer, index) => {
           const { identityLines, body, references } = parseDiscussionAnswer(answer)
@@ -340,6 +448,7 @@ function stripLeadingNumber(text: string): string {
 function AssignmentTemplate({ data }: { data: PDFData }) {
   return (
     <Document>
+      {data.withCover && <UTCoverPage data={data} />}
       <Page size={PAGE_SIZE} style={styles.page}>
         <Text style={styles.soalListHeader}>SOAL</Text>
         {data.taskDescription && (

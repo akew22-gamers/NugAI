@@ -270,6 +270,9 @@ export async function POST(request: NextRequest) {
         task_type: body.task_type,
         min_words_target: lengthConfig.minWords,
         course_name_snapshot: body.course_name,
+        course_code_snapshot: body.course_id
+          ? (await prisma.course.findUnique({ where: { id: body.course_id }, select: { course_code: true } }))?.course_code || null
+          : null,
         module_book_title_snapshot: body.module_book_title,
         tutor_name_snapshot: body.tutor_name,
         ai_provider_name: usedProviderName,

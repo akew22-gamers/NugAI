@@ -125,6 +125,7 @@ model Course {
   id              String   @id @default(uuid())
   user_id         String
   course_name     String   @db.VarChar(100)
+  course_code     String?  @db.VarChar(20)
   module_book_title String @db.VarChar(200)
   tutor_name      String   @db.VarChar(100)
   created_at      DateTime @default(now())
@@ -158,6 +159,7 @@ model TaskSession {
 
   // Snapshot fields for course data (preserve for PDF generation if course deleted)
   course_name_snapshot        String?  @db.VarChar(100)
+  course_code_snapshot        String?  @db.VarChar(20)
   module_book_title_snapshot  String?  @db.VarChar(200)
   tutor_name_snapshot         String?  @db.VarChar(100)
 

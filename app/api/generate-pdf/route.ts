@@ -12,7 +12,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json()
-    const { sessionId, taskType, taskDescription } = body
+    const { sessionId, taskType, taskDescription, withCover, sessionNumber } = body
 
     if (!sessionId) {
       return NextResponse.json(
@@ -59,6 +59,7 @@ export async function POST(request: NextRequest) {
     const pdfData: PDFData = {
       taskType: taskSession.task_type,
       courseName: taskSession.course_name_snapshot || 'Unknown Course',
+      courseCode: taskSession.course_code_snapshot || undefined,
       moduleName: taskSession.module_book_title_snapshot || 'Unknown Module',
       tutorName: taskSession.tutor_name_snapshot || 'Unknown Tutor',
       studentName: profile.full_name,
@@ -75,6 +76,8 @@ export async function POST(request: NextRequest) {
       })),
       taskDescription: taskDescription || undefined,
       createdAt: taskSession.created_at,
+      withCover: withCover || false,
+      sessionNumber: sessionNumber || undefined,
     }
 
     const pdfBuffer = await generatePDF(pdfData)
