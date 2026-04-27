@@ -205,7 +205,6 @@ const styles = StyleSheet.create({
   utCoverIdentityRow: {
     flexDirection: 'row',
     marginBottom: 2,
-    justifyContent: 'center',
   },
   utCoverIdentityLabel: {
     fontSize: 12,
@@ -336,18 +335,16 @@ function UTCoverPage({ data }: { data: PDFData }) {
       <View style={{ height: 12 }} />
       <Text style={styles.utCoverBody}>DISUSUN OLEH</Text>
       {/* Tabel rata kiri teks, tapi posisi tabel di center dokumen */}
-      <View style={{ alignItems: 'center', marginTop: 4, marginBottom: 4 }}>
-        <View style={{ width: 250 }}>
-          <View style={styles.utCoverIdentityRow}>
-            <Text style={styles.utCoverIdentityLabel}>NAMA</Text>
-            <Text style={styles.utCoverIdentitySeparator}>:</Text>
-            <Text style={styles.utCoverIdentityValue}>{data.studentName.toUpperCase()}</Text>
-          </View>
-          <View style={styles.utCoverIdentityRow}>
-            <Text style={styles.utCoverIdentityLabel}>NIM</Text>
-            <Text style={styles.utCoverIdentitySeparator}>:</Text>
-            <Text style={styles.utCoverIdentityValue}>{data.studentNim}</Text>
-          </View>
+      <View style={{ width: 250, alignSelf: 'center', marginTop: 4, marginBottom: 4 }}>
+        <View style={styles.utCoverIdentityRow}>
+          <Text style={styles.utCoverIdentityLabel}>NAMA</Text>
+          <Text style={styles.utCoverIdentitySeparator}>:</Text>
+          <Text style={styles.utCoverIdentityValue}>{data.studentName.toUpperCase()}</Text>
+        </View>
+        <View style={styles.utCoverIdentityRow}>
+          <Text style={styles.utCoverIdentityLabel}>NIM</Text>
+          <Text style={styles.utCoverIdentitySeparator}>:</Text>
+          <Text style={styles.utCoverIdentityValue}>{data.studentNim}</Text>
         </View>
       </View>
 

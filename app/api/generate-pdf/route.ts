@@ -25,6 +25,7 @@ export async function POST(request: NextRequest) {
       where: { id: sessionId },
       include: {
         task_items: true,
+        course: true,
         user: {
           include: {
             student_profile: true,
@@ -59,7 +60,7 @@ export async function POST(request: NextRequest) {
     const pdfData: PDFData = {
       taskType: taskSession.task_type,
       courseName: taskSession.course_name_snapshot || 'Unknown Course',
-      courseCode: taskSession.course_code_snapshot || undefined,
+      courseCode: taskSession.course_code_snapshot || taskSession.course?.course_code || undefined,
       moduleName: taskSession.module_book_title_snapshot || 'Unknown Module',
       tutorName: taskSession.tutor_name_snapshot || 'Unknown Tutor',
       studentName: profile.full_name,
