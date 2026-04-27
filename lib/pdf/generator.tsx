@@ -8,6 +8,7 @@ import {
   pdf,
 } from '@react-pdf/renderer'
 import { registerFonts, getFontFamily } from './font-loader'
+import { UT_LOGO_BASE64 } from './ut-logo'
 import { PAGE_SIZE, PAGE_MARGIN } from './styles'
 
 interface ReferenceData {
@@ -307,27 +308,32 @@ function UTCoverPage({ data }: { data: PDFData }) {
     ? `${data.courseName.toUpperCase()} (${data.courseCode})`
     : data.courseName.toUpperCase()
 
-  // Use local ut.png from public folder
-  const utLogoPath = `${process.cwd()}/public/ut.png`
+  // Use base64 embedded logo to ensure it works in all environments
 
   return (
     <Page size={PAGE_SIZE} style={styles.utCoverPage}>
-      <View style={styles.utCoverSpacer} />
+      <View style={{ height: 60 }} />
+
       <Text style={styles.utCoverTitleLarge}>
         TUGAS TUTORIAL SESI {data.sessionNumber || 1}
       </Text>
       <Text style={styles.utCoverTitleLarge}>MATA KULIAH</Text>
       <Text style={styles.utCoverTitleLarge}>{courseLabel}</Text>
 
-      <Image src={utLogoPath} style={styles.utCoverLogo} />
+      <View style={{ height: 25 }} />
+
+      {/* eslint-disable-next-line jsx-a11y/alt-text */}
+      <Image src={UT_LOGO_BASE64} style={styles.utCoverLogo} />
+
+      <View style={{ height: 25 }} />
 
       <Text style={styles.utCoverTitleMedium}>TUTOR PEMBIMBING</Text>
       <Text style={styles.utCoverTitleMedium}>{data.tutorName.toUpperCase()}</Text>
 
-      <View style={styles.utCoverSpacer} />
+      <View style={{ height: 20 }} />
 
       <Text style={styles.utCoverTitleMedium}>DISUSUN OLEH</Text>
-      <View style={{ width: 300, marginTop: 4, marginBottom: 4 }}>
+      <View style={{ width: 300, marginTop: 6, marginBottom: 6 }}>
         <View style={styles.utCoverIdentityRow}>
           <Text style={styles.utCoverIdentityLabel}>NAMA</Text>
           <Text style={styles.utCoverIdentitySeparator}>:</Text>
@@ -340,7 +346,7 @@ function UTCoverPage({ data }: { data: PDFData }) {
         </View>
       </View>
 
-      <View style={styles.utCoverSpacer} />
+      <View style={{ height: 20 }} />
 
       <Text style={styles.utCoverTitleLarge}>
         PROGRAM STUDI {data.studyProgram.toUpperCase()}
