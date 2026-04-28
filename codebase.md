@@ -145,9 +145,10 @@ NugAI/
 - Streaming response via Vercel AI SDK
 - Prompt engineering khusus Bahasa Indonesia akademik
 - Deteksi otomatis soal matematika → format penyelesaian bertahap
-- **Answer Style Settings**: 4 opsi gaya jawaban (Paragraf, Poin/Numbering, Langkah Matematika, Kombinasi) — dipilih user di Step 1, disimpan di DB, digunakan sebagai instruksi AI prompt
+- **Answer Style Settings**: 4 opsi gaya jawaban (Paragraf, Poin/Numbering, Langkah Matematika, Kombinasi) — dipilih user di Step 1, disimpan di DB, digunakan sebagai instruksi AI prompt. Juga tersedia saat regenerate jawaban di Step 3 (user bisa ubah gaya & panjang jawaban saat revisi)
 - **AI Preamble Stripping**: sanitizeAnswer() menghapus kalimat pembuka/konfirmasi AI (misal "Baik, berikut jawaban...") + strip markdown bold/italic formatting marks
 - Prompt regenerasi melarang AI menulis preamble/konfirmasi
+- **Regenerate UI**: Saat klik regenerate, muncul pilihan Panjang Jawaban & Gaya Jawaban + textarea instruksi opsional. Parameter dikirim ke API regenerate untuk override style jawaban
 
 ### 2. Web Search (Referensi)
 - Tavily API: General & advanced web search
@@ -183,7 +184,7 @@ NugAI/
 - PREMIUM tier: Unlimited (monthly subscription atau lifetime)
 - Auto-reset mingguan (setiap Senin UTC) via logika `week_start_date`
 - Auto-expire premium subscription via cron job (`/api/cron/reset-quotas`)
-- Per-item regenerate limit: max 5x
+- Per-item regenerate limit: FREE = max 5x, PREMIUM = max 15x
 - Admin bisa set durasi premium (bulan) atau lifetime via dashboard
 
 ### 7. Cron Jobs (Vercel Cron)

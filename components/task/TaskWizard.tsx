@@ -68,7 +68,7 @@ export function TaskWizard({ defaultTaskType, title, subtitle }: TaskWizardProps
     }
   }
 
-  const handleRegenerate = async (questionIndex: number, instructions?: string) => {
+  const handleRegenerate = async (questionIndex: number, instructions?: string, answerLength?: string, answerStyle?: string) => {
     setIsProcessing(true)
     try {
       const response = await fetch("/api/regenerate", {
@@ -78,6 +78,8 @@ export function TaskWizard({ defaultTaskType, title, subtitle }: TaskWizardProps
           sessionId: result?.sessionId,
           questionIndex,
           instructions,
+          answer_length: answerLength,
+          answer_style: answerStyle,
         }),
       })
 

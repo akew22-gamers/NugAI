@@ -11,10 +11,12 @@ import { toast } from "sonner"
 import { Loading } from "@/components/ui/loading"
 import { PDFDownloadModal } from "./PDFDownloadModal"
 
+import { cn } from "@/lib/utils"
+
 interface Step3ResultProps {
   formData: TaskFormData
   result: TaskResult
-  onRegenerate: (questionIndex: number, instructions?: string) => void
+  onRegenerate: (questionIndex: number, instructions?: string, answerLength?: string, answerStyle?: string) => void
   onReset: () => void
   isProcessing: boolean
   providerName?: string
@@ -39,6 +41,8 @@ export function Step3Result({
   const [internalActiveQuestion, setInternalActiveQuestion] = useState(0)
   const [regenerateInstructions, setRegenerateInstructions] = useState("")
   const [showRegenerateInput, setShowRegenerateInput] = useState(false)
+  const [regenAnswerLength, setRegenAnswerLength] = useState<"SHORT" | "MEDIUM" | "LONG">(formData.answer_length || "MEDIUM")
+  const [regenAnswerStyle, setRegenAnswerStyle] = useState<"paragraph" | "bullet" | "math_steps" | "combination">(formData.answer_style || "paragraph")
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null)
   const [showPDFModal, setShowPDFModal] = useState(false)
   const [isUT, setIsUT] = useState(false)
@@ -118,7 +122,7 @@ export function Step3Result({
   }
 
   const handleRegenerate = () => {
-    onRegenerate(questionIndex, regenerateInstructions || undefined)
+    onRegenerate(questionIndex, regenerateInstructions || undefined, regenAnswerLength, regenAnswerStyle)
     setRegenerateInstructions("")
     setShowRegenerateInput(false)
   }
@@ -240,7 +244,58 @@ export function Step3Result({
           </div>
 
           {showRegenerateInput && (
-            <div className="space-y-2 pt-4 border-t border-zinc-200">
+            <div className="space-y-4 pt-4 border-t border-zinc-200">
+              <div>
+                <p className="text-sm font-medium text-zinc-700 mb-2">Panjang Jawaban</p>
+                <div className="flex gap-2">
+                  {([
+                    { value: "SHORT", label: "Singkat" },
+                    { value: "MEDIUM", label: "Sedang" },
+                    { value: "LONG", label: "Panjang" },
+                  ] as const).map((opt) => (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      onClick={() => setRegenAnswerLength(opt.value)}
+                      className={cn(
+                        "flex-1 py-2 px-3 rounded-lg border text-sm font-medium transition-all",
+                        regenAnswerLength === opt.value
+                          ? "border-purple-500 bg-purple-50 text-purple-700 ring-1 ring-purple-500"
+                          : "border-zinc-200 text-zinc-600 hover:border-zinc-300"
+                      )}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <p className="text-sm font-medium text-zinc-700 mb-2">Gaya Jawaban</p>
+                <div className="grid grid-cols-2 gap-2">
+                  {([
+                    { value: "paragraph", label: "Paragraf" },
+                    { value: "bullet", label: "Poin/Numbering" },
+                    { value: "math_steps", label: "Langkah Matematika" },
+                    { value: "combination", label: "Kombinasi" },
+                  ] as const).map((opt) => (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      onClick={() => setRegenAnswerStyle(opt.value)}
+                      className={cn(
+                        "py-2 px-3 rounded-lg border text-sm font-medium transition-all",
+                        regenAnswerStyle === opt.value
+                          ? "border-purple-500 bg-purple-50 text-purple-700 ring-1 ring-purple-500"
+                          : "border-zinc-200 text-zinc-600 hover:border-zinc-300"
+                      )}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
               <Textarea
                 value={regenerateInstructions}
                 onChange={(e) => setRegenerateInstructions(e.target.value)}

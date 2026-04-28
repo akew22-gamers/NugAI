@@ -38,6 +38,8 @@ interface RegenerateRequest {
   sessionId: string
   questionIndex: number
   instructions?: string
+  answer_length?: 'SHORT' | 'MEDIUM' | 'LONG'
+  answer_style?: 'paragraph' | 'bullet' | 'math_steps' | 'combination'
 }
 
 export async function POST(request: NextRequest) {
@@ -77,10 +79,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Question not found' }, { status: 404 })
     }
 
-    if (taskItem.regenerate_count >= 5) {
-      return NextResponse.json({ error: 'Regenerate limit reached (max 5)' }, { status: 403 })
-    }
-
     const currentWeekStart = getWeekStart()
     const user = await prisma.user.findUnique({
       where: { id: session.user.id },
@@ -93,6 +91,15 @@ export async function POST(request: NextRequest) {
 
     if (!user) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 })
+    }
+
+    // Per-item regenerate limit: FREE = 5, PREMIUM = 15
+    const PER_ITEM_REGEN_LIMIT_FREE = 5
+    const PER_ITEM_REGEN_LIMIT_PREMIUM = 15
+    const perItemLimit = user.subscription_tier === 'PREMIUM' ? PER_ITEM_REGEN_LIMIT_PREMIUM : PER_ITEM_REGEN_LIMIT_FREE
+
+    if (taskItem.regenerate_count >= perItemLimit) {
+      return NextResponse.json({ error: `Regenerate limit reached (max ${perItemLimit}x per soal)` }, { status: 403 })
     }
 
     let weeklyRegenerateCount = user.weekly_regenerate_count
@@ -131,7 +138,8 @@ export async function POST(request: NextRequest) {
       return "MEDIUM"
     }
 
-    const answer_length = answerLengthMapping(taskSession.min_words_target)
+    const answer_length = body.answer_length || answerLengthMapping(taskSession.min_words_target)
+    const answer_style = body.answer_style || (taskSession as Record<string, unknown>).answer_style as string || 'paragraph'
 
     const regenerationContext = {
       question_text: taskItem.question_text,
@@ -141,7 +149,7 @@ export async function POST(request: NextRequest) {
       student_name: profile.full_name,
       student_nim: profile.nim,
       answer_length: answer_length,
-      answer_style: (taskSession.answer_style as 'paragraph' | 'bullet' | 'math_steps' | 'combination') || 'paragraph',
+      answer_style: answer_style as 'paragraph' | 'bullet' | 'math_steps' | 'combination',
       course_name: taskSession.course_name_snapshot || undefined,
       module_book_title: taskSession.module_book_title_snapshot || undefined,
       tutor_name: taskSession.tutor_name_snapshot || undefined,
