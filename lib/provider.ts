@@ -15,6 +15,9 @@ export interface AIProviderConfig {
     fetched_at: string
   }
   last_model_fetch?: Date
+  health_status?: string | null
+  health_error?: string | null
+  last_health_check?: Date | null
 }
 
 export interface CreateAIProviderInput {
@@ -129,6 +132,9 @@ export async function getAllAIProviders(): Promise<AIProviderConfig[]> {
       priority: true,
       available_models: true,
       last_model_fetch: true,
+      health_status: true,
+      health_error: true,
+      last_health_check: true,
     },
     orderBy: [{ priority: 'desc' }, { created_at: 'asc' }],
   })
@@ -143,6 +149,9 @@ export async function getAllAIProviders(): Promise<AIProviderConfig[]> {
     priority: p.priority,
     available_models: p.available_models as AIProviderConfig['available_models'],
     last_model_fetch: p.last_model_fetch ?? undefined,
+    health_status: p.health_status,
+    health_error: p.health_error,
+    last_health_check: p.last_health_check,
   }))
 }
 
