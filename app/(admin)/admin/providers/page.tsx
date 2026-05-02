@@ -38,6 +38,9 @@ interface Provider {
     fetched_at: string
   }
   last_model_fetch?: Date
+  health_status?: "normal" | "error" | null
+  health_error?: string | null
+  last_health_check?: Date | string | null
 }
 
 interface Model {
@@ -79,6 +82,8 @@ export default function AdminProvidersPage() {
   const [priority, setPriority] = useState<string>("0")
   const [showApiKey, setShowApiKey] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
+  const [isChecking, setIsChecking] = useState(false)
+  const [isDeletingErrors, setIsDeletingErrors] = useState(false)
 
   useEffect(() => {
     fetchProviders()
@@ -285,6 +290,81 @@ export default function AdminProvidersPage() {
     }
   }
 
+  const handleCheckHealth = async () => {
+    if (providers.length === 0) {
+      toast.error("Belum ada provider untuk dicek")
+      return
+    }
+
+    setIsChecking(true)
+    try {
+      const response = await fetch("/api/admin/providers/check-health", {
+        method: "POST",
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        await fetchProviders()
+        if (data.error > 0) {
+          toast.warning(
+            `Pengecekan selesai: ${data.normal}/${data.total} normal, ${data.error} error`
+          )
+        } else {
+          toast.success(
+            `Semua provider normal (${data.normal}/${data.total})`
+          )
+        }
+      } else {
+        const error = await response.json()
+        toast.error(error.error || "Gagal mengecek provider")
+      }
+    } catch (error) {
+      console.error("Failed to check providers:", error)
+      toast.error("Gagal mengecek provider")
+    } finally {
+      setIsChecking(false)
+    }
+  }
+
+  const handleDeleteErrors = async () => {
+    const errorProviders = providers.filter((p) => p.health_status === "error")
+    if (errorProviders.length === 0) {
+      toast.error("Tidak ada provider dengan status error")
+      return
+    }
+
+    if (
+      !confirm(
+        `Apakah Anda yakin ingin menghapus ${errorProviders.length} provider dengan status error?`
+      )
+    ) {
+      return
+    }
+
+    setIsDeletingErrors(true)
+    try {
+      const response = await fetch("/api/admin/providers/delete-errors", {
+        method: "POST",
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        await fetchProviders()
+        toast.success(
+          data.message || `${data.deleted} provider error berhasil dihapus`
+        )
+      } else {
+        const error = await response.json()
+        toast.error(error.error || "Gagal menghapus provider error")
+      }
+    } catch (error) {
+      console.error("Failed to delete error providers:", error)
+      toast.error("Gagal menghapus provider error")
+    } finally {
+      setIsDeletingErrors(false)
+    }
+  }
+
   const handleEdit = async (provider: Provider) => {
     setIsEditing(true)
     setEditingProvider(provider)
@@ -327,14 +407,35 @@ export default function AdminProvidersPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
           <h1 className="text-2xl font-bold text-slate-900">Provider AI</h1>
           <p className="text-slate-600 mt-1">
             Kelola provider AI untuk generasi tugas
           </p>
         </div>
-        <Button onClick={openNewProviderDialog}>Tambah Provider</Button>
+        <div className="flex flex-wrap items-center gap-2">
+          <Button
+            variant="outline"
+            onClick={handleCheckHealth}
+            disabled={isChecking || providers.length === 0}
+          >
+            {isChecking ? "Mengecek..." : "Cek Provider"}
+          </Button>
+          {providers.some((p) => p.health_status === "error") && (
+            <Button
+              variant="outline"
+              className="text-red-600 border-red-300 hover:bg-red-50 hover:text-red-700"
+              onClick={handleDeleteErrors}
+              disabled={isDeletingErrors}
+            >
+              {isDeletingErrors
+                ? "Menghapus..."
+                : `Hapus Error (${providers.filter((p) => p.health_status === "error").length})`}
+            </Button>
+          )}
+          <Button onClick={openNewProviderDialog}>Tambah Provider</Button>
+        </div>
       </div>
 
       {isLoading ? (
@@ -367,11 +468,21 @@ export default function AdminProvidersPage() {
                 <CardHeader className="pb-3">
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
-                      <CardTitle className="text-lg flex items-center gap-2">
+                      <CardTitle className="text-lg flex items-center gap-2 flex-wrap">
                         {provider.provider_name}
                         {provider.is_active && (
                           <span className="text-xs font-bold text-white bg-green-600 px-2 py-1 rounded-full">
                             AKTIF
+                          </span>
+                        )}
+                        {provider.health_status === "normal" && (
+                          <span className="text-xs font-bold text-white bg-emerald-600 px-2 py-1 rounded-full">
+                            NORMAL
+                          </span>
+                        )}
+                        {provider.health_status === "error" && (
+                          <span className="text-xs font-bold text-white bg-red-600 px-2 py-1 rounded-full">
+                            ERROR
                           </span>
                         )}
                       </CardTitle>
@@ -414,6 +525,21 @@ export default function AdminProvidersPage() {
                         <span className="ml-2 text-slate-700">
                           {new Date(provider.last_model_fetch).toLocaleDateString("id-ID")}
                         </span>
+                      </div>
+                    )}
+                    {provider.last_health_check && (
+                      <div className="text-sm">
+                        <span className="text-slate-500">Cek Terakhir:</span>
+                        <span className="ml-2 text-slate-700">
+                          {new Date(provider.last_health_check).toLocaleString("id-ID")}
+                        </span>
+                      </div>
+                    )}
+                    {provider.health_status === "error" && provider.health_error && (
+                      <div className="p-2 rounded-md bg-red-50 border border-red-200">
+                        <p className="text-xs text-red-700 break-words">
+                          <span className="font-semibold">Error:</span> {provider.health_error}
+                        </p>
                       </div>
                     )}
                     <div className="flex items-center gap-2 pt-3 border-t border-slate-200">

@@ -260,6 +260,9 @@ model AIProvider {
   is_active         Boolean        @default(true)
   priority          Int            @default(0)
   last_model_fetch  DateTime?
+  health_status     String?        @db.VarChar(20)      // "normal" | "error" | null (belum dicek)
+  health_error      String?        @db.VarChar(500)     // Pesan error dari pengecekan terakhir
+  last_health_check DateTime?
   created_at        DateTime       @default(now())
   updated_at        DateTime       @updatedAt
 

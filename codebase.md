@@ -47,7 +47,7 @@ NugAI/
 │   │   │   └── page.tsx          # Task list (cards with search, date filter & pagination)
 │   │   └── layout.tsx            # Student layout (Sidebar + InactivityGuard 20min + ProfileGuard)
 │   ├── api/                      # API Routes
-│   │   ├── admin/                # Admin APIs (analytics, providers, users)
+│   │   ├── admin/                # Admin APIs (analytics, providers, users, check-health, delete-errors)
 │   │   ├── auth/[...nextauth]/   # NextAuth handler
 │   │   ├── courses/              # Course CRUD API
 │   │   ├── cron/                 # Cron jobs (cleanup, purge, reset quotas)
@@ -121,7 +121,7 @@ NugAI/
 | **TaskItem** | Item soal/jawaban per sesi (question, answer, references, status, regenerate count) |
 | **DailyUsageLog** | Log penggunaan harian (tokens, search calls, estimated cost, provider info) |
 | **DataPurgeLog** | Audit trail untuk data purging |
-| **AIProvider** | Konfigurasi AI provider (DeepSeek, OpenAI, Groq, Together, Custom) — admin managed |
+| **AIProvider** | Konfigurasi AI provider (DeepSeek, OpenAI, Groq, Together, Custom) — admin managed, health check (health_status, health_error, last_health_check) |
 | **SearchProvider** | Konfigurasi search provider (Tavily, Exa) — admin managed |
 
 ### Enums
@@ -141,6 +141,7 @@ NugAI/
 ### 1. AI Task Generation
 - Multi-provider support dengan failover otomatis (health tracking, cooldown 60s, max 3 consecutive failures)
 - Provider: DeepSeek, OpenAI, Groq, Together AI, Custom (OpenAI-compatible)
+- **Provider Health Check**: Admin bisa cek status semua provider via tombol "Cek Provider" — hit `/models` endpoint tiap provider (parallel, timeout 15s). Hasil disimpan ke DB (health_status: normal/error, health_error, last_health_check). Badge NORMAL (hijau) / ERROR (merah) tampil di card provider. Tombol "Hapus Error" muncul otomatis jika ada provider error, hapus semua provider berstatus error sekaligus. API: `/api/admin/providers/check-health` (POST) & `/api/admin/providers/delete-errors` (POST)
 - Auto-redirect DeepSeek reasoning models (`deepseek-reasoner`, `deepseek-r1`) ke `deepseek-chat`
 - Streaming response via Vercel AI SDK
 - Prompt engineering khusus Bahasa Indonesia akademik
