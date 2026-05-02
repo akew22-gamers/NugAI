@@ -12,7 +12,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json()
-    const { sessionId, taskType, taskDescription, withCover, sessionNumber, includeDescription } = body
+    const { sessionId, taskType, taskDescription, withCover, sessionNumber, includeDescription, fontFamily } = body
 
     if (!sessionId) {
       return NextResponse.json(
@@ -80,6 +80,7 @@ export async function POST(request: NextRequest) {
       createdAt: taskSession.created_at,
       withCover: withCover || false,
       sessionNumber: sessionNumber || undefined,
+      fontFamily: fontFamily || 'Times-Roman',
     }
 
     const pdfBuffer = await generatePDF(pdfData)

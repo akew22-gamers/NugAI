@@ -132,7 +132,7 @@ export default function TaskDetailPage() {
     }
   }
 
-  const handleDownloadPDF = async (options?: { withCover: boolean; sessionNumber?: number }) => {
+  const handleDownloadPDF = async (options?: { withCover: boolean; sessionNumber?: number; fontFamily?: string }) => {
     try {
       const response = await fetch("/api/generate-pdf", {
         method: "POST",
@@ -144,6 +144,7 @@ export default function TaskDetailPage() {
           withCover: options?.withCover || false,
           sessionNumber: options?.sessionNumber || undefined,
           includeDescription: includeDescription,
+          fontFamily: options?.fontFamily || "Times-Roman",
         }),
       })
 

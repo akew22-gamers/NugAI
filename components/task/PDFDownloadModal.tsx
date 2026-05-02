@@ -7,10 +7,12 @@ import { Label } from "@/components/ui/label"
 import { cn } from "@/lib/utils"
 import { X, Download, FileText, BookOpen } from "lucide-react"
 
+type FontFamily = "Helvetica" | "Times-Roman"
+
 interface PDFDownloadModalProps {
   isOpen: boolean
   onClose: () => void
-  onDownload: (options: { withCover: boolean; sessionNumber?: number }) => void
+  onDownload: (options: { withCover: boolean; sessionNumber?: number; fontFamily: FontFamily }) => void
   isUT: boolean
   courseName?: string
 }
@@ -24,6 +26,7 @@ export function PDFDownloadModal({
 }: PDFDownloadModalProps) {
   const [withCover, setWithCover] = useState(false)
   const [sessionNumber, setSessionNumber] = useState("")
+  const [fontFamily, setFontFamily] = useState<FontFamily>("Times-Roman")
   const [error, setError] = useState("")
 
   const handleDownload = () => {
@@ -33,9 +36,9 @@ export function PDFDownloadModal({
         setError("Masukkan nomor sesi yang valid (1-8)")
         return
       }
-      onDownload({ withCover: true, sessionNumber: num })
+      onDownload({ withCover: true, sessionNumber: num, fontFamily })
     } else {
-      onDownload({ withCover: false })
+      onDownload({ withCover: false, fontFamily })
     }
     handleClose()
   }
@@ -86,6 +89,53 @@ export function PDFDownloadModal({
               <span className="truncate">{courseName}</span>
             </div>
           )}
+
+          {/* Pilihan Font - untuk semua user */}
+          <div className="space-y-3">
+            <Label className="text-sm font-medium text-zinc-700">
+              Font Dokumen
+            </Label>
+            <div className="grid grid-cols-2 gap-2">
+              <label
+                className={cn(
+                  "flex items-center justify-center gap-2 p-3 rounded-lg border cursor-pointer transition-colors text-center",
+                  fontFamily === "Times-Roman"
+                    ? "border-emerald-500 bg-emerald-50"
+                    : "border-zinc-200 hover:border-zinc-300"
+                )}
+              >
+                <input
+                  type="radio"
+                  name="fontOption"
+                  checked={fontFamily === "Times-Roman"}
+                  onChange={() => setFontFamily("Times-Roman")}
+                  className="accent-emerald-600"
+                />
+                <span className="text-sm text-zinc-700" style={{ fontFamily: 'Times New Roman, serif' }}>
+                  Times New Roman
+                </span>
+              </label>
+              <label
+                className={cn(
+                  "flex items-center justify-center gap-2 p-3 rounded-lg border cursor-pointer transition-colors text-center",
+                  fontFamily === "Helvetica"
+                    ? "border-emerald-500 bg-emerald-50"
+                    : "border-zinc-200 hover:border-zinc-300"
+                )}
+              >
+                <input
+                  type="radio"
+                  name="fontOption"
+                  checked={fontFamily === "Helvetica"}
+                  onChange={() => setFontFamily("Helvetica")}
+                  className="accent-emerald-600"
+                />
+                <span className="text-sm text-zinc-700" style={{ fontFamily: 'Arial, Helvetica, sans-serif' }}>
+                  Arial
+                </span>
+              </label>
+            </div>
+          </div>
 
           {isUT && (
             <div className="space-y-3">
@@ -161,12 +211,6 @@ export function PDFDownloadModal({
                 </div>
               )}
             </div>
-          )}
-
-          {!isUT && (
-            <p className="text-sm text-zinc-600">
-              Dokumen PDF akan di-download tanpa halaman cover.
-            </p>
           )}
         </div>
 

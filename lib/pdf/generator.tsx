@@ -7,7 +7,7 @@ import {
   Image,
   pdf,
 } from '@react-pdf/renderer'
-import { registerFonts, getFontFamily } from './font-loader'
+import { registerFonts } from './font-loader'
 import { UT_LOGO_BASE64 } from './ut-logo'
 import { PAGE_SIZE, PAGE_MARGIN } from './styles'
 
@@ -52,11 +52,12 @@ interface PDFData {
   createdAt: Date
   withCover?: boolean
   sessionNumber?: number
+  fontFamily?: 'Helvetica' | 'Times-Roman'
 }
 
-const styles = StyleSheet.create({
+const createDocStyles = (fontFamily: 'Helvetica' | 'Times-Roman' = 'Times-Roman') => StyleSheet.create({
   page: {
-    fontFamily: getFontFamily(),
+    fontFamily: fontFamily,
     fontSize: 12,
     lineHeight: 1.15,
     padding: PAGE_MARGIN,
@@ -106,7 +107,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   discussionBody: {
-    fontFamily: getFontFamily(),
+    fontFamily: fontFamily,
     fontSize: 12,
     lineHeight: 1.15,
     textAlign: 'justify',
@@ -175,7 +176,7 @@ const styles = StyleSheet.create({
   },
   // UT Cover Page styles
   utCoverPage: {
-    fontFamily: getFontFamily(),
+    fontFamily: fontFamily,
     padding: PAGE_MARGIN,
     justifyContent: 'flex-start',
     alignItems: 'center',
@@ -400,7 +401,7 @@ function renderFormattedText(text: string) {
   }).filter(Boolean)
 }
 
-function UTCoverPage({ data }: { data: PDFData }) {
+function UTCoverPage({ data, styles }: { data: PDFData; styles: ReturnType<typeof createDocStyles> }) {
   const courseLabel = data.courseCode
     ? `${data.courseName.toUpperCase()} (${data.courseCode})`
     : data.courseName.toUpperCase()
@@ -463,12 +464,12 @@ function UTCoverPage({ data }: { data: PDFData }) {
   )
 }
 
-function DiscussionTemplate({ data }: { data: PDFData }) {
+function DiscussionTemplate({ data, styles }: { data: PDFData; styles: ReturnType<typeof createDocStyles> }) {
   const allAnswers = data.taskItems.map(item => item.answer_text)
   
   return (
     <Document>
-      {data.withCover && <UTCoverPage data={data} />}
+      {data.withCover && <UTCoverPage data={data} styles={styles} />}
       <Page size={PAGE_SIZE} style={styles.page}>
         {allAnswers.map((answer, index) => {
           const { identityLines, body, references } = parseDiscussionAnswer(answer)
@@ -550,10 +551,10 @@ function stripLeadingNumber(text: string): string {
   return text.replace(/^\d+\.\s*/, '').trim()
 }
 
-function AssignmentTemplate({ data }: { data: PDFData }) {
+function AssignmentTemplate({ data, styles }: { data: PDFData; styles: ReturnType<typeof createDocStyles> }) {
   return (
     <Document>
-      {data.withCover && <UTCoverPage data={data} />}
+      {data.withCover && <UTCoverPage data={data} styles={styles} />}
       <Page size={PAGE_SIZE} style={styles.page}>
         <Text style={styles.soalListHeader}>SOAL</Text>
         {data.includeDescription !== false && data.taskDescription && (
@@ -630,9 +631,11 @@ export async function generatePDF(data: PDFData): Promise<Buffer> {
     console.error('Font registration failed, using default:', e)
   }
   
+  const styles = createDocStyles(data.fontFamily || 'Times-Roman')
+  
   const document = data.taskType === 'DISCUSSION' 
-    ? DiscussionTemplate({ data })
-    : AssignmentTemplate({ data })
+    ? DiscussionTemplate({ data, styles })
+    : AssignmentTemplate({ data, styles })
   
   const stream = await pdf(document).toBuffer()
   const chunks: Uint8Array[] = []

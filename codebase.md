@@ -165,11 +165,10 @@ NugAI/
 - @react-pdf/renderer (server-side)
 - Cover page dengan logo universitas
 - **Cover page khusus Universitas Terbuka**: Layout sesuai template UT (sesi tutorial, kode mata kuliah, logo UT, identitas mahasiswa, program studi, fakultas, UPBJJ)
-- Modal download PDF: pilihan dengan/tanpa cover (khusus user UT) + input nomor sesi
+- Modal download PDF: pilihan dengan/tanpa cover (khusus user UT) + input nomor sesi + **pilihan font**
+- **Pilihan font dokumen PDF**: User bisa memilih antara **Times New Roman** (Times-Roman) atau **Arial** (Helvetica) saat download. Default: Times New Roman. Menggunakan built-in fonts dari @react-pdf/renderer (tidak perlu external font file)
 - **Switch deskripsi di PDF**: Toggle untuk menyertakan/mengecualikan deskripsi soal dari PDF (hanya untuk ASSIGNMENT). Default ON. Tersedia di Step3Result dan halaman detail task
 - **Formatted text rendering**: renderFormattedText() parser yang mendukung numbered lists, sub-items, section headers (Diketahui/Ditanyakan/Penyelesaian/Kesimpulan), dan paragraf — menggantikan plain text rendering
-- Liberation Sans fonts (fallback)
-- Support custom font upload per user
 
 ### 5. Authentication & Security
 - NextAuth v5 dengan Credentials provider

@@ -87,7 +87,7 @@ export function Step3Result({
     }
   }
 
-  const handleDownloadPDF = async (options?: { withCover: boolean; sessionNumber?: number }) => {
+  const handleDownloadPDF = async (options?: { withCover: boolean; sessionNumber?: number; fontFamily?: string }) => {
     try {
       const response = await fetch("/api/generate-pdf", {
         method: "POST",
@@ -99,6 +99,7 @@ export function Step3Result({
           withCover: options?.withCover || false,
           sessionNumber: options?.sessionNumber || undefined,
           includeDescription: includeDescription,
+          fontFamily: options?.fontFamily || "Times-Roman",
         }),
       })
 
