@@ -64,3 +64,7 @@ temp/
 
 # OCR temp images (auto-deleted)
 public/ocr-temp/
+
+# Local notes & secrets (never commit)
+SECRETS.md
+secrets/
