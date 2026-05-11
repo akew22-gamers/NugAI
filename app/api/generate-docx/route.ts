@@ -1,0 +1,126 @@
+import { NextRequest, NextResponse } from 'next/server'
+import { auth } from '@/lib/auth'
+import { prisma } from '@/lib/prisma'
+import { generateDocx, DocxData } from '@/lib/docx/generator'
+
+export async function POST(request: NextRequest) {
+  const session = await auth()
+
+  if (!session || !session.user) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
+  try {
+    const body = await request.json()
+    const {
+      sessionId,
+      taskDescription,
+      withCover,
+      sessionNumber,
+      includeDescription,
+      fontFamily,
+    } = body
+
+    if (!sessionId) {
+      return NextResponse.json(
+        { error: 'Session ID is required' },
+        { status: 400 },
+      )
+    }
+
+    const taskSession = await prisma.taskSession.findUnique({
+      where: { id: sessionId },
+      include: {
+        task_items: true,
+        course: true,
+        user: {
+          include: {
+            student_profile: true,
+          },
+        },
+      },
+    })
+
+    if (!taskSession) {
+      return NextResponse.json(
+        { error: 'Task session not found' },
+        { status: 404 },
+      )
+    }
+
+    if (taskSession.user_id !== session.user.id) {
+      return NextResponse.json(
+        { error: 'Unauthorized access to this session' },
+        { status: 403 },
+      )
+    }
+
+    if (!taskSession.user.student_profile) {
+      return NextResponse.json(
+        { error: 'Student profile not found' },
+        { status: 404 },
+      )
+    }
+
+    const profile = taskSession.user.student_profile
+
+    const docxData: DocxData = {
+      taskType: taskSession.task_type,
+      courseName: taskSession.course_name_snapshot || 'Unknown Course',
+      courseCode:
+        taskSession.course_code_snapshot ||
+        taskSession.course?.course_code ||
+        undefined,
+      moduleName:
+        taskSession.module_book_title_snapshot || 'Unknown Module',
+      tutorName: taskSession.tutor_name_snapshot || 'Unknown Tutor',
+      studentName: profile.full_name,
+      studentNim: profile.nim,
+      universityName: profile.university_name,
+      faculty: profile.faculty,
+      studyProgram: profile.study_program,
+      upbjjBranch: profile.upbjj_branch || undefined,
+      universityLogoUrl: profile.university_logo_url,
+      taskItems: taskSession.task_items.map((item) => ({
+        question_text: item.question_text,
+        answer_text: item.answer_text || '',
+        references_used:
+          (item.references_used as unknown as DocxData['taskItems'][0]['references_used']) ||
+          undefined,
+      })),
+      taskDescription: taskDescription || undefined,
+      includeDescription: includeDescription !== false,
+      createdAt: taskSession.created_at,
+      withCover: withCover || false,
+      sessionNumber: sessionNumber || undefined,
+      fontFamily: fontFamily || 'Times-Roman',
+    }
+
+    const docxBuffer = await generateDocx(docxData)
+
+    const filename = `Tugas-${docxData.courseName.replace(/\s+/g, '-')}-${docxData.studentNim}.docx`
+
+    return new NextResponse(new Uint8Array(docxBuffer), {
+      status: 200,
+      headers: {
+        'Content-Type':
+          'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'Content-Disposition': `attachment; filename="${filename}"`,
+      },
+    })
+  } catch (error) {
+    console.error('DOCX generation failed:', error)
+
+    if (error instanceof Error) {
+      return NextResponse.json(
+        { error: `DOCX generation failed: ${error.message}` },
+        { status: 500 },
+      )
+    }
+
+    return NextResponse.json(
+      { error: 'Failed to generate DOCX due to unknown error' },
+      { status: 500 },
+    )
+  }
+}

@@ -5,25 +5,34 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { cn } from "@/lib/utils"
-import { X, Download, FileText, BookOpen } from "lucide-react"
+import { X, Download, FileText, BookOpen, FileType2 } from "lucide-react"
 
 type FontFamily = "Helvetica" | "Times-Roman"
+export type DownloadFormat = "pdf" | "docx"
 
-interface PDFDownloadModalProps {
+export interface DownloadOptions {
+  format: DownloadFormat
+  withCover: boolean
+  sessionNumber?: number
+  fontFamily: FontFamily
+}
+
+interface DownloadModalProps {
   isOpen: boolean
   onClose: () => void
-  onDownload: (options: { withCover: boolean; sessionNumber?: number; fontFamily: FontFamily }) => void
+  onDownload: (options: DownloadOptions) => void
   isUT: boolean
   courseName?: string
 }
 
-export function PDFDownloadModal({
+export function DownloadModal({
   isOpen,
   onClose,
   onDownload,
   isUT,
   courseName,
-}: PDFDownloadModalProps) {
+}: DownloadModalProps) {
+  const [format, setFormat] = useState<DownloadFormat>("docx")
   const [withCover, setWithCover] = useState(false)
   const [sessionNumber, setSessionNumber] = useState("")
   const [fontFamily, setFontFamily] = useState<FontFamily>("Times-Roman")
@@ -36,14 +45,15 @@ export function PDFDownloadModal({
         setError("Masukkan nomor sesi yang valid (1-8)")
         return
       }
-      onDownload({ withCover: true, sessionNumber: num, fontFamily })
+      onDownload({ format, withCover: true, sessionNumber: num, fontFamily })
     } else {
-      onDownload({ withCover: false, fontFamily })
+      onDownload({ format, withCover: false, fontFamily })
     }
     handleClose()
   }
 
   const handleClose = () => {
+    setFormat("docx")
     setWithCover(false)
     setSessionNumber("")
     setError("")
@@ -51,6 +61,8 @@ export function PDFDownloadModal({
   }
 
   if (!isOpen) return null
+
+  const isDocx = format === "docx"
 
   return (
     <div
@@ -63,12 +75,12 @@ export function PDFDownloadModal({
         onClick={handleClose}
       />
 
-      <div className="relative bg-white rounded-xl shadow-xl w-full max-w-sm">
-        <div className="flex items-center justify-between p-5 border-b border-zinc-100">
+      <div className="relative bg-white rounded-xl shadow-xl w-full max-w-sm max-h-[90vh] overflow-y-auto">
+        <div className="flex items-center justify-between p-5 border-b border-zinc-100 sticky top-0 bg-white">
           <div className="flex items-center gap-2">
-            <FileText className="w-5 h-5 text-emerald-600" />
+            <Download className="w-5 h-5 text-emerald-600" />
             <h2 className="text-lg font-semibold text-zinc-900">
-              Download PDF
+              Download Jawaban
             </h2>
           </div>
           <Button
@@ -90,7 +102,66 @@ export function PDFDownloadModal({
             </div>
           )}
 
-          {/* Pilihan Font - untuk semua user */}
+          <div className="space-y-3">
+            <Label className="text-sm font-medium text-zinc-700">
+              Format File
+            </Label>
+            <div className="grid grid-cols-2 gap-2">
+              <label
+                className={cn(
+                  "flex flex-col items-center justify-center gap-1 p-3 rounded-lg border cursor-pointer transition-colors text-center",
+                  isDocx
+                    ? "border-emerald-500 bg-emerald-50"
+                    : "border-zinc-200 hover:border-zinc-300"
+                )}
+              >
+                <input
+                  type="radio"
+                  name="formatOption"
+                  checked={isDocx}
+                  onChange={() => setFormat("docx")}
+                  className="sr-only"
+                />
+                <FileType2
+                  className={cn(
+                    "w-5 h-5",
+                    isDocx ? "text-emerald-600" : "text-zinc-500"
+                  )}
+                />
+                <span className="text-sm font-medium text-zinc-800">Word (.docx)</span>
+                <span className="text-[11px] text-zinc-500 leading-tight">
+                  Bisa diedit di Word
+                </span>
+              </label>
+              <label
+                className={cn(
+                  "flex flex-col items-center justify-center gap-1 p-3 rounded-lg border cursor-pointer transition-colors text-center",
+                  !isDocx
+                    ? "border-emerald-500 bg-emerald-50"
+                    : "border-zinc-200 hover:border-zinc-300"
+                )}
+              >
+                <input
+                  type="radio"
+                  name="formatOption"
+                  checked={!isDocx}
+                  onChange={() => setFormat("pdf")}
+                  className="sr-only"
+                />
+                <FileText
+                  className={cn(
+                    "w-5 h-5",
+                    !isDocx ? "text-emerald-600" : "text-zinc-500"
+                  )}
+                />
+                <span className="text-sm font-medium text-zinc-800">PDF</span>
+                <span className="text-[11px] text-zinc-500 leading-tight">
+                  Siap kumpul final
+                </span>
+              </label>
+            </div>
+          </div>
+
           <div className="space-y-3">
             <Label className="text-sm font-medium text-zinc-700">
               Font Dokumen
@@ -214,7 +285,7 @@ export function PDFDownloadModal({
           )}
         </div>
 
-        <div className="flex gap-3 p-5 pt-0">
+        <div className="flex gap-3 p-5 pt-0 sticky bottom-0 bg-white">
           <Button
             variant="outline"
             className="flex-1"
@@ -227,7 +298,7 @@ export function PDFDownloadModal({
             onClick={handleDownload}
           >
             <Download className="w-4 h-4" />
-            Download
+            Download {isDocx ? "Word" : "PDF"}
           </Button>
         </div>
       </div>

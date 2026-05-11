@@ -2,7 +2,7 @@
 
 ## Overview
 
-**NugAI** adalah aplikasi web AI Task Generator untuk mahasiswa, dibangun menggunakan **Next.js 16** dengan **App Router**. Aplikasi ini membantu mahasiswa menghasilkan jawaban tugas akademik (Diskusi & Soal) menggunakan AI, dilengkapi pencarian referensi web real-time, OCR untuk gambar soal, dan export PDF profesional.
+**NugAI** adalah aplikasi web AI Task Generator untuk mahasiswa, dibangun menggunakan **Next.js 16** dengan **App Router**. Aplikasi ini membantu mahasiswa menghasilkan jawaban tugas akademik (Diskusi & Soal) menggunakan AI, dilengkapi pencarian referensi web real-time, OCR untuk gambar soal, dan export PDF/DOCX profesional.
 
 - **Framework**: Next.js 16.2.4 (App Router)
 - **Language**: TypeScript 5
@@ -13,6 +13,7 @@
 - **Search**: Tavily & Exa API (web search untuk referensi akademik)
 - **OCR**: Tesseract.js 7
 - **PDF**: @react-pdf/renderer 4
+- **DOCX**: docx 9.6 (editable Word output)
 - **Blob Storage**: @vercel/blob (untuk logo universitas, font)
 - **Deployment**: Vercel (region: `sin1` — Singapore)
 - **Font**: Space Grotesk (Google Fonts)
@@ -51,6 +52,7 @@ NugAI/
 │   │   ├── auth/[...nextauth]/   # NextAuth handler
 │   │   ├── courses/              # Course CRUD API
 │   │   ├── cron/                 # Cron jobs (cleanup, purge, reset quotas)
+│   │   ├── generate-docx/        # DOCX (Word) generation endpoint
 │   │   ├── generate-pdf/         # PDF generation endpoint
 │   │   ├── generate-task/        # AI task generation (streaming)
 │   │   ├── profile/              # Profile API
@@ -68,11 +70,12 @@ NugAI/
 │   ├── layout/                   # Sidebar, MobileNav, InactivityGuard, ProfileGuard
 │   ├── onboarding/               # OnboardingWizard (Welcome, Profile, Course, Complete steps)
 │   ├── settings/                 # PasswordForm, ProfileForm
-│   ├── task/                     # TaskWizard (Step1Input, Step2Processing, Step3Result, OCRDropzone, PDFDownloadModal)
+│   ├── task/                     # TaskWizard (Step1Input, Step2Processing, Step3Result, OCRDropzone, DownloadModal)
 │   └── ui/                       # Reusable UI primitives (button, card, dialog, input, table, etc.)
 ├── hooks/
 │   └── useInactivityLogout.ts    # Auto-logout hook (localStorage timestamp for mobile support)
 ├── lib/
+│   ├── docx/                     # DOCX (Word) generation (generator, styles, cover-builder, content-builder)
 │   ├── pdf/                      # PDF generation (font-loader, generator, styles)
 │   ├── prompts/                  # AI prompt templates (task-generation, regeneration)
 │   ├── types/                    # TypeScript type extensions (next-auth.d.ts)
@@ -162,14 +165,18 @@ NugAI/
 - Support bahasa Indonesia + English (`ind+eng`)
 - Upload gambar soal → ekstrak teks otomatis
 
-### 4. PDF Export
-- @react-pdf/renderer (server-side)
+### 4. Document Export (PDF & DOCX)
+- **PDF**: @react-pdf/renderer (server-side, `/api/generate-pdf`)
+- **DOCX**: docx 9.6 (server-side, `/api/generate-docx`) — output editable di Microsoft Word / Google Docs / LibreOffice
+- **Unified Download Modal** (`DownloadModal.tsx`): toggle format PDF/DOCX + pilihan cover + pilihan font dalam satu UI
 - Cover page dengan logo universitas
-- **Cover page khusus Universitas Terbuka**: Layout sesuai template UT (sesi tutorial, kode mata kuliah, logo UT, identitas mahasiswa, program studi, fakultas, UPBJJ)
-- Modal download PDF: pilihan dengan/tanpa cover (khusus user UT) + input nomor sesi + **pilihan font**
-- **Pilihan font dokumen PDF**: User bisa memilih antara **Times New Roman** (Times-Roman) atau **Arial** (Helvetica) saat download. Default: Times New Roman. Menggunakan built-in fonts dari @react-pdf/renderer (tidak perlu external font file)
-- **Switch deskripsi di PDF**: Toggle untuk menyertakan/mengecualikan deskripsi soal dari PDF (hanya untuk ASSIGNMENT). Default ON. Tersedia di Step3Result dan halaman detail task
-- **Formatted text rendering**: renderFormattedText() parser yang mendukung numbered lists, sub-items, section headers (Diketahui/Ditanyakan/Penyelesaian/Kesimpulan), dan paragraf — menggantikan plain text rendering
+- **Cover page khusus Universitas Terbuka**: Layout sesuai template UT (sesi tutorial, kode mata kuliah, logo UT, identitas mahasiswa, program studi, fakultas, UPBJJ) — tersedia di PDF dan DOCX
+- **Pilihan font dokumen**: User bisa memilih antara **Times New Roman** atau **Arial** saat download. Default: Times New Roman
+  - PDF: menggunakan built-in fonts dari @react-pdf/renderer (Times-Roman/Helvetica)
+  - DOCX: mapping ke font name native Microsoft Word (Times New Roman / Arial)
+- **Switch deskripsi di file**: Toggle untuk menyertakan/mengecualikan deskripsi soal dari output (hanya untuk ASSIGNMENT). Default ON. Tersedia di Step3Result dan halaman detail task
+- **Formatted text rendering**: Parser di kedua format yang mendukung numbered lists, sub-items, section headers (Diketahui/Ditanyakan/Penyelesaian/Kesimpulan), dan paragraf justified
+- **DOCX struktur**: `lib/docx/` — `generator.ts` (builder utama), `styles.ts` (konstanta twips/half-points), `cover-builder.ts` (UT cover + table identitas), `content-builder.ts` (parser + paragraph builders)
 
 ### 5. Authentication & Security
 - NextAuth v5 dengan Credentials provider
@@ -239,6 +246,7 @@ npm run db:seed      # Seed database
 | Search | Tavily API, Exa API |
 | OCR | Tesseract.js 7 |
 | PDF | @react-pdf/renderer |
+| DOCX | docx 9.6 |
 | Storage | Vercel Blob |
 | Deployment | Vercel (Singapore region) |
 | CI | GitHub Actions |

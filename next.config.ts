@@ -9,7 +9,7 @@ const nextConfig: NextConfig = {
     },
   },
 
-  serverExternalPackages: ['@react-pdf/renderer'],
+  serverExternalPackages: ['@react-pdf/renderer', 'docx'],
 
   images: {
     remotePatterns: [

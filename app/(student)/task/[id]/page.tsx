@@ -17,7 +17,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog"
 import { Loading } from "@/components/ui/loading"
-import { PDFDownloadModal } from "@/components/task/PDFDownloadModal"
+import { DownloadModal, type DownloadOptions } from "@/components/task/DownloadModal"
 
 interface TaskItem {
   id: string
@@ -53,7 +53,8 @@ export default function TaskDetailPage() {
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
-  const [showPDFModal, setShowPDFModal] = useState(false)
+  const [showDownloadModal, setShowDownloadModal] = useState(false)
+  const [isDownloading, setIsDownloading] = useState(false)
   const [isUT, setIsUT] = useState(false)
   const [includeDescription, setIncludeDescription] = useState(true)
 
@@ -132,38 +133,46 @@ export default function TaskDetailPage() {
     }
   }
 
-  const handleDownloadPDF = async (options?: { withCover: boolean; sessionNumber?: number; fontFamily?: string }) => {
+  const handleDownload = async (options: DownloadOptions) => {
+    setIsDownloading(true)
+    const isDocx = options.format === "docx"
+    const endpoint = isDocx ? "/api/generate-docx" : "/api/generate-pdf"
+    const extension = isDocx ? "docx" : "pdf"
+    const formatLabel = isDocx ? "Word" : "PDF"
+
     try {
-      const response = await fetch("/api/generate-pdf", {
+      const response = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           sessionId: taskId,
           taskType: task?.task_type,
           taskDescription: task?.task_description_snapshot || "",
-          withCover: options?.withCover || false,
-          sessionNumber: options?.sessionNumber || undefined,
+          withCover: options.withCover,
+          sessionNumber: options.sessionNumber,
           includeDescription: includeDescription,
-          fontFamily: options?.fontFamily || "Times-Roman",
+          fontFamily: options.fontFamily,
         }),
       })
 
       if (!response.ok) {
         const errorData = await response.json()
-        throw new Error(errorData.error || "Gagal generate PDF")
+        throw new Error(errorData.error || `Gagal generate ${formatLabel}`)
       }
 
       const blob = await response.blob()
       const url = window.URL.createObjectURL(blob)
       const a = window.document.createElement("a")
       a.href = url
-      a.download = `Tugas-${task?.course_name_snapshot || "Untitled"}.pdf`
+      a.download = `Tugas-${task?.course_name_snapshot || "Untitled"}.${extension}`
       a.click()
       window.URL.revokeObjectURL(url)
 
-      toast.success("PDF berhasil di-download")
+      toast.success(`${formatLabel} berhasil di-download`)
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Gagal generate PDF")
+      toast.error(error instanceof Error ? error.message : `Gagal generate ${formatLabel}`)
+    } finally {
+      setIsDownloading(false)
     }
   }
 
@@ -228,9 +237,9 @@ export default function TaskDetailPage() {
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <Button onClick={() => setShowPDFModal(true)} size="sm" className="gap-2 bg-emerald-600 hover:bg-emerald-700 text-white">
+          <Button onClick={() => setShowDownloadModal(true)} disabled={isDownloading} size="sm" className="gap-2 bg-emerald-600 hover:bg-emerald-700 text-white">
             <Download className="w-4 h-4" />
-            <span className="hidden sm:inline">Download</span> PDF
+            <span className="hidden sm:inline">{isDownloading ? "Memproses..." : "Download"}</span>
           </Button>
           <Button
             variant="outline"
@@ -246,10 +255,10 @@ export default function TaskDetailPage() {
               type="button"
               onClick={() => setIncludeDescription(!includeDescription)}
               className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-zinc-200 hover:bg-zinc-50 transition-colors text-sm"
-              title={includeDescription ? "Deskripsi akan disertakan di PDF" : "Deskripsi hanya sebagai referensi AI, tidak masuk PDF"}
+              title={includeDescription ? "Deskripsi akan disertakan di file" : "Deskripsi hanya sebagai referensi AI, tidak masuk file"}
             >
               <FileText className="w-3.5 h-3.5 text-zinc-500" />
-              <span className="text-zinc-600">Deskripsi di PDF</span>
+              <span className="text-zinc-600">Deskripsi di file</span>
               <div className={`relative w-8 h-4.5 rounded-full transition-colors ${includeDescription ? 'bg-emerald-500' : 'bg-zinc-300'}`}>
                 <div className={`absolute top-0.5 w-3.5 h-3.5 rounded-full bg-white shadow transition-transform ${includeDescription ? 'translate-x-4' : 'translate-x-0.5'}`} />
               </div>
@@ -381,10 +390,10 @@ export default function TaskDetailPage() {
         </DialogContent>
       </Dialog>
 
-      <PDFDownloadModal
-        isOpen={showPDFModal}
-        onClose={() => setShowPDFModal(false)}
-        onDownload={handleDownloadPDF}
+      <DownloadModal
+        isOpen={showDownloadModal}
+        onClose={() => setShowDownloadModal(false)}
+        onDownload={handleDownload}
         isUT={isUT}
         courseName={task.course_name_snapshot || undefined}
       />
