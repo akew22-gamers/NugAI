@@ -10,6 +10,8 @@ import {
 import { registerFonts } from './font-loader'
 import { UT_LOGO_BASE64 } from './ut-logo'
 import { PAGE_SIZE, PAGE_MARGIN } from './styles'
+import { parseMarkdownToTokens } from '@/lib/markdown/markdown-parser'
+import { renderPdfTable } from './table-builder'
 
 interface ReferenceData {
   type: 'module' | 'journal' | 'book' | 'government' | 'web'
@@ -306,99 +308,59 @@ function parseDiscussionAnswer(answerText: string): {
   return { identityLines, body: bodyText, references }
 }
 
-// Parser untuk render teks berformat (bullet/numbering) di PDF
 function renderFormattedText(text: string) {
-  const lines = text.split('\n')
-  const elements: Array<{ type: 'paragraph' | 'list_item' | 'sub_item' | 'section_header' | 'empty'; content: string; marker?: string }> = []
+  const tokens = parseMarkdownToTokens(text)
 
-  for (const line of lines) {
-    const trimmed = line.trim()
-    if (!trimmed) {
-      elements.push({ type: 'empty', content: '' })
-      continue
+  return tokens.map((tok, idx) => {
+    if (tok.type === 'table') {
+      return renderPdfTable({
+        headers: tok.headers,
+        rows: tok.rows,
+        alignments: tok.alignments,
+        keyPrefix: `tbl-${idx}`,
+      })
     }
 
-    // Deteksi section header (Diketahui, Ditanyakan, Penyelesaian, Kesimpulan)
-    const sectionMatch = trimmed.match(/^(Diketahui|Ditanyakan|Penyelesaian|Jawab|Kesimpulan)\s*[:.]?\s*$/i)
-    if (sectionMatch) {
-      elements.push({ type: 'section_header', content: sectionMatch[1] })
-      continue
-    }
-
-    // Deteksi numbered list: "1.", "2.", "a.", "b.", "1)", "a)"
-    const numberedMatch = trimmed.match(/^(\d+[.)]\s*|[a-z][.)]\s*)(.+)$/i)
-    if (numberedMatch) {
-      elements.push({ type: 'list_item', marker: numberedMatch[1].trim(), content: numberedMatch[2].trim() })
-      continue
-    }
-
-    // Deteksi sub-item: "- text" atau "  - text"
-    const subItemMatch = trimmed.match(/^[-–]\s+(.+)$/)
-    if (subItemMatch) {
-      elements.push({ type: 'sub_item', marker: '-', content: subItemMatch[1].trim() })
-      continue
-    }
-
-    // Default: paragraf biasa
-    elements.push({ type: 'paragraph', content: trimmed })
-  }
-
-  // Merge consecutive paragraphs
-  const merged: typeof elements = []
-  for (const el of elements) {
-    if (el.type === 'paragraph' && merged.length > 0 && merged[merged.length - 1].type === 'paragraph') {
-      merged[merged.length - 1].content += ' ' + el.content
-    } else if (el.type === 'empty') {
-      // Skip empty lines but don't merge across them
-      if (merged.length > 0 && merged[merged.length - 1].type !== 'empty') {
-        merged.push(el)
-      }
-    } else {
-      merged.push(el)
-    }
-  }
-
-  // Filter trailing empties
-  while (merged.length > 0 && merged[merged.length - 1].type === 'empty') {
-    merged.pop()
-  }
-
-  return merged.map((el, idx) => {
-    if (el.type === 'empty') return null
-
-    if (el.type === 'section_header') {
+    if (tok.type === 'section_header') {
       return (
         <Text key={idx} style={{ fontSize: 12, fontWeight: 'bold', lineHeight: 1.15, marginTop: idx > 0 ? 8 : 0, marginBottom: 4 }}>
-          {el.content}
+          {tok.content}
         </Text>
       )
     }
 
-    if (el.type === 'list_item') {
+    if (tok.type === 'heading') {
+      return (
+        <Text key={idx} style={{ fontSize: 13, fontWeight: 'bold', lineHeight: 1.15, marginTop: idx > 0 ? 10 : 0, marginBottom: 6 }}>
+          {tok.content}
+        </Text>
+      )
+    }
+
+    if (tok.type === 'list_item') {
       return (
         <View key={idx} style={{ flexDirection: 'row', marginBottom: 3, paddingLeft: 0 }}>
-          <Text style={{ fontSize: 12, lineHeight: 1.15, width: 22 }}>{el.marker}</Text>
-          <Text style={{ fontSize: 12, lineHeight: 1.15, flex: 1, textAlign: 'justify' }}>{el.content}</Text>
+          <Text style={{ fontSize: 12, lineHeight: 1.15, width: 22 }}>{tok.marker}</Text>
+          <Text style={{ fontSize: 12, lineHeight: 1.15, flex: 1, textAlign: 'justify' }}>{tok.content}</Text>
         </View>
       )
     }
 
-    if (el.type === 'sub_item') {
+    if (tok.type === 'sub_item') {
       return (
         <View key={idx} style={{ flexDirection: 'row', marginBottom: 2, paddingLeft: 22 }}>
-          <Text style={{ fontSize: 12, lineHeight: 1.15, width: 15 }}>{el.marker}</Text>
-          <Text style={{ fontSize: 12, lineHeight: 1.15, flex: 1, textAlign: 'justify' }}>{el.content}</Text>
+          <Text style={{ fontSize: 12, lineHeight: 1.15, width: 15 }}>{tok.marker}</Text>
+          <Text style={{ fontSize: 12, lineHeight: 1.15, flex: 1, textAlign: 'justify' }}>{tok.content}</Text>
         </View>
       )
     }
 
-    // paragraph
     return (
       <Text key={idx} style={{ fontSize: 12, lineHeight: 1.15, textAlign: 'justify', marginBottom: 6 }}>
-        {el.content}
+        {tok.content}
       </Text>
     )
-  }).filter(Boolean)
+  })
 }
 
 function UTCoverPage({ data, styles }: { data: PDFData; styles: ReturnType<typeof createDocStyles> }) {

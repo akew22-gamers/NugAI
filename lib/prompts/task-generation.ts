@@ -262,6 +262,40 @@ Referensi:
 1. [Pengarang/Tim Penyusun]. ([Tahun]). ${context.module_book_title}. [Edisi]. [Penerbit].
 2. [Nama Pengarang]. ([Tahun]). [Judul Buku/Karya Ilmiah]. [Penerbit/Jurnal].`
 
+  const markdownFormatPrompt = `FORMAT OUTPUT — MARKDOWN (WAJIB):
+Output jawabanmu akan di-render dari Markdown ke HTML/PDF/DOCX. Gunakan sintaks Markdown standar yang DIDUKUNG RENDERER:
+
+YANG BOLEH digunakan:
+- Paragraf biasa (pisahkan dengan baris kosong)
+- Numbered list: "1. ...", "2. ...", "a. ...", "b. ..."
+- Bullet sub-item: "- ..." (HANYA sebagai sub-item di bawah numbered list)
+- Section header untuk matematika: "Diketahui", "Ditanyakan", "Penyelesaian", "Kesimpulan" (ditulis sebagai baris sendiri diakhiri ":" atau ".")
+- Bold: **teks** (gunakan SEPARATELY, jangan berlebihan)
+
+TABEL (GFM Table):
+- Gunakan HANYA jika soal butuh data tabular (perbandingan, data statistik, neraca, tabel frekuensi, matriks, dsb.)
+- Format wajib GitHub Flavored Markdown:
+  | Kolom 1 | Kolom 2 | Kolom 3 |
+  |---------|---------|---------|
+  | Data A  | Data B  | Data C  |
+  | Data D  | Data E  | Data F  |
+- Baris pertama adalah header (bold otomatis)
+- Baris kedua WAJIB berisi separator "|---|---|---|"
+- Setiap baris WAJIB diawali dan diakhiri "|"
+- Jumlah kolom tiap baris HARUS sama
+- Kalau input soal sudah punya tabel, SALIN dan gunakan struktur tabel tersebut untuk argumentasi
+- JANGAN gunakan tabel untuk daftar biasa — pakai numbered/bullet list
+- Tulis baris kosong SEBELUM dan SESUDAH tabel
+
+YANG DILARANG:
+- Heading # ## ### (jangan gunakan di body, hanya untuk title utama — kita tidak butuh itu)
+- Blockquote (>)
+- Code fence (\`\`\`)
+- HTML mentah: <table>, <b>, <br>, <div>
+- Asterisk liar untuk bullet (gunakan "-" atau nomor, bukan "*")
+- Escape character yang tidak perlu (\\*, \\#, dsb.)
+`
+
   return `${personaPrompt}
 
 ${languagePrompt}
@@ -271,6 +305,8 @@ ${mathDetectionPrompt}
 ${wordCountPrompt}
 
 ${referencePrompt}
+
+${markdownFormatPrompt}
 
 ${structurePrompt}`
 }

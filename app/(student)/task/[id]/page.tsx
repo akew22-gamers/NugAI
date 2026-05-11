@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/dialog"
 import { Loading } from "@/components/ui/loading"
 import { DownloadModal, type DownloadOptions } from "@/components/task/DownloadModal"
+import { RichTextViewer } from "@/components/editor/RichTextViewer"
 
 interface TaskItem {
   id: string
@@ -346,16 +347,16 @@ export default function TaskDetailPage() {
             <CardContent className="space-y-4">
               <div>
                 <p className="text-sm font-medium text-slate-600 mb-2">Pertanyaan:</p>
-                <p className="text-slate-700 whitespace-pre-wrap">{item.question_text}</p>
+                <RichTextViewer markdown={item.question_text} />
               </div>
               {item.answer_text && (
                 <div>
                   <p className="text-sm font-medium text-slate-600 mb-2">Jawaban:</p>
-                  <div 
-                    className="prose prose-sm max-w-none max-h-[400px] overflow-y-auto text-slate-700 whitespace-pre-wrap"
+                  <div
+                    className="max-h-[500px] overflow-y-auto pr-2"
                     style={{ scrollbarWidth: 'thin' }}
                   >
-                    {item.answer_text}
+                    <RichTextViewer markdown={item.answer_text} />
                   </div>
                 </div>
               )}

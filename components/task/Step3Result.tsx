@@ -10,6 +10,7 @@ import { Download, RefreshCw, ArrowLeft, Loader2, Copy, Check, FileText } from "
 import { toast } from "sonner"
 import { Loading } from "@/components/ui/loading"
 import { DownloadModal, type DownloadOptions } from "./DownloadModal"
+import { RichTextViewer, RichTextViewerStyles } from "@/components/editor/RichTextViewer"
 
 import { cn } from "@/lib/utils"
 
@@ -241,21 +242,20 @@ export function Step3Result({
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div 
-            className="prose prose-sm max-w-none max-h-[400px] overflow-y-auto pr-2"
+          <div
+            className="max-h-[500px] overflow-y-auto pr-2"
             style={{ scrollbarWidth: 'thin', scrollbarColor: '#d4d4d8 #f4f4f5' }}
           >
             {formData.task_type === "ASSIGNMENT" && formData.questions.length > 1 && (
-              <div className="mb-4">
-                <p className="text-slate-500 text-sm font-medium">Pertanyaan:</p>
-                <p className="text-slate-600 text-sm mt-0.5 whitespace-pre-wrap">{formData.questions[questionIndex]}</p>
+              <div className="mb-4 pb-3 border-b border-zinc-100">
+                <p className="text-slate-500 text-sm font-medium mb-1">Pertanyaan:</p>
+                <RichTextViewer markdown={formData.questions[questionIndex]} className="text-sm" />
                 <p className="text-slate-500 text-sm mt-3 font-medium">Jawaban:</p>
               </div>
             )}
-            <p className="whitespace-pre-wrap text-zinc-700 leading-relaxed">
-              {currentAnswer.replace(/^\d+\.\s*/, '')}
-            </p>
+            <RichTextViewer markdown={currentAnswer.replace(/^\d+\.\s*/, '')} />
           </div>
+          <RichTextViewerStyles />
 
           {showRegenerateInput && (
             <div className="space-y-4 pt-4 border-t border-zinc-200">

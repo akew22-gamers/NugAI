@@ -14,6 +14,8 @@
 - **OCR**: Tesseract.js 7
 - **PDF**: @react-pdf/renderer 4
 - **DOCX**: docx 9.6 (editable Word output)
+- **Rich Text Editor**: Tiptap v3 (input & viewer) dengan table extension
+- **Markdown**: turndown (HTML→MD) + marked (MD→HTML) + custom parser untuk PDF/DOCX render
 - **Blob Storage**: @vercel/blob (untuk logo universitas, font)
 - **Deployment**: Vercel (region: `sin1` — Singapore)
 - **Font**: Space Grotesk (Google Fonts)
@@ -71,12 +73,14 @@ NugAI/
 │   ├── onboarding/               # OnboardingWizard (Welcome, Profile, Course, Complete steps)
 │   ├── settings/                 # PasswordForm, ProfileForm
 │   ├── task/                     # TaskWizard (Step1Input, Step2Processing, Step3Result, OCRDropzone, DownloadModal)
+│   ├── editor/                   # Rich Text Editor (Tiptap + toolbar) + Viewer (markdown → HTML)
 │   └── ui/                       # Reusable UI primitives (button, card, dialog, input, table, etc.)
 ├── hooks/
 │   └── useInactivityLogout.ts    # Auto-logout hook (localStorage timestamp for mobile support)
 ├── lib/
-│   ├── docx/                     # DOCX (Word) generation (generator, styles, cover-builder, content-builder)
-│   ├── pdf/                      # PDF generation (font-loader, generator, styles)
+│   ├── docx/                     # DOCX (Word) generation (generator, styles, cover-builder, content-builder, table-builder)
+│   ├── markdown/                 # Markdown converters & parser (tiptap→MD, MD→HTML, MD→tokens)
+│   ├── pdf/                      # PDF generation (font-loader, generator, styles, table-builder)
 │   ├── prompts/                  # AI prompt templates (task-generation, regeneration)
 │   ├── types/                    # TypeScript type extensions (next-auth.d.ts)
 │   ├── ai.ts                     # AI model creation & generation (multi-provider)
@@ -175,8 +179,18 @@ NugAI/
   - PDF: menggunakan built-in fonts dari @react-pdf/renderer (Times-Roman/Helvetica)
   - DOCX: mapping ke font name native Microsoft Word (Times New Roman / Arial)
 - **Switch deskripsi di file**: Toggle untuk menyertakan/mengecualikan deskripsi soal dari output (hanya untuk ASSIGNMENT). Default ON. Tersedia di Step3Result dan halaman detail task
-- **Formatted text rendering**: Parser di kedua format yang mendukung numbered lists, sub-items, section headers (Diketahui/Ditanyakan/Penyelesaian/Kesimpulan), dan paragraf justified
-- **DOCX struktur**: `lib/docx/` — `generator.ts` (builder utama), `styles.ts` (konstanta twips/half-points), `cover-builder.ts` (UT cover + table identitas), `content-builder.ts` (parser + paragraph builders)
+- **Unified markdown parser**: `lib/markdown/markdown-parser.ts` — parsing single source untuk PDF dan DOCX (tokens: heading, paragraph, list_item, sub_item, section_header, table). Mendukung GFM table dengan alignment.
+- **Table rendering**: `lib/pdf/table-builder.tsx` dan `lib/docx/table-builder.ts` — render markdown table ke native PDF/DOCX table dengan borders, header shading, dan cell alignment
+- **DOCX struktur**: `lib/docx/` — `generator.ts` (builder utama), `styles.ts` (konstanta twips/half-points), `cover-builder.ts` (UT cover + table identitas), `content-builder.ts` (pakai markdown parser), `table-builder.ts` (GFM table → docx Table)
+
+### 4a. Rich Text Editor (Input & Viewer)
+- **Tiptap v3** untuk input soal & deskripsi di Step1Input (ProseMirror-based)
+- **Extensions**: StarterKit (paragraph, heading, list, bold, italic) + Table + TableRow + TableCell + TableHeader + Placeholder
+- **Toolbar** (`EditorToolbar.tsx`): Bold, Italic, Heading2, Bullet list, Numbered list, Insert Table. Saat cursor di tabel: Tambah/Hapus Baris/Kolom, Hapus Tabel. Undo/Redo di kanan.
+- **Storage format**: Markdown (GFM) — bukan HTML. `RichTextEditor` serialize Tiptap HTML → Markdown via `turndown + turndown-plugin-gfm` onUpdate, sehingga form state & DB selalu markdown.
+- **Viewer read-only** (`RichTextViewer.tsx`): render markdown → HTML via `marked`, di-inject via `dangerouslySetInnerHTML` dengan Tailwind Typography styling + custom styles untuk table
+- **Backward compatible**: plain text existing di DB tetap valid — markdown parser handle plain paragraph dengan baik, tidak perlu migrasi data
+- **AI Integration**: system prompt instruksikan AI output markdown GFM (termasuk table). Parser PDF/DOCX langsung konsumsi output AI tanpa konversi
 
 ### 5. Authentication & Security
 - NextAuth v5 dengan Credentials provider

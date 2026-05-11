@@ -1,6 +1,7 @@
 import {
   Paragraph,
   TextRun,
+  Table,
   AlignmentType,
   HeadingLevel,
 } from 'docx'
@@ -12,6 +13,8 @@ import {
   resolveFontName,
   type FontChoice,
 } from './styles'
+import { parseMarkdownToTokens } from '@/lib/markdown/markdown-parser'
+import { buildDocxTable } from './table-builder'
 
 export interface ReferenceData {
   type: 'module' | 'journal' | 'book' | 'government' | 'web'
@@ -28,12 +31,6 @@ export interface ReferenceData {
   doi?: string
   source?: string
 }
-
-type ParsedElement =
-  | { type: 'paragraph'; content: string }
-  | { type: 'list_item'; marker: string; content: string }
-  | { type: 'sub_item'; marker: string; content: string }
-  | { type: 'section_header'; content: string }
 
 interface DiscussionParsed {
   identityLines: Array<{ label: string; value: string }>
@@ -117,82 +114,41 @@ export function stripLeadingNumber(text: string): string {
   return text.replace(/^\d+\.\s*/, '').trim()
 }
 
-function parseFormattedText(text: string): ParsedElement[] {
-  const lines = text.split('\n')
-  const elements: Array<ParsedElement | { type: 'empty' }> = []
-
-  for (const line of lines) {
-    const trimmed = line.trim()
-    if (!trimmed) {
-      elements.push({ type: 'empty' })
-      continue
-    }
-
-    const sectionMatch = trimmed.match(/^(Diketahui|Ditanyakan|Penyelesaian|Jawab|Kesimpulan)\s*[:.]?\s*$/i)
-    if (sectionMatch) {
-      elements.push({ type: 'section_header', content: sectionMatch[1] })
-      continue
-    }
-
-    const numberedMatch = trimmed.match(/^(\d+[.)]\s*|[a-z][.)]\s*)(.+)$/i)
-    if (numberedMatch) {
-      elements.push({
-        type: 'list_item',
-        marker: numberedMatch[1].trim(),
-        content: numberedMatch[2].trim(),
-      })
-      continue
-    }
-
-    const subItemMatch = trimmed.match(/^[-–]\s+(.+)$/)
-    if (subItemMatch) {
-      elements.push({
-        type: 'sub_item',
-        marker: '-',
-        content: subItemMatch[1].trim(),
-      })
-      continue
-    }
-
-    elements.push({ type: 'paragraph', content: trimmed })
-  }
-
-  const merged: Array<ParsedElement | { type: 'empty' }> = []
-  for (const el of elements) {
-    const last = merged[merged.length - 1]
-    if (el.type === 'paragraph' && last && last.type === 'paragraph') {
-      last.content += ' ' + el.content
-    } else if (el.type === 'empty') {
-      if (last && last.type !== 'empty') {
-        merged.push(el)
-      }
-    } else {
-      merged.push(el)
-    }
-  }
-
-  while (merged.length > 0 && merged[merged.length - 1].type === 'empty') {
-    merged.pop()
-  }
-
-  return merged.filter((el): el is ParsedElement => el.type !== 'empty')
-}
-
 export function buildFormattedTextParagraphs(
   text: string,
   font: FontChoice,
-): Paragraph[] {
+): Array<Paragraph | Table> {
   const fontName = resolveFontName(font)
-  const elements = parseFormattedText(text)
-  const paragraphs: Paragraph[] = []
+  const tokens = parseMarkdownToTokens(text)
+  const children: Array<Paragraph | Table> = []
 
-  elements.forEach((el, idx) => {
-    if (el.type === 'section_header') {
-      paragraphs.push(
+  tokens.forEach((tok, idx) => {
+    if (tok.type === 'table') {
+      children.push(
+        buildDocxTable(
+          {
+            headers: tok.headers,
+            rows: tok.rows,
+            alignments: tok.alignments,
+          },
+          font,
+        ),
+      )
+      children.push(
+        new Paragraph({
+          children: [new TextRun({ text: '' })],
+          spacing: { before: 0, after: 120 },
+        }),
+      )
+      return
+    }
+
+    if (tok.type === 'section_header') {
+      children.push(
         new Paragraph({
           children: [
             new TextRun({
-              text: el.content,
+              text: tok.content,
               bold: true,
               font: fontName,
               size: FONT_SIZE.body,
@@ -208,12 +164,33 @@ export function buildFormattedTextParagraphs(
       return
     }
 
-    if (el.type === 'list_item') {
-      paragraphs.push(
+    if (tok.type === 'heading') {
+      children.push(
         new Paragraph({
           children: [
             new TextRun({
-              text: `${el.marker}\t${el.content}`,
+              text: tok.content,
+              bold: true,
+              font: fontName,
+              size: tok.level <= 2 ? FONT_SIZE.heading : FONT_SIZE.body,
+            }),
+          ],
+          spacing: {
+            before: idx > 0 ? PARA_SPACING.sectionHeader.before : 0,
+            after: PARA_SPACING.sectionHeader.after,
+            line: LINE_SPACING.body,
+          },
+        }),
+      )
+      return
+    }
+
+    if (tok.type === 'list_item') {
+      children.push(
+        new Paragraph({
+          children: [
+            new TextRun({
+              text: `${tok.marker}\t${tok.content}`,
               font: fontName,
               size: FONT_SIZE.body,
             }),
@@ -233,12 +210,12 @@ export function buildFormattedTextParagraphs(
       return
     }
 
-    if (el.type === 'sub_item') {
-      paragraphs.push(
+    if (tok.type === 'sub_item') {
+      children.push(
         new Paragraph({
           children: [
             new TextRun({
-              text: `${el.marker}\t${el.content}`,
+              text: `${tok.marker}\t${tok.content}`,
               font: fontName,
               size: FONT_SIZE.body,
             }),
@@ -258,11 +235,11 @@ export function buildFormattedTextParagraphs(
       return
     }
 
-    paragraphs.push(
+    children.push(
       new Paragraph({
         children: [
           new TextRun({
-            text: el.content,
+            text: tok.content,
             font: fontName,
             size: FONT_SIZE.body,
           }),
@@ -277,7 +254,7 @@ export function buildFormattedTextParagraphs(
     )
   })
 
-  return paragraphs
+  return children
 }
 
 export function buildIdentityParagraphs(

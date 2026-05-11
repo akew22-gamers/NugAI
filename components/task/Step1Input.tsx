@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent } from "@/components/ui/card"
 import { OCRDropzone } from "@/components/task/OCRDropzone"
+import { RichTextEditor } from "@/components/editor/RichTextEditor"
 import { Course } from "@/components/courses/CourseCard"
 import { TaskFormData } from "@/app/(student)/task/new/page"
 import { useSession } from "next-auth/react"
@@ -334,14 +335,14 @@ export function Step1Input({ initialData, onComplete, lockedTaskType }: Step1Inp
           <div className="flex flex-col h-full space-y-4">
             <div className="space-y-2">
               <Label>Deskripsi/Cerita Soal (Opsional)</Label>
-              <Textarea
+              <RichTextEditor
                 value={taskDescription}
-                onChange={(e) => setTaskDescription(e.target.value)}
-                placeholder="Masukkan cerita kasus, deskripsi, atau konteks soal yang berlaku untuk semua pertanyaan di bawah ini"
-                className="min-h-[100px] resize-y"
+                onChange={setTaskDescription}
+                placeholder="Masukkan cerita kasus, deskripsi, atau konteks soal. Anda bisa menyisipkan tabel via toolbar jika diperlukan."
+                minHeight={120}
               />
               <p className="text-xs text-slate-500">
-                Jika soal memiliki cerita/kasus yang sama, masukkan di sini. Deskripsi akan digunakan sebagai konteks untuk semua soal.
+                Jika soal memiliki cerita/kasus yang sama, masukkan di sini. Deskripsi akan digunakan sebagai konteks untuk semua soal. Gunakan tombol tabel di toolbar jika soal menyertakan data tabular.
               </p>
             </div>
 
@@ -368,11 +369,12 @@ export function Step1Input({ initialData, onComplete, lockedTaskType }: Step1Inp
                     </Button>
                   )}
                 </div>
-                <Textarea
+                <RichTextEditor
                   value={question}
-                  onChange={(e) => handleQuestionChange(index, e.target.value)}
-                  placeholder="Masukkan soal/tugas atau upload gambar untuk OCR"
-                  className={`flex-1 min-h-[200px] resize-y ${errors.questions && index === 0 ? "border-red-500" : ""}`}
+                  onChange={(val) => handleQuestionChange(index, val)}
+                  placeholder="Masukkan soal/tugas. Gunakan tombol tabel di toolbar untuk menyisipkan data tabular."
+                  minHeight={200}
+                  error={!!errors.questions && index === 0}
                 />
                 <OCRDropzone
                   onComplete={(text) => handleOCRComplete(text, index)}
