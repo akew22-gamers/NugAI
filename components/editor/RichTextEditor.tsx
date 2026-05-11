@@ -7,7 +7,7 @@ import { TableRow } from '@tiptap/extension-table-row'
 import { TableCell } from '@tiptap/extension-table-cell'
 import { TableHeader } from '@tiptap/extension-table-header'
 import { Placeholder } from '@tiptap/extension-placeholder'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { tiptapHtmlToMarkdown } from '@/lib/markdown/tiptap-to-markdown'
 import { markdownToHtml } from '@/lib/markdown/markdown-to-html'
 import { EditorToolbar } from './EditorToolbar'
@@ -32,6 +32,8 @@ export function RichTextEditor({
   error = false,
   className,
 }: RichTextEditorProps) {
+  const [showGrid, setShowGrid] = useState(true)
+
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
@@ -53,16 +55,6 @@ export function RichTextEditor({
       const html = editor.getHTML()
       const markdown = tiptapHtmlToMarkdown(html)
       onChange(markdown)
-    },
-    editorProps: {
-      attributes: {
-        class: cn(
-          'prose prose-sm max-w-none focus:outline-none px-3 py-2',
-          'prose-headings:font-semibold prose-p:my-2',
-          'prose-table:my-3 prose-td:border prose-td:border-zinc-300 prose-td:px-2 prose-td:py-1',
-          'prose-th:border prose-th:border-zinc-300 prose-th:bg-zinc-50 prose-th:px-2 prose-th:py-1',
-        ),
-      },
     },
   })
 
@@ -101,46 +93,18 @@ export function RichTextEditor({
         className,
       )}
     >
-      <EditorToolbar editor={editor} disabled={disabled} />
-      <div style={{ minHeight }} className="overflow-auto rte-content">
+      <EditorToolbar
+        editor={editor}
+        disabled={disabled}
+        showGrid={showGrid}
+        onToggleGrid={() => setShowGrid((prev) => !prev)}
+      />
+      <div
+        style={{ minHeight }}
+        className={cn('overflow-auto rte-content', !showGrid && 'table-grid-hidden')}
+      >
         <EditorContent editor={editor} />
       </div>
-      <style jsx global>{`
-        .rte-content .ProseMirror {
-          min-height: inherit;
-          outline: none;
-        }
-        .rte-content .ProseMirror p.is-editor-empty:first-child::before {
-          content: attr(data-placeholder);
-          color: rgb(161 161 170);
-          pointer-events: none;
-          height: 0;
-          float: left;
-        }
-        .rte-content .rte-table {
-          border-collapse: collapse;
-          table-layout: fixed;
-          width: 100%;
-          margin: 12px 0;
-          overflow: hidden;
-        }
-        .rte-content .rte-table td,
-        .rte-content .rte-table th {
-          border: 1px solid rgb(212 212 216);
-          padding: 6px 10px;
-          vertical-align: top;
-          min-width: 60px;
-        }
-        .rte-content .rte-table th {
-          background-color: rgb(244 244 245);
-          font-weight: 600;
-          text-align: left;
-        }
-        .rte-content .rte-table .selectedCell {
-          background-color: rgb(220 252 231);
-          position: relative;
-        }
-      `}</style>
     </div>
   )
 }

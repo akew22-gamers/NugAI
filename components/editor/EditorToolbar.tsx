@@ -15,6 +15,8 @@ import {
   Trash2,
   Columns,
   Rows,
+  Grid3x3,
+  Grid2x2,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -59,9 +61,16 @@ function Divider() {
 interface EditorToolbarProps {
   editor: Editor
   disabled?: boolean
+  showGrid?: boolean
+  onToggleGrid?: () => void
 }
 
-export function EditorToolbar({ editor, disabled }: EditorToolbarProps) {
+export function EditorToolbar({
+  editor,
+  disabled,
+  showGrid = true,
+  onToggleGrid,
+}: EditorToolbarProps) {
   const isInTable = editor.isActive('table')
 
   return (
@@ -128,6 +137,21 @@ export function EditorToolbar({ editor, disabled }: EditorToolbarProps) {
       >
         <TableIcon className="w-4 h-4" />
       </ToolbarButton>
+
+      {onToggleGrid && (
+        <ToolbarButton
+          onClick={onToggleGrid}
+          active={!showGrid}
+          disabled={disabled}
+          title={showGrid ? 'Sembunyikan garis tabel' : 'Tampilkan garis tabel'}
+        >
+          {showGrid ? (
+            <Grid3x3 className="w-4 h-4" />
+          ) : (
+            <Grid2x2 className="w-4 h-4 text-zinc-400" />
+          )}
+        </ToolbarButton>
+      )}
 
       {isInTable && (
         <>
