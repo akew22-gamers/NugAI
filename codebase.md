@@ -79,6 +79,7 @@ NugAI/
 │   └── useInactivityLogout.ts    # Auto-logout hook (localStorage timestamp for mobile support)
 ├── lib/
 │   ├── docx/                     # DOCX (Word) generation (generator, styles, cover-builder, content-builder, table-builder)
+│   ├── generation/               # Batch answer contract (parseBatchResponse, deduplicateReferences)
 │   ├── markdown/                 # Markdown converters & parser (tiptap→MD, MD→HTML, MD→tokens)
 │   ├── pdf/                      # PDF generation (font-loader, generator, styles, table-builder)
 │   ├── prompts/                  # AI prompt templates (task-generation, regeneration)
@@ -104,7 +105,8 @@ NugAI/
 │   ├── nugai-icon-192.png        # PWA icon 192x192 (circular)
 │   └── nugai-icon-512.png        # PWA icon 512x512 (circular)
 ├── tests/
-│   └── landing-page.spec.ts      # Playwright tests
+│   ├── landing-page.spec.ts      # Playwright tests
+│   └── batch-contract.test.ts    # node:test untuk kontrak batch (parse + dedup referensi)
 ├── docs/                         # Documentation (deployment, cron, testing)
 ├── .github/workflows/ci.yml      # CI pipeline
 ├── vercel.json                   # Vercel config (crons, regions, function limits)
@@ -124,8 +126,8 @@ NugAI/
 | **User** | User account (ADMIN/USER), subscription tier (FREE/PREMIUM), weekly quota tracking, premium subscription duration (monthly/lifetime), admin login rate limiting |
 | **StudentProfile** | Profil mahasiswa (nama, NIM, universitas, fakultas, prodi, logo URL, default settings) |
 | **Course** | Mata kuliah per-user (nama, kode mata kuliah (opsional, khusus UT), buku modul, nama tutor) |
-| **TaskSession** | Sesi pembuatan tugas (tipe, target kata, AI provider tracking, course snapshot termasuk course_code, task_description_snapshot, answer_style) |
-| **TaskItem** | Item soal/jawaban per sesi (question, answer, references, status, regenerate count) |
+| **TaskSession** | Sesi pembuatan tugas (tipe, target kata, AI provider tracking, course snapshot termasuk course_code, task_description_snapshot, answer_style, source_requirements) |
+| **TaskItem** | Item soal/jawaban per sesi (question, question_order, answer, references, status, regenerate count) |
 | **DailyUsageLog** | Log penggunaan harian (tokens, search calls, estimated cost, provider info) |
 | **DataPurgeLog** | Audit trail untuk data purging |
 | **AIProvider** | Konfigurasi AI provider (DeepSeek, OpenAI, Groq, Together, Custom) — admin managed, health check (health_status, health_error, last_health_check) |
@@ -145,12 +147,14 @@ NugAI/
 
 ## Key Features & Architecture
 
-### 1. AI Task Generation
+### 1. AI Task Generation (Batch + Streaming Progress)
 - Multi-provider support dengan failover otomatis (health tracking, cooldown 60s, max 3 consecutive failures)
 - Provider: DeepSeek, OpenAI, Groq, Together AI, Custom (OpenAI-compatible)
 - **Provider Health Check**: Admin bisa cek status semua provider via tombol "Cek Provider" — hit `/models` endpoint tiap provider (parallel, timeout 15s). Hasil disimpan ke DB (health_status: normal/error, health_error, last_health_check). Badge NORMAL (hijau) / ERROR (merah) tampil di card provider. Tombol "Hapus Error" muncul otomatis jika ada provider error, hapus semua provider berstatus error sekaligus. API: `/api/admin/providers/check-health` (POST) & `/api/admin/providers/delete-errors` (POST)
 - Auto-redirect DeepSeek reasoning models (`deepseek-reasoner`, `deepseek-r1`) ke `deepseek-chat`
-- Streaming response via Vercel AI SDK
+- **Batch generation**: semua soal (1–5) dikirim dalam satu prompt; AI wajib mengembalikan JSON ketat per nomor soal (`{answers: [{questionOrder, answer, references}]}`). Parsing/validasi terpusat di `lib/generation/batch-contract.ts` (urutan 1..N unik, jawaban non-kosong, referensi berjudul). Setiap hasil disimpan pada `TaskItem` masing-masing (`question_order`, `answer_text`, `references_used`, status COMPLETED/FAILED) — kegagalan satu soal tidak menghapus hasil soal lain
+- **Source requirements**: input opsional di Step 1 (maks 2000 karakter, misal "utamakan jurnal 2021–2026"), disimpan di `TaskSession.source_requirements`, dipakai pada prompt generate dan regenerate
+- **Real-time progress**: `POST /api/generate-task` mengembalikan SSE (`text/event-stream`) dengan event `progress` per tahap (validating → searching → preparing_ai → generating → validating_answers → saving → formatting) termasuk provider/model aktual dan status per soal, lalu event `complete` (hasil) atau `error`. `TaskWizard` membaca stream dan `Step2Processing` menampilkan provider aktif, hitungan soal selesai/gagal, serta status menunggu/selesai/gagal per nomor soal
 - Prompt engineering khusus Bahasa Indonesia akademik
 - Deteksi otomatis soal matematika → format penyelesaian bertahap
 - **Answer Style Settings**: 4 opsi gaya jawaban (Paragraf, Poin/Numbering, Langkah Matematika, Kombinasi) — dipilih user di Step 1, disimpan di DB, digunakan sebagai instruksi AI prompt. Juga tersedia saat regenerate jawaban di Step 3 (user bisa ubah gaya & panjang jawaban saat revisi)
@@ -182,6 +186,7 @@ NugAI/
 - **Unified markdown parser**: `lib/markdown/markdown-parser.ts` — parsing single source untuk PDF dan DOCX (tokens: heading, paragraph, list_item, sub_item, section_header, table). Mendukung GFM table dengan alignment.
 - **Table rendering**: `lib/pdf/table-builder.tsx` dan `lib/docx/table-builder.ts` — render markdown table ke native PDF/DOCX table dengan borders, header shading, dan cell alignment
 - **DOCX struktur**: `lib/docx/` — `generator.ts` (builder utama), `styles.ts` (konstanta twips/half-points), `cover-builder.ts` (UT cover + table identitas), `content-builder.ts` (pakai markdown parser), `table-builder.ts` (GFM table → docx Table)
+- **Template deterministik**: header identitas (Nama/NIM dari profil), body jawaban per nomor soal, footer referensi gabungan yang dideduplikasi dari `references_used` semua item. Data lama (jawaban berisi header/Referensi inline) tetap didukung via fallback parser — footer memakai referensi tersimpan bila ada, referensi inline bila tidak
 
 ### 4a. Rich Text Editor (Input & Viewer)
 - **Tiptap v3** untuk input soal & deskripsi di Step1Input (ProseMirror-based)
@@ -264,6 +269,6 @@ npm run db:seed      # Seed database
 | Storage | Vercel Blob |
 | Deployment | Vercel (Singapore region) |
 | CI | GitHub Actions |
-| Testing | Playwright |
+| Testing | Playwright + node:test (`tests/batch-contract.test.ts` via `npx tsx --test`) |
 | Notifications | Sonner (toast) |
 | Validation | Zod v4 |

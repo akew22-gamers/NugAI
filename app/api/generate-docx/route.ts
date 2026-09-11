@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
     const taskSession = await prisma.taskSession.findUnique({
       where: { id: sessionId },
       include: {
-        task_items: true,
+        task_items: { orderBy: [{ question_order: 'asc' }, { created_at: 'asc' }] },
         course: true,
         user: {
           include: {
@@ -88,7 +88,7 @@ export async function POST(request: NextRequest) {
           (item.references_used as unknown as DocxData['taskItems'][0]['references_used']) ||
           undefined,
       })),
-      taskDescription: taskDescription || undefined,
+      taskDescription: taskSession.task_description_snapshot || taskDescription || undefined,
       includeDescription: includeDescription !== false,
       createdAt: taskSession.created_at,
       withCover: withCover || false,

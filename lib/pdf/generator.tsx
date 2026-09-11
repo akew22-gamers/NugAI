@@ -248,6 +248,19 @@ function formatReference(ref: ReferenceData): string {
   }
 }
 
+function collectReferences(items: TaskItemData[]): ReferenceData[] {
+  const references = items.flatMap((item) => {
+    const value = item.references_used as unknown as { references?: ReferenceData[] } | ReferenceData[] | undefined
+    return Array.isArray(value) ? value : value?.references || []
+  })
+  return references.filter((reference, index) => reference.title && references.findIndex((other) => (other.url || other.title) === (reference.url || reference.title)) === index)
+}
+
+function renderStoredReferences(references: ReferenceData[], styles: ReturnType<typeof createDocStyles>) {
+  if (!references.length) return null
+  return <View style={styles.referenceSection}><Text style={styles.referenceHeader}>Referensi:</Text>{references.map((reference, index) => <View key={`${reference.url || reference.title}-${index}`} style={styles.referenceItem}><Text style={styles.referenceNumber}>{index + 1}.</Text><Text style={styles.referenceText}>{formatReference(reference)}</Text></View>)}</View>
+}
+
 function parseDiscussionAnswer(answerText: string): {
   identityLines: Array<{ label: string; value: string }>
   body: string
@@ -427,42 +440,36 @@ function UTCoverPage({ data, styles }: { data: PDFData; styles: ReturnType<typeo
 }
 
 function DiscussionTemplate({ data, styles }: { data: PDFData; styles: ReturnType<typeof createDocStyles> }) {
-  const allAnswers = data.taskItems.map(item => item.answer_text)
-  
+  const storedReferences = collectReferences(data.taskItems)
+  const parsedAnswers = data.taskItems.map((item) => parseDiscussionAnswer(item.answer_text))
+  const embeddedReferences = parsedAnswers.flatMap((parsed) => parsed.references)
+
   return (
     <Document>
       {data.withCover && <UTCoverPage data={data} styles={styles} />}
       <Page size={PAGE_SIZE} style={styles.page}>
-        {allAnswers.map((answer, index) => {
-          const { identityLines, body, references } = parseDiscussionAnswer(answer)
+        <View style={styles.identitySection}><View style={styles.identityRow}><Text style={styles.identityLabel}>Nama</Text><Text style={styles.identitySeparator}>:</Text><Text style={styles.identityValue}>{data.studentName}</Text></View><View style={styles.identityRow}><Text style={styles.identityLabel}>NIM</Text><Text style={styles.identitySeparator}>:</Text><Text style={styles.identityValue}>{data.studentNim}</Text></View></View>
+        {parsedAnswers.map(({ body }, index) => {
           return (
             <View key={index}>
-              {identityLines.length > 0 && (
-                <View style={styles.identitySection}>
-                  {identityLines.map((id, idx) => (
-                    <View key={idx} style={styles.identityRow}>
-                      <Text style={styles.identityLabel}>{id.label}</Text>
-                      <Text style={styles.identitySeparator}>:</Text>
-                      <Text style={styles.identityValue}>{id.value}</Text>
-                    </View>
-                  ))}
-                </View>
-              )}
+              <Text style={styles.questionHeader}>Jawaban Soal {index + 1}</Text>
               <View>{renderFormattedText(body)}</View>
-              {references.length > 0 && (
-                <View style={styles.referenceSection}>
-                  <Text style={styles.referenceHeader}>Referensi:</Text>
-                  {references.map((ref, refIdx) => (
-                    <View key={refIdx} style={styles.referenceItem}>
-                      <Text style={styles.referenceNumber}>{ref.number}</Text>
-                      <Text style={styles.referenceText}>{ref.text}</Text>
-                    </View>
-                  ))}
-                </View>
-              )}
             </View>
           )
         })}
+        {storedReferences.length > 0
+          ? renderStoredReferences(storedReferences, styles)
+          : embeddedReferences.length > 0 && (
+            <View style={styles.referenceSection}>
+              <Text style={styles.referenceHeader}>Referensi:</Text>
+              {embeddedReferences.map((ref, refIdx) => (
+                <View key={refIdx} style={styles.referenceItem}>
+                  <Text style={styles.referenceNumber}>{ref.number}</Text>
+                  <Text style={styles.referenceText}>{ref.text}</Text>
+                </View>
+              ))}
+            </View>
+          )}
       </Page>
     </Document>
   )
@@ -514,6 +521,7 @@ function stripLeadingNumber(text: string): string {
 }
 
 function AssignmentTemplate({ data, styles }: { data: PDFData; styles: ReturnType<typeof createDocStyles> }) {
+  const references = collectReferences(data.taskItems)
   return (
     <Document>
       {data.withCover && <UTCoverPage data={data} styles={styles} />}
@@ -582,6 +590,7 @@ function AssignmentTemplate({ data, styles }: { data: PDFData; styles: ReturnTyp
           </Page>
         )
       })}
+      {references.length > 0 && <Page size={PAGE_SIZE} style={styles.page}>{renderStoredReferences(references, styles)}</Page>}
     </Document>
   )
 }

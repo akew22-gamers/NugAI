@@ -7,6 +7,7 @@ export interface TaskFormData {
   task_description: string
   answer_length: "SHORT" | "MEDIUM" | "LONG"
   answer_style: "paragraph" | "bullet" | "math_steps" | "combination"
+  source_requirements: string
   course_id: string | null
   course_name: string
   module_book_title: string
@@ -17,6 +18,7 @@ export interface TaskFormData {
 export interface TaskResult {
   sessionId: string
   answers: string[]
+  itemStatuses?: Array<"COMPLETED" | "FAILED">
   references: Array<{
     type: string
     title: string

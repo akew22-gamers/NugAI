@@ -40,6 +40,7 @@ export function Step1Input({ initialData, onComplete, lockedTaskType }: Step1Inp
   const [tutorName, setTutorName] = useState(initialData.tutor_name)
   const [answerLength, setAnswerLength] = useState<"SHORT" | "MEDIUM" | "LONG">(initialData.answer_length || "MEDIUM")
   const [answerStyle, setAnswerStyle] = useState<"paragraph" | "bullet" | "math_steps" | "combination">(initialData.answer_style || "paragraph")
+  const [sourceRequirements, setSourceRequirements] = useState(initialData.source_requirements || "")
   const [taskDescription, setTaskDescription] = useState(initialData.task_description || "")
   const [questions, setQuestions] = useState<string[]>(initialData.questions.length > 0 ? initialData.questions : [""])
   const [errors, setErrors] = useState<Record<string, string>>({})
@@ -100,6 +101,7 @@ export function Step1Input({ initialData, onComplete, lockedTaskType }: Step1Inp
   )
 
   const handleAddQuestion = () => {
+    if (questions.length >= 5) return
     setQuestions([...questions, ""])
   }
 
@@ -155,6 +157,7 @@ export function Step1Input({ initialData, onComplete, lockedTaskType }: Step1Inp
       tutor_name: tutorName,
       answer_length: answerLength,
       answer_style: answerStyle,
+      source_requirements: sourceRequirements,
       questions: questions.filter((q) => q.trim()),
     })
   }
@@ -326,6 +329,15 @@ export function Step1Input({ initialData, onComplete, lockedTaskType }: Step1Inp
                 ))}
               </div>
             </div>
+            <div>
+              <Label>Kebutuhan Sumber (Opsional)</Label>
+              <Textarea
+                value={sourceRequirements}
+                onChange={(event) => setSourceRequirements(event.target.value)}
+                placeholder="Contoh: utamakan jurnal 2021-2026 dan modul; hindari blog."
+                rows={3}
+              />
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -348,7 +360,7 @@ export function Step1Input({ initialData, onComplete, lockedTaskType }: Step1Inp
 
             <div className="flex items-center justify-between mt-4">
               <Label>Soal/Tugas</Label>
-              <Button variant="outline" size="sm" onClick={handleAddQuestion} className="gap-2">
+              <Button variant="outline" size="sm" onClick={handleAddQuestion} disabled={questions.length >= 5} className="gap-2">
                 <Plus className="w-4 h-4" />
                 Tambah Soal
               </Button>
@@ -434,6 +446,10 @@ export function Step1Input({ initialData, onComplete, lockedTaskType }: Step1Inp
               <div>
                 <p className="text-slate-500">Tutor</p>
                 <p className="font-medium text-slate-900">{tutorName || "-"}</p>
+              </div>
+              <div>
+                <p className="text-slate-500">Kebutuhan Sumber</p>
+                <p className="font-medium text-slate-900">{sourceRequirements || "Standar akademik"}</p>
               </div>
             </div>
 

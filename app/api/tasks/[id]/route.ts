@@ -31,6 +31,7 @@ export async function GET(
         module_book_title_snapshot: true,
         tutor_name_snapshot: true,
         task_description_snapshot: true,
+        source_requirements: true,
         ai_provider_name: true,
         ai_provider_type: true,
         ai_model: true,
@@ -39,12 +40,12 @@ export async function GET(
             id: true,
             question_text: true,
             answer_text: true,
+            references_used: true,
             status: true,
+            question_order: true,
             created_at: true,
           },
-          orderBy: {
-            created_at: "asc",
-          },
+          orderBy: [{ question_order: "asc" }, { created_at: "asc" }],
         },
       },
     })

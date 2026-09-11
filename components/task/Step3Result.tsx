@@ -33,7 +33,7 @@ export function Step3Result({
   onRegenerate,
   onReset,
   isProcessing,
-  providerName = "DeepSeek",
+  providerName = "",
   modelName,
   regenerateCounts = {},
   activeQuestion,
@@ -100,7 +100,7 @@ export function Step3Result({
       const response = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
+      body: JSON.stringify({
           sessionId: result.sessionId,
           taskType: formData.task_type,
           taskDescription: formData.task_description || "",
@@ -141,6 +141,8 @@ export function Step3Result({
   const currentAnswer = result.answers[questionIndex] || ""
   const wordCount = countWords(currentAnswer)
   const regenCount = regenerateCounts[questionIndex] || 0
+  const currentStatus = result.itemStatuses?.[questionIndex]
+  const isMultiQuestion = formData.questions.length > 1
 
   return (
     <div className="space-y-6">
@@ -173,7 +175,7 @@ export function Step3Result({
         )}
       </div>
 
-      {formData.task_type === "ASSIGNMENT" && formData.questions.length > 1 && (
+      {isMultiQuestion && (
         <div className="flex gap-2 flex-wrap items-center rounded-xl border border-zinc-200 bg-white shadow-sm p-3">
           {formData.questions.map((_, index) => (
             <Button
@@ -184,6 +186,7 @@ export function Step3Result({
               className={questionIndex === index ? "bg-zinc-900 text-white hover:bg-zinc-800" : ""}
             >
               Soal {index + 1}
+              {result.itemStatuses?.[index] === "FAILED" ? " (gagal)" : ""}
             </Button>
           ))}
         </div>
@@ -199,7 +202,7 @@ export function Step3Result({
           <div className="flex items-center justify-between">
             <CardTitle className="flex items-center gap-2">
               <span>
-                {formData.task_type === "ASSIGNMENT" && formData.questions.length > 1
+                {isMultiQuestion
                   ? `Jawaban Soal ${questionIndex + 1}`
                   : formData.task_type === "ASSIGNMENT" ? "Jawaban Soal" : "Jawaban Diskusi"}
               </span>
@@ -211,6 +214,11 @@ export function Step3Result({
               {modelName && (
                 <span className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-indigo-100 text-indigo-700">
                   {modelName}
+                </span>
+              )}
+              {currentStatus === "FAILED" && (
+                <span className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-red-100 text-red-700">
+                  Gagal — regenerate soal ini
                 </span>
               )}
               {regenCount > 0 && (
@@ -246,14 +254,20 @@ export function Step3Result({
             className="max-h-[500px] overflow-y-auto pr-2"
             style={{ scrollbarWidth: 'thin', scrollbarColor: '#d4d4d8 #f4f4f5' }}
           >
-            {formData.task_type === "ASSIGNMENT" && formData.questions.length > 1 && (
+            {isMultiQuestion && (
               <div className="mb-4 pb-3 border-b border-zinc-100">
                 <p className="text-slate-500 text-sm font-medium mb-1">Pertanyaan:</p>
                 <RichTextViewer markdown={formData.questions[questionIndex]} className="text-sm" />
                 <p className="text-slate-500 text-sm mt-3 font-medium">Jawaban:</p>
               </div>
             )}
-            <RichTextViewer markdown={currentAnswer.replace(/^\d+\.\s*/, '')} />
+            {currentStatus === "FAILED" && !currentAnswer ? (
+              <p className="text-sm text-red-600">
+                Jawaban soal ini gagal dibuat. Gunakan tombol Regenerate Jawaban untuk mencoba lagi khusus soal ini.
+              </p>
+            ) : (
+              <RichTextViewer markdown={currentAnswer.replace(/^\d+\.\s*/, '')} />
+            )}
           </div>
           <RichTextViewerStyles />
 

@@ -51,6 +51,15 @@ export interface DocxData {
   fontFamily?: FontChoice
 }
 
+function collectReferences(items: DocxTaskItemData[]): Array<{ number: string; text: string }> {
+  const values = items.flatMap((item) => {
+    const references = item.references_used as unknown as { references?: ReferenceData[] } | ReferenceData[] | undefined
+    return Array.isArray(references) ? references : references?.references || []
+  })
+  const unique = values.filter((reference, index) => reference.title && values.findIndex((other) => (other.url || other.title) === (reference.url || reference.title)) === index)
+  return unique.map((reference, index) => ({ number: `${index + 1}.`, text: `${reference.author ? `${reference.author}. ` : ''}${reference.year ? `(${reference.year}). ` : ''}${reference.title}.${reference.url ? ` ${reference.url}` : ''}` }))
+}
+
 function pageBreakParagraph(): Paragraph {
   return new Paragraph({
     children: [new TextRun({ children: [new PageBreak()] })],
@@ -63,31 +72,22 @@ function buildDiscussionChildren(
 ): Array<Paragraph | Table> {
   const children: Array<Paragraph | Table> = []
 
-  data.taskItems.forEach((item, index) => {
+  children.push(...buildIdentityParagraphs([{ label: 'Nama', value: data.studentName }, { label: 'NIM', value: data.studentNim }], font))
+
+  const parsedAnswers = data.taskItems.map((item) => parseDiscussionAnswer(item.answer_text))
+
+  parsedAnswers.forEach((parsed, index) => {
     if (index > 0) {
       children.push(pageBreakParagraph())
     }
 
-    const { identityLines, body, references } = parseDiscussionAnswer(
-      item.answer_text,
-    )
-
-    if (identityLines.length > 0) {
-      children.push(...buildIdentityParagraphs(identityLines, font))
-      children.push(
-        new Paragraph({
-          children: [new TextRun({ text: '' })],
-          spacing: { before: 0, after: 120 },
-        }),
-      )
-    }
-
-    children.push(...buildFormattedTextParagraphs(body, font))
-
-    if (references.length > 0) {
-      children.push(...buildReferenceParagraphs(references, font))
-    }
+    children.push(buildQuestionNumberHeading(index + 1, font))
+    children.push(...buildFormattedTextParagraphs(parsed.body, font))
   })
+
+  const storedReferences = collectReferences(data.taskItems)
+  const embeddedReferences = parsedAnswers.flatMap((parsed) => parsed.references)
+  children.push(...buildReferenceParagraphs(storedReferences.length > 0 ? storedReferences : embeddedReferences, font))
 
   return children
 }
@@ -116,16 +116,19 @@ function buildAssignmentChildren(
       children.push(pageBreakParagraph())
     }
 
-    const { body, references } = parseAnswerWithReferences(item.answer_text)
+    const { body } = parseAnswerWithReferences(item.answer_text)
     const cleanBody = stripLeadingNumber(body)
 
     children.push(buildQuestionNumberHeading(idx + 1, font))
     children.push(...buildFormattedTextParagraphs(cleanBody, font))
 
-    if (references.length > 0) {
-      children.push(...buildReferenceParagraphs(references, font))
-    }
   })
+
+  const storedAssignmentReferences = collectReferences(data.taskItems)
+  if (storedAssignmentReferences.length > 0) {
+    children.push(pageBreakParagraph())
+    children.push(...buildReferenceParagraphs(storedAssignmentReferences, font))
+  }
 
   return children
 }

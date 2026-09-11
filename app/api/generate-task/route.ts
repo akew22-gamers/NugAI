@@ -1,14 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
-import { generate } from '@/lib/ai'
+import { generate, isProviderConfigured } from '@/lib/ai'
+import { getActiveProvidersOrdered } from '@/lib/ai-failover'
 import { combinedSearch, formatSearchResultsForPrompt, searchModuleMetadata } from '@/lib/search'
-import { buildSystemPrompt, buildUserPrompt } from '@/lib/prompts/task-generation'
-import { isProviderConfigured } from '@/lib/ai'
+import { parseBatchResponse, type BatchAnswer } from '@/lib/generation/batch-contract'
 
 interface GenerateTaskRequest {
   task_type: 'DISCUSSION' | 'ASSIGNMENT'
-  task_description: string
+  task_description?: string
+  source_requirements?: string
   course_id: string | null
   course_name: string
   module_book_title: string
@@ -18,372 +19,118 @@ interface GenerateTaskRequest {
   questions: string[]
 }
 
-function getConfigForLength(length: 'SHORT' | 'MEDIUM' | 'LONG') {
-  switch (length) {
-    case 'SHORT': return { minWords: 150, maxTokens: 2048 }
-    case 'MEDIUM': return { minWords: 300, maxTokens: 4096 }
-    case 'LONG': return { minWords: 500, maxTokens: 8192 }
-  }
+const lengthConfig = (length: GenerateTaskRequest['answer_length']) => {
+  if (length === 'SHORT') return { minWords: 150, maxTokens: 2048 }
+  if (length === 'LONG') return { minWords: 500, maxTokens: 8192 }
+  return { minWords: 300, maxTokens: 4096 }
 }
-
-function sanitizeAnswer(text: string): string {
-  let cleaned = text.trim()
-
-  // Strip AI preamble/confirmation phrases (baris pertama yang merupakan konfirmasi AI)
-  const preamblePatterns = [
-    /^(?:Baik|Tentu|Berikut|Dengan senang hati|Saya akan|Ini adalah|Berikut adalah|Berikut ini|Di bawah ini|Saya sudah|Jawaban sudah|Revisi sudah|Sesuai permintaan|Berdasarkan feedback|Seperti yang diminta|Tentu saja)[^\n]*[.:]\s*\n*/i,
-  ]
-  for (const pattern of preamblePatterns) {
-    cleaned = cleaned.replace(pattern, '').trim()
-  }
-
-  // Strip asterisks yang merupakan formatting marks (bold/italic markdown)
-  // Tapi pertahankan asterisks yang merupakan bagian dari konten matematika (misal: *)
-  cleaned = cleaned.replace(/\*{1,3}([^*]+)\*{1,3}/g, '$1') // **bold** atau *italic* → plain text
-  cleaned = cleaned.replace(/\*/g, '') // sisa asterisks yang tidak berpasangan
-
-  return cleaned
-}
-
-const WEEKLY_TASK_LIMIT = 3
 
 function getWeekStart(): Date {
   const now = new Date()
   const day = now.getUTCDay()
-  const diff = day === 0 ? 6 : day - 1
   const monday = new Date(now)
-  monday.setUTCDate(now.getUTCDate() - diff)
+  monday.setUTCDate(now.getUTCDate() - (day === 0 ? 6 : day - 1))
   monday.setUTCHours(0, 0, 0, 0)
   return monday
 }
 
-async function checkQuota(userId: string): Promise<{ canProceed: boolean; error?: string }> {
-  const currentWeekStart = getWeekStart()
-
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-    select: {
-      subscription_tier: true,
-      weekly_usage_count: true,
-      weekly_regenerate_count: true,
-      week_start_date: true,
-    },
-  })
-
-  if (!user) {
-    return { canProceed: false, error: 'User not found' }
+function buildBatchPrompt(body: GenerateTaskRequest, profile: { study_program: string; university_name: string }, searchContext: string, moduleMetadata: string) {
+  const questions = body.questions.map((question, index) => `${index + 1}. ${question}`).join('\n\n')
+  const style = body.answer_style === 'bullet' ? 'poin/numbering' : body.answer_style === 'math_steps' ? 'langkah matematika' : body.answer_style === 'combination' ? 'kombinasi paragraf dan poin' : 'paragraf naratif'
+  const words = body.answer_length === 'SHORT' ? 'sekitar 150 kata' : body.answer_length === 'LONG' ? 'sekitar 500 kata' : 'sekitar 300 kata'
+  return {
+    systemPrompt: `Kamu menjawab tugas akademik Bahasa Indonesia. Jawab substansi setiap soal secara mandiri. Jangan tulis header mahasiswa, salam pembuka, footer, judul dokumen, atau daftar referensi di dalam answer karena aplikasi menyusunnya sendiri. Gaya jawaban: ${style}. Target panjang per soal: ${words}. Gunakan sumber nyata dari konteks yang tersedia dan jangan mengarang bibliografi. Kembalikan JSON valid saja tanpa markdown atau code fence dengan bentuk {"answers":[{"questionOrder":1,"answer":"markdown jawaban", "references":[{"type":"journal|book|module|government|web","title":"...","url":"...","author":"...","year":"..."}]}]}. Setiap questionOrder harus muncul tepat sekali.`,
+    userPrompt: `Mata kuliah: ${body.course_name}\nModul/buku utama: ${body.module_book_title}\nTutor: ${body.tutor_name}\nProgram studi: ${profile.study_program}\nUniversitas: ${profile.university_name}\nKebutuhan sumber user: ${body.source_requirements || 'Gunakan sumber akademik yang relevan.'}\n${body.task_description ? `Konteks tugas:\n${body.task_description}\n` : ''}\nSoal:\n${questions}\n\nMetadata modul:\n${moduleMetadata || '-'}\n\nKonteks pencarian:\n${searchContext || '-'}`,
   }
-
-  if (user.subscription_tier === 'PREMIUM') {
-    return { canProceed: true }
-  }
-
-  let weeklyUsageCount = user.weekly_usage_count
-
-  if (user.week_start_date) {
-    const userWeekStart = new Date(user.week_start_date)
-    userWeekStart.setUTCHours(0, 0, 0, 0)
-
-    if (userWeekStart.getTime() < currentWeekStart.getTime()) {
-      await prisma.user.update({
-        where: { id: userId },
-        data: {
-          weekly_usage_count: 0,
-          weekly_regenerate_count: 0,
-          week_start_date: currentWeekStart,
-        },
-      })
-      return { canProceed: true }
-    }
-  } else {
-    weeklyUsageCount = 0
-  }
-
-  if (weeklyUsageCount >= WEEKLY_TASK_LIMIT) {
-    return { canProceed: false, error: 'Kuota mingguan generate tugas habis (maks 3/minggu). Upgrade ke Premium untuk akses unlimited.' }
-  }
-
-  return { canProceed: true }
 }
 
 export async function POST(request: NextRequest) {
   const session = await auth()
+  if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (session.user.role !== 'USER') return NextResponse.json({ error: 'Only users can generate tasks' }, { status: 403 })
 
-  if (!session || !session.user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
+  const encoder = new TextEncoder()
+  const stream = new ReadableStream({
+    async start(controller) {
+      const emit = (event: string, data: Record<string, unknown>) => controller.enqueue(encoder.encode(`data: ${JSON.stringify({ event, ...data })}\n\n`))
+      let taskSessionId: string | undefined
+      try {
+        const body = await request.json() as GenerateTaskRequest
+        body.source_requirements = body.source_requirements?.slice(0, 2000)
+        if (!body.questions?.length || body.questions.length > 5 || !body.course_name || !body.module_book_title || !body.tutor_name) throw new Error('Data tugas tidak lengkap atau jumlah soal tidak valid')
+        if (!(await isProviderConfigured())) throw new Error('AI provider belum dikonfigurasi')
+        emit('progress', { stage: 'validating', message: 'Memvalidasi tugas dan menyiapkan sesi...', items: [] })
 
-  if (session.user.role !== 'USER') {
-    return NextResponse.json({ error: 'Only users can generate tasks' }, { status: 403 })
-  }
+        const user = await prisma.user.findUnique({ where: { id: session.user.id }, select: { subscription_tier: true, weekly_usage_count: true, week_start_date: true } })
+        if (!user) throw new Error('User tidak ditemukan')
+        const weekStart = getWeekStart()
+        const usage = user.week_start_date && new Date(user.week_start_date) >= weekStart ? user.weekly_usage_count : 0
+        if (user.subscription_tier === 'FREE' && usage >= 3) throw new Error('Kuota mingguan generate tugas habis (maks 3/minggu). Upgrade ke Premium untuk akses unlimited.')
 
-  try {
-    const body: GenerateTaskRequest = await request.json()
-
-    if (!body.questions || body.questions.length === 0) {
-      return NextResponse.json({ error: 'Questions are required' }, { status: 400 })
-    }
-
-    if (!body.course_name || !body.module_book_title) {
-      return NextResponse.json({ error: 'Course info is required' }, { status: 400 })
-    }
-
-    const providerConfigured = await isProviderConfigured()
-    if (!providerConfigured) {
-      return NextResponse.json(
-        { error: 'AI provider belum dikonfigurasi. Admin harus setup AI provider di /admin/providers' },
-        { status: 503 }
-      )
-    }
-
-    const quotaCheck = await checkQuota(session.user.id)
-    if (!quotaCheck.canProceed) {
-      return NextResponse.json({ error: quotaCheck.error }, { status: 403 })
-    }
-
-    const profile = await prisma.studentProfile.findUnique({
-      where: { user_id: session.user.id },
-    })
-
-    if (!profile) {
-      return NextResponse.json({ error: 'Profile tidak ditemukan. Silakan lengkapi profile di /settings' }, { status: 404 })
-    }
-
-    const answers: string[] = []
-    const allQuestionReferences: any[][] = []
-    let totalTokens = 0
-    let totalTavilyCalls = 0
-    let totalExaCalls = 0
-    let usedProviderName: string | null = null
-    let usedProviderType: string | null = null
-    let usedModel: string | null = null
-
-    const lengthConfig = getConfigForLength(body.answer_length || 'MEDIUM')
-
-    const moduleMetadata = await searchModuleMetadata(body.module_book_title, profile.university_name)
-
-    const isDiscussionMulti = body.task_type === 'DISCUSSION' && body.questions.length > 1
-
-    if (isDiscussionMulti) {
-      const combinedQuestions = body.questions.map((q, i) => `${i + 1}. ${q}`).join('\n\n')
-      const maxTokens = lengthConfig.maxTokens
-
-      const searchQuery = `${body.course_name} ${body.module_book_title} ${body.questions[0]}`
-      const searchResults = await combinedSearch({ query: searchQuery, maxResults: 5 })
-      const searchContext = formatSearchResultsForPrompt(searchResults.results)
-      totalTavilyCalls += searchResults.tavilyResults
-      totalExaCalls += searchResults.exaResults
-      allQuestionReferences.push(searchResults.results.slice(0, 2))
-
-      const systemPrompt = buildSystemPrompt({
-        study_program: profile.study_program,
-        university_name: profile.university_name,
-        course_name: body.course_name,
-        module_book_title: body.module_book_title,
-        tutor_name: body.tutor_name,
-        answer_length: body.answer_length,
-        answer_style: body.answer_style || 'paragraph',
-        task_type: body.task_type,
-        question_text: combinedQuestions,
-        search_context: searchContext,
-        task_description: body.task_description || undefined,
-        question_index: 0,
-        total_questions: body.questions.length,
-        module_metadata: moduleMetadata || undefined,
-      })
-
-      const userPrompt = buildUserPrompt({
-        study_program: profile.study_program,
-        university_name: profile.university_name,
-        course_name: body.course_name,
-        module_book_title: body.module_book_title,
-        tutor_name: body.tutor_name,
-        answer_length: body.answer_length,
-        answer_style: body.answer_style || 'paragraph',
-        task_type: body.task_type,
-        question_text: combinedQuestions,
-        search_context: searchContext,
-        student_name: profile.full_name,
-        student_nim: profile.nim,
-        task_description: body.task_description || undefined,
-        question_index: 0,
-        total_questions: body.questions.length,
-        module_metadata: moduleMetadata || undefined,
-      })
-
-      const result = await generate({ systemPrompt, userPrompt, maxTokens, temperature: 0.7 })
-      answers.push(sanitizeAnswer(result.text))
-      totalTokens += result.usage?.totalTokens || 0
-
-      const castResult = result as any
-      if ('providerName' in result && castResult.providerName) {
-        usedProviderName = castResult.providerName || null
-        usedProviderType = castResult.providerType || null
-        usedModel = castResult.model || null
-      }
-    } else {
-      const maxTokens = lengthConfig.maxTokens
-
-      for (let i = 0; i < body.questions.length; i++) {
-        const question = body.questions[i]
-        const searchQuery = `${body.course_name} ${body.module_book_title} ${question}`
-        const searchResults = await combinedSearch({ query: searchQuery, maxResults: 3 })
-        const searchContext = formatSearchResultsForPrompt(searchResults.results)
-
-        totalTavilyCalls += searchResults.tavilyResults
-        totalExaCalls += searchResults.exaResults
-        allQuestionReferences.push(searchResults.results.slice(0, 2))
-
-        const systemPrompt = buildSystemPrompt({
-          study_program: profile.study_program,
-          university_name: profile.university_name,
-          course_name: body.course_name,
-          module_book_title: body.module_book_title,
-          tutor_name: body.tutor_name,
-          answer_length: body.answer_length,
-          answer_style: body.answer_style || 'paragraph',
-          task_type: body.task_type,
-          question_text: question,
-          search_context: searchContext,
-          task_description: body.task_description || undefined,
-          question_index: i,
-          total_questions: body.questions.length,
-          module_metadata: moduleMetadata || undefined,
+        const profile = await prisma.studentProfile.findUnique({ where: { user_id: session.user.id } })
+        if (!profile) throw new Error('Profile tidak ditemukan. Silakan lengkapi profile di /settings')
+        const config = lengthConfig(body.answer_length)
+        const taskSession = await prisma.taskSession.create({
+          data: {
+            user_id: session.user.id, course_id: body.course_id, task_type: body.task_type, min_words_target: config.minWords,
+            course_name_snapshot: body.course_name, module_book_title_snapshot: body.module_book_title, tutor_name_snapshot: body.tutor_name,
+            task_description_snapshot: body.task_description || null, source_requirements: body.source_requirements || null, answer_style: body.answer_style,
+            task_items: { create: body.questions.map((question_text, index) => ({ question_text, question_order: index + 1, status: 'GENERATING' })) },
+          }, include: { task_items: { orderBy: { question_order: 'asc' } } },
         })
-
-        const userPrompt = buildUserPrompt({
-          study_program: profile.study_program,
-          university_name: profile.university_name,
-          course_name: body.course_name,
-          module_book_title: body.module_book_title,
-          tutor_name: body.tutor_name,
-          answer_length: body.answer_length,
-          answer_style: body.answer_style || 'paragraph',
-          task_type: body.task_type,
-          question_text: question,
-          search_context: searchContext,
-          student_name: profile.full_name,
-          student_nim: profile.nim,
-          task_description: body.task_description || undefined,
-          question_index: i,
-          total_questions: body.questions.length,
-          module_metadata: moduleMetadata || undefined,
-        })
-
-        const result = await generate({ systemPrompt, userPrompt, maxTokens, temperature: 0.7 })
-        answers.push(sanitizeAnswer(result.text))
-        totalTokens += result.usage?.totalTokens || 0
-
-        const castResult = result as any
-        if ('providerName' in result && castResult.providerName) {
-          usedProviderName = castResult.providerName || null
-          usedProviderType = castResult.providerType || null
-          usedModel = castResult.model || null
+        taskSessionId = taskSession.id
+        const items = taskSession.task_items.map((item) => ({ questionOrder: item.question_order || 0, status: 'GENERATING' as const }))
+        emit('progress', { stage: 'searching', message: 'Mencari referensi sesuai kebutuhan sumber...', items })
+        const query = `${body.course_name} ${body.module_book_title} ${body.questions.join(' ')} ${body.source_requirements || ''}`
+        const [search, moduleMetadata] = await Promise.all([combinedSearch({ query, maxResults: 8 }), searchModuleMetadata(body.module_book_title, profile.university_name)])
+        try {
+          const providers = await getActiveProvidersOrdered()
+          const primary = providers[0]
+          if (primary) {
+            emit('progress', { stage: 'preparing_ai', message: `Menghubungkan ke ${primary.name}...`, providerName: primary.name, items })
+          }
+        } catch {
+          // Abaikan kegagalan pre-check; generate() melaporkan error sebenarnya
         }
-      }
-    }
-
-    const taskSession = await prisma.taskSession.create({
-      data: {
-        user_id: session.user.id,
-        course_id: body.course_id,
-        task_type: body.task_type,
-        min_words_target: lengthConfig.minWords,
-        course_name_snapshot: body.course_name,
-        course_code_snapshot: body.course_id
-          ? (await prisma.course.findUnique({ where: { id: body.course_id }, select: { course_code: true } }))?.course_code || null
-          : null,
-        module_book_title_snapshot: body.module_book_title,
-        tutor_name_snapshot: body.tutor_name,
-        task_description_snapshot: body.task_description || null,
-        answer_style: body.answer_style || 'paragraph',
-        ai_provider_name: usedProviderName,
-        ai_provider_type: usedProviderType,
-        ai_model: usedModel,
-        task_items: {
-          create: isDiscussionMulti
-            ? [{
-                question_text: body.questions.map((q, i) => `${i + 1}. ${q}`).join('\n'),
-                answer_text: answers[0],
-                status: 'COMPLETED',
-                references_used: allQuestionReferences[0]?.length > 0
-                  ? JSON.parse(JSON.stringify({ references: allQuestionReferences[0] }))
-                  : undefined,
-              }]
-            : body.questions.map((question, index) => ({
-                question_text: question,
-                answer_text: answers[index],
-                status: 'COMPLETED',
-                references_used: allQuestionReferences[index]?.length > 0
-                  ? JSON.parse(JSON.stringify({ references: allQuestionReferences[index] }))
-                  : undefined,
-              })),
-        },
-      },
-      include: {
-        task_items: true,
-      },
-    })
-
-    await prisma.$transaction([
-      prisma.user.update({
-        where: { id: session.user.id },
-        data: {
-          weekly_usage_count: { increment: 1 },
-          week_start_date: getWeekStart(),
-        },
-      }),
-      prisma.dailyUsageLog.create({
-        data: {
-          user_id: session.user.id,
-          session_id: taskSession.id,
-          llm_tokens_used: totalTokens,
-          tavily_calls: totalTavilyCalls,
-          exa_calls: totalExaCalls,
-          ai_provider_name: usedProviderName,
-          ai_provider_type: usedProviderType,
-          date: new Date(),
-        },
-      }),
-    ])
-
-    return NextResponse.json({
-      sessionId: taskSession.id,
-      answers,
-      references: allQuestionReferences.length > 0 && allQuestionReferences[0].length > 0 
-        ? allQuestionReferences[0].map((r: any) => ({
-            type: r.type || 'web',
-            title: r.title,
-            url: r.url,
-            author: r.metadata?.author as string | undefined,
-          }))
-        : [],
-      providerName: usedProviderName,
-      providerType: usedProviderType,
-      model: usedModel,
-    })
-  } catch (error) {
-    console.error('Task generation failed:', error)
-    
-    if (error instanceof Error) {
-      if (error.message.includes('API_KEY_ENCRYPTION_KEY')) {
-        return NextResponse.json({ 
-          error: 'Encryption key tidak valid. Periksa API_KEY_ENCRYPTION_KEY di environment.' 
-        }, { status: 500 })
-      }
-      if (error.message.includes('No active AI provider')) {
-        return NextResponse.json({ 
-          error: 'AI provider belum dikonfigurasi. Admin harus setup di /admin/providers' 
-        }, { status: 503 })
-      }
-      if (error.message.includes('Decryption failed')) {
-        return NextResponse.json({ 
-          error: 'API key tidak bisa di-decrypt. Encryption key berbeda dengan saat provider dibuat. Hapus provider dan buat baru.' 
-        }, { status: 500 })
-      }
-      return NextResponse.json({ error: error.message }, { status: 500 })
-    }
-    
-    return NextResponse.json({ error: 'Gagal generate jawaban' }, { status: 500 })
-  }
+        emit('progress', { stage: 'generating', message: `AI sedang menyusun jawaban untuk ${body.questions.length} soal...`, items })
+        const prompts = buildBatchPrompt(body, profile, formatSearchResultsForPrompt(search.results), moduleMetadata)
+        const generated = await generate({ ...prompts, maxTokens: Math.min(8192, config.maxTokens * body.questions.length), temperature: 0.4 })
+        emit('progress', { stage: 'validating_answers', message: 'Memverifikasi dan menyimpan jawaban tiap soal...', providerName: generated.providerName, model: generated.model, items })
+        let answers: BatchAnswer[] = []
+        try { answers = parseBatchResponse(generated.text, body.questions.length) } catch (error) {
+          const message = error instanceof Error ? error.message : 'Format respons AI tidak valid'
+          await prisma.taskItem.updateMany({ where: { session_id: taskSession.id }, data: { status: 'FAILED' } })
+          emit('progress', { stage: 'failed', message, providerName: generated.providerName, model: generated.model, items: items.map((item) => ({ ...item, status: 'FAILED', error: message })) })
+          throw error
+        }
+        const statuses: Array<'COMPLETED' | 'FAILED'> = []
+        for (const item of taskSession.task_items) {
+          const answer = answers.find((value) => value.questionOrder === item.question_order)
+          if (!answer) {
+            await prisma.taskItem.update({ where: { id: item.id }, data: { status: 'FAILED' } })
+            statuses.push('FAILED')
+          } else {
+            await prisma.taskItem.update({ where: { id: item.id }, data: { answer_text: answer.answer.trim(), references_used: answer.references?.length ? JSON.parse(JSON.stringify({ references: answer.references })) : undefined, status: 'COMPLETED' } })
+            statuses.push('COMPLETED')
+          }
+          const completedItems = taskSession.task_items.map((taskItem, index) => ({ questionOrder: taskItem.question_order || 0, status: statuses[index] || 'GENERATING' }))
+          emit('progress', { stage: 'saving', message: 'Menyimpan hasil per soal...', providerName: generated.providerName, model: generated.model, items: completedItems })
+        }
+        await prisma.taskSession.update({ where: { id: taskSession.id }, data: { ai_provider_name: generated.providerName || null, ai_provider_type: generated.providerType || null, ai_model: generated.model || null } })
+        await prisma.$transaction([
+          prisma.user.update({ where: { id: session.user.id }, data: { weekly_usage_count: { increment: 1 }, week_start_date: weekStart } }),
+          prisma.dailyUsageLog.create({ data: { user_id: session.user.id, session_id: taskSession.id, llm_tokens_used: generated.usage?.totalTokens || 0, tavily_calls: search.tavilyResults, exa_calls: search.exaResults, ai_provider_name: generated.providerName || null, ai_provider_type: generated.providerType || null, date: new Date() } }),
+        ])
+        const saved = await prisma.taskItem.findMany({ where: { session_id: taskSession.id }, orderBy: { question_order: 'asc' } })
+        const result = { sessionId: taskSession.id, answers: saved.map((item) => item.answer_text || ''), itemStatuses: saved.map((item) => item.status), references: [], providerName: generated.providerName, providerType: generated.providerType, model: generated.model }
+        emit('progress', { stage: 'formatting', message: 'Menyusun format dokumen akhir...', providerName: generated.providerName, model: generated.model, items: saved.map((item) => ({ questionOrder: item.question_order || 0, status: item.status })) })
+        emit('complete', { result })
+      } catch (error) {
+        const message = error instanceof Error ? error.message : 'Gagal generate jawaban'
+        if (taskSessionId) await prisma.taskItem.updateMany({ where: { session_id: taskSessionId, status: 'GENERATING' }, data: { status: 'FAILED' } })
+        emit('error', { message })
+      } finally { controller.close() }
+    },
+  })
+  return new Response(stream, { headers: { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache, no-transform', Connection: 'keep-alive' } })
 }

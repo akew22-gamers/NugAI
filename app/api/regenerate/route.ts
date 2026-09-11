@@ -59,7 +59,9 @@ export async function POST(request: NextRequest) {
     const taskSession = await prisma.taskSession.findUnique({
       where: { id: body.sessionId },
       include: {
-        task_items: true,
+        task_items: {
+          orderBy: [{ question_order: 'asc' }, { created_at: 'asc' }],
+        },
         user: {
           include: { student_profile: true },
         },
@@ -154,6 +156,7 @@ export async function POST(request: NextRequest) {
       module_book_title: taskSession.module_book_title_snapshot || undefined,
       tutor_name: taskSession.tutor_name_snapshot || undefined,
       university_name: profile.university_name || undefined,
+      source_requirements: taskSession.source_requirements || undefined,
     }
 
     const systemPrompt = buildRegenerationSystemPrompt(regenerationContext)
@@ -172,9 +175,8 @@ export async function POST(request: NextRequest) {
 
     const sanitizedAnswer = sanitizeAnswer(result.text)
 
-    const castResult = result as any
-    const usedModel = castResult.model || null
-    const usedProviderName = castResult.providerName || null
+    const usedModel = result.model || null
+    const usedProviderName = result.providerName || null
 
     await prisma.$transaction([
       prisma.taskItem.update({

@@ -1,10 +1,19 @@
 "use client"
 
 import { useState } from "react"
+import { toast } from "sonner"
 import { Step1Input } from "@/components/task/Step1Input"
 import { Step2Processing } from "@/components/task/Step2Processing"
 import { Step3Result } from "@/components/task/Step3Result"
 import { TaskFormData, TaskResult } from "@/app/(student)/task/new/page"
+
+export interface GenerationProgress {
+  stage: string
+  message: string
+  providerName?: string
+  model?: string
+  items: Array<{ questionOrder: number; status: "GENERATING" | "COMPLETED" | "FAILED"; error?: string }>
+}
 
 interface TaskWizardProps {
   defaultTaskType: "DISCUSSION" | "ASSIGNMENT"
@@ -23,6 +32,7 @@ export function TaskWizard({ defaultTaskType, title, subtitle }: TaskWizardProps
     tutor_name: "",
     answer_length: "MEDIUM",
     answer_style: "paragraph",
+    source_requirements: "",
     questions: [],
   })
   const [result, setResult] = useState<TaskResult | null>(null)
@@ -31,9 +41,15 @@ export function TaskWizard({ defaultTaskType, title, subtitle }: TaskWizardProps
   const [activeQuestion, setActiveQuestion] = useState(0)
   const [providerName, setProviderName] = useState<string>("")
   const [modelName, setModelName] = useState<string>("")
+  const [generationProgress, setGenerationProgress] = useState<GenerationProgress>({ stage: "preparing", message: "Menyiapkan tugas...", items: [] })
 
   const handleStep1Complete = (data: TaskFormData) => {
     setFormData(data)
+    setGenerationProgress({
+      stage: "preparing",
+      message: `Menyiapkan jawaban untuk ${data.questions.length} soal...`,
+      items: data.questions.map((_, index) => ({ questionOrder: index + 1, status: "GENERATING" })),
+    })
     setStep(2)
     handleGenerate(data)
   }
@@ -48,20 +64,45 @@ export function TaskWizard({ defaultTaskType, title, subtitle }: TaskWizardProps
       })
 
       if (!response.ok) {
-        throw new Error("Gagal generate jawaban")
+        let message = "Gagal generate jawaban"
+        try {
+          const errorData = await response.json()
+          if (errorData?.error) message = errorData.error
+        } catch {
+          // Gunakan pesan default bila body bukan JSON
+        }
+        throw new Error(message)
       }
+      if (!response.body) throw new Error("Gagal generate jawaban")
 
-      const resultData = await response.json()
-      setResult(resultData)
-      if (resultData.providerName) {
-        setProviderName(resultData.providerName)
+      const reader = response.body.getReader()
+      const decoder = new TextDecoder()
+      let buffer = ""
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+        buffer += decoder.decode(value, { stream: true })
+        const events = buffer.split("\n\n")
+        buffer = events.pop() || ""
+        for (const event of events) {
+          const line = event.split("\n").find((value) => value.startsWith("data: "))
+          if (!line) continue
+          const data = JSON.parse(line.slice(6))
+          if (data.event === "progress") {
+            setGenerationProgress({ stage: data.stage, message: data.message, providerName: data.providerName, model: data.model, items: data.items || [] })
+          }
+          if (data.event === "complete") {
+            setResult(data.result)
+            setProviderName(data.result.providerName || "")
+            setModelName(data.result.model || "")
+            setStep(3)
+          }
+          if (data.event === "error") throw new Error(data.message || "Gagal generate jawaban")
+        }
       }
-      if (resultData.model) {
-        setModelName(resultData.model)
-      }
-      setStep(3)
     } catch (error) {
       console.error("Generation failed:", error)
+      toast.error(error instanceof Error ? error.message : "Gagal generate jawaban")
       setStep(1)
     } finally {
       setIsProcessing(false)
@@ -84,7 +125,14 @@ export function TaskWizard({ defaultTaskType, title, subtitle }: TaskWizardProps
       })
 
       if (!response.ok) {
-        throw new Error("Gagal regenerate jawaban")
+        let message = "Gagal regenerate jawaban"
+        try {
+          const errorData = await response.json()
+          if (errorData?.error) message = errorData.error
+        } catch {
+          // Gunakan pesan default bila body bukan JSON
+        }
+        throw new Error(message)
       }
 
       const newData = await response.json()
@@ -108,8 +156,10 @@ export function TaskWizard({ defaultTaskType, title, subtitle }: TaskWizardProps
       if (newData.model) {
         setModelName(newData.model)
       }
+      toast.success(`Jawaban soal ${questionIndex + 1} berhasil diperbarui`)
     } catch (error) {
       console.error("Regeneration failed:", error)
+      toast.error(error instanceof Error ? error.message : "Gagal regenerate jawaban")
     } finally {
       setIsProcessing(false)
     }
@@ -126,6 +176,7 @@ export function TaskWizard({ defaultTaskType, title, subtitle }: TaskWizardProps
       tutor_name: "",
       answer_length: "MEDIUM",
       answer_style: "paragraph",
+      source_requirements: "",
       questions: [],
     })
     setResult(null)
@@ -174,6 +225,7 @@ export function TaskWizard({ defaultTaskType, title, subtitle }: TaskWizardProps
       {step === 2 && (
         <Step2Processing
           formData={formData}
+          progress={generationProgress}
         />
       )}
 

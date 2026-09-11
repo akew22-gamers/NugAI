@@ -12,6 +12,7 @@ export interface RegenerationContext {
   module_book_title?: string
   tutor_name?: string
   university_name?: string
+  source_requirements?: string
 }
 
 export function buildRegenerationSystemPrompt(context: RegenerationContext): string {
@@ -82,6 +83,9 @@ ATURAN REFERENSI:
 - DILARANG KERAS menggunakan sumber dari: scribd.com, academia.edu, slideshare.net, blogspot, wordpress, atau website tidak kredibel
 - Jika menggunakan website/artikel online, pastikan berasal dari universitas, pemerintah, atau lembaga resmi
 - Format Referensi: tulis "Referensi:" di baris tersendiri, lalu baris kosong, lalu nomor 1 dan 2${discussionFormatNote}
+
+KEBUTUHAN SUMBER USER:
+${context.source_requirements || 'Gunakan sumber akademik yang relevan.'}
 
 INSTRUKSI REGENERASI:
 - Perbaiki jawaban sebelumnya sesuai instruksi yang diberikan

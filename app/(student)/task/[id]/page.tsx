@@ -20,11 +20,21 @@ import { Loading } from "@/components/ui/loading"
 import { DownloadModal, type DownloadOptions } from "@/components/task/DownloadModal"
 import { RichTextViewer } from "@/components/editor/RichTextViewer"
 
+interface TaskReference {
+  type?: string
+  title: string
+  url?: string
+  author?: string
+  year?: string
+}
+
 interface TaskItem {
   id: string
   question_text: string
   answer_text: string | null
+  references_used?: { references?: TaskReference[] } | TaskReference[] | null
   status: string
+  question_order: number | null
   created_at: string
 }
 
@@ -37,6 +47,7 @@ interface TaskSession {
   module_book_title_snapshot: string | null
   tutor_name_snapshot: string | null
   task_description_snapshot: string | null
+  source_requirements: string | null
   ai_provider_name: string | null
   ai_provider_type: string | null
   ai_model: string | null
@@ -177,6 +188,13 @@ export default function TaskDetailPage() {
     }
   }
 
+  const getItemReferences = (item: TaskItem): TaskReference[] => {
+    if (!item.references_used) return []
+    return Array.isArray(item.references_used)
+      ? item.references_used
+      : item.references_used.references || []
+  }
+
   const formatDate = (dateString: string) => {
     if (!dateString) return "Tanggal tidak valid"
     const date = new Date(dateString)
@@ -286,6 +304,12 @@ export default function TaskDetailPage() {
               <p className="text-sm text-slate-500">Tutor</p>
               <p className="font-medium">{task.tutor_name_snapshot || "-"}</p>
             </div>
+            {task.source_requirements && (
+              <div className="sm:col-span-2 md:col-span-3">
+                <p className="text-sm text-slate-500">Kebutuhan Sumber</p>
+                <p className="font-medium">{task.source_requirements}</p>
+              </div>
+            )}
             <div>
               <p className="text-sm text-slate-500">Panjang Jawaban</p>
               <p className="font-medium">{getLengthLabel(task.min_words_target)}</p>
@@ -319,7 +343,12 @@ export default function TaskDetailPage() {
           <Card key={item.id}>
             <CardHeader>
               <CardTitle className="flex items-center justify-between">
-                <span>Soal {index + 1}</span>
+                <span className="flex items-center gap-2">
+                  Soal {item.question_order || index + 1}
+                  <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${item.status === "COMPLETED" ? "bg-emerald-100 text-emerald-700" : item.status === "FAILED" ? "bg-red-100 text-red-700" : "bg-zinc-100 text-zinc-600"}`}>
+                    {item.status === "COMPLETED" ? "Selesai" : item.status === "FAILED" ? "Gagal" : "Diproses"}
+                  </span>
+                </span>
                 <div className="flex items-center gap-3">
                   {item.answer_text && (
                     <>
@@ -358,6 +387,21 @@ export default function TaskDetailPage() {
                   >
                     <RichTextViewer markdown={item.answer_text} />
                   </div>
+                </div>
+              )}
+              {getItemReferences(item).length > 0 && (
+                <div>
+                  <p className="text-sm font-medium text-slate-600 mb-2">Referensi soal ini:</p>
+                  <ol className="list-decimal list-inside space-y-1 text-sm text-slate-600">
+                    {getItemReferences(item).map((reference, referenceIndex) => (
+                      <li key={referenceIndex}>
+                        {reference.author ? `${reference.author}. ` : ""}
+                        {reference.year ? `(${reference.year}). ` : ""}
+                        {reference.title}
+                        {reference.url ? ` — ${reference.url}` : ""}
+                      </li>
+                    ))}
+                  </ol>
                 </div>
               )}
             </CardContent>
