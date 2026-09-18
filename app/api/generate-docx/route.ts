@@ -11,6 +11,12 @@ export async function POST(request: NextRequest) {
   }
 
   try {
+    try {
+      await prisma.$executeRawUnsafe(`ALTER TABLE "task_sessions" ADD COLUMN IF NOT EXISTS "source_requirements" TEXT`)
+      await prisma.$executeRawUnsafe(`ALTER TABLE "task_items" ADD COLUMN IF NOT EXISTS "question_order" INTEGER`)
+    } catch {
+      // ignore
+    }
     const body = await request.json()
     const {
       sessionId,
@@ -28,18 +34,36 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const taskSession = await prisma.taskSession.findUnique({
-      where: { id: sessionId },
-      include: {
-        task_items: { orderBy: [{ question_order: 'asc' }, { created_at: 'asc' }] },
-        course: true,
-        user: {
-          include: {
-            student_profile: true,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let taskSession: any = null
+    try {
+      taskSession = await prisma.taskSession.findUnique({
+        where: { id: sessionId },
+        include: {
+          task_items: { orderBy: [{ question_order: 'asc' }, { created_at: 'asc' }] },
+          course: true,
+          user: {
+            include: {
+              student_profile: true,
+            },
           },
         },
-      },
-    })
+      })
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error)
+      if (message.includes("question_order") || message.includes("source_requirements")) {
+        const fallback: any = await prisma.taskSession.findUnique({
+          where: { id: sessionId },
+          include: { task_items: { orderBy: { created_at: 'asc' } }, course: true, user: { include: { student_profile: true } } },
+        })
+        if (fallback) {
+          fallback.task_items = fallback.task_items.map((item: { question_order?: number }, index: number) => ({ ...item, question_order: index + 1 }))
+        }
+        taskSession = fallback
+      } else {
+        throw error
+      }
+    }
 
     if (!taskSession) {
       return NextResponse.json(
@@ -81,7 +105,7 @@ export async function POST(request: NextRequest) {
       studyProgram: profile.study_program,
       upbjjBranch: profile.upbjj_branch || undefined,
       universityLogoUrl: profile.university_logo_url,
-      taskItems: taskSession.task_items.map((item) => ({
+      taskItems: taskSession.task_items.map((item: { question_text: string; answer_text: string | null; references_used: unknown }) => ({
         question_text: item.question_text,
         answer_text: item.answer_text || '',
         references_used:

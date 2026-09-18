@@ -42,6 +42,15 @@ interface RegenerateRequest {
   answer_style?: 'paragraph' | 'bullet' | 'math_steps' | 'combination'
 }
 
+async function ensureColumnsForRegenerate(): Promise<void> {
+  try {
+    await prisma.$executeRawUnsafe(`ALTER TABLE "task_sessions" ADD COLUMN IF NOT EXISTS "source_requirements" TEXT`)
+    await prisma.$executeRawUnsafe(`ALTER TABLE "task_items" ADD COLUMN IF NOT EXISTS "question_order" INTEGER`)
+  } catch {
+    // ignore
+  }
+}
+
 export async function POST(request: NextRequest) {
   const session = await auth()
 
@@ -50,23 +59,46 @@ export async function POST(request: NextRequest) {
   }
 
   try {
+    await ensureColumnsForRegenerate()
     const body: RegenerateRequest = await request.json()
 
     if (!body.sessionId || body.questionIndex === undefined) {
       return NextResponse.json({ error: 'Session ID and question index required' }, { status: 400 })
     }
 
-    const taskSession = await prisma.taskSession.findUnique({
-      where: { id: body.sessionId },
-      include: {
-        task_items: {
-          orderBy: [{ question_order: 'asc' }, { created_at: 'asc' }],
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let taskSession: any = null
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let taskSessionAny: any = null
+    try {
+      taskSessionAny = await prisma.taskSession.findUnique({
+        where: { id: body.sessionId },
+        include: {
+          task_items: {
+            orderBy: [{ question_order: 'asc' }, { created_at: 'asc' }],
+          },
+          user: {
+            include: { student_profile: true },
+          },
         },
-        user: {
-          include: { student_profile: true },
-        },
-      },
-    })
+      })
+      taskSession = taskSessionAny
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error)
+      if (message.includes("source_requirements") || message.includes("question_order")) {
+        taskSessionAny = await prisma.taskSession.findUnique({
+          where: { id: body.sessionId },
+          include: { task_items: { orderBy: { created_at: 'asc' } }, user: { include: { student_profile: true } } },
+        })
+        if (taskSessionAny) {
+          taskSessionAny.source_requirements = taskSessionAny.source_requirements ?? null
+          taskSessionAny.task_items = taskSessionAny.task_items.map((item: { question_order?: number }, index: number) => ({ ...item, question_order: index + 1 }))
+        }
+        taskSession = taskSessionAny
+      } else {
+        throw error
+      }
+    }
 
     if (!taskSession) {
       return NextResponse.json({ error: 'Session not found' }, { status: 404 })

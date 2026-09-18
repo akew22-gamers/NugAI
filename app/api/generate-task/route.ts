@@ -49,12 +49,23 @@ export async function POST(request: NextRequest) {
   if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   if (session.user.role !== 'USER') return NextResponse.json({ error: 'Only users can generate tasks' }, { status: 403 })
 
+  async function ensureTaskColumns(): Promise<void> {
+    try {
+      await prisma.$executeRawUnsafe(`ALTER TABLE "task_sessions" ADD COLUMN IF NOT EXISTS "source_requirements" TEXT`)
+      await prisma.$executeRawUnsafe(`ALTER TABLE "task_items" ADD COLUMN IF NOT EXISTS "question_order" INTEGER`)
+      await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS "task_items_session_id_question_order_idx" ON "task_items"("session_id", "question_order")`)
+    } catch {
+      // Abaikan jika DB tidak mengizinkan DDL dari runtime; fallback create tanpa kolom baru tetap ditangani di bawah
+    }
+  }
+
   const encoder = new TextEncoder()
   const stream = new ReadableStream({
     async start(controller) {
       const emit = (event: string, data: Record<string, unknown>) => controller.enqueue(encoder.encode(`data: ${JSON.stringify({ event, ...data })}\n\n`))
       let taskSessionId: string | undefined
       try {
+        await ensureTaskColumns()
         const body = await request.json() as GenerateTaskRequest
         body.source_requirements = body.source_requirements?.slice(0, 2000)
         if (!body.questions?.length || body.questions.length > 5 || !body.course_name || !body.module_book_title || !body.tutor_name) throw new Error('Data tugas tidak lengkap atau jumlah soal tidak valid')
@@ -70,16 +81,47 @@ export async function POST(request: NextRequest) {
         const profile = await prisma.studentProfile.findUnique({ where: { user_id: session.user.id } })
         if (!profile) throw new Error('Profile tidak ditemukan. Silakan lengkapi profile di /settings')
         const config = lengthConfig(body.answer_length)
-        const taskSession = await prisma.taskSession.create({
-          data: {
-            user_id: session.user.id, course_id: body.course_id, task_type: body.task_type, min_words_target: config.minWords,
-            course_name_snapshot: body.course_name, module_book_title_snapshot: body.module_book_title, tutor_name_snapshot: body.tutor_name,
-            task_description_snapshot: body.task_description || null, source_requirements: body.source_requirements || null, answer_style: body.answer_style,
-            task_items: { create: body.questions.map((question_text, index) => ({ question_text, question_order: index + 1, status: 'GENERATING' })) },
-          }, include: { task_items: { orderBy: { question_order: 'asc' } } },
-        })
-        taskSessionId = taskSession.id
-        const items = taskSession.task_items.map((item) => ({ questionOrder: item.question_order || 0, status: 'GENERATING' as const }))
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        let taskSession: any = null
+        try {
+          taskSession = await prisma.taskSession.create({
+            data: {
+              user_id: session.user.id, course_id: body.course_id, task_type: body.task_type, min_words_target: config.minWords,
+              course_name_snapshot: body.course_name, module_book_title_snapshot: body.module_book_title, tutor_name_snapshot: body.tutor_name,
+              task_description_snapshot: body.task_description || null, source_requirements: body.source_requirements || null, answer_style: body.answer_style,
+              task_items: { create: body.questions.map((question_text, index) => ({ question_text, question_order: index + 1, status: 'GENERATING' })) },
+            }, include: { task_items: { orderBy: { question_order: 'asc' } } },
+          })
+        } catch (createError) {
+          const message = createError instanceof Error ? createError.message : String(createError)
+          if (message.includes('source_requirements') || message.includes('question_order')) {
+            await ensureTaskColumns()
+            try {
+              taskSession = await prisma.taskSession.create({
+                data: {
+                  user_id: session.user.id, course_id: body.course_id, task_type: body.task_type, min_words_target: config.minWords,
+                  course_name_snapshot: body.course_name, module_book_title_snapshot: body.module_book_title, tutor_name_snapshot: body.tutor_name,
+                  task_description_snapshot: body.task_description || null, source_requirements: body.source_requirements || null, answer_style: body.answer_style,
+                  task_items: { create: body.questions.map((question_text, index) => ({ question_text, question_order: index + 1, status: 'GENERATING' })) },
+                }, include: { task_items: { orderBy: { question_order: 'asc' } } },
+              })
+            } catch {
+              taskSession = await prisma.taskSession.create({
+                data: {
+                  user_id: session.user.id, course_id: body.course_id, task_type: body.task_type, min_words_target: config.minWords,
+                  course_name_snapshot: body.course_name, module_book_title_snapshot: body.module_book_title, tutor_name_snapshot: body.tutor_name,
+                  task_description_snapshot: body.task_description || null, answer_style: body.answer_style,
+                  task_items: { create: body.questions.map((question_text) => ({ question_text, status: 'GENERATING' })) },
+                }, include: { task_items: { orderBy: { created_at: 'asc' } } },
+              })
+              taskSession.task_items = taskSession.task_items.map((item: { question_order?: number }, index: number) => ({ ...item, question_order: index + 1 }))
+              }
+            } else {
+              throw createError
+            }
+          }
+          taskSessionId = taskSession.id
+        const items = taskSession.task_items.map((item: { question_order?: number | null }) => ({ questionOrder: item.question_order || 0, status: 'GENERATING' as const }))
         emit('progress', { stage: 'searching', message: 'Mencari referensi sesuai kebutuhan sumber...', items })
         const query = `${body.course_name} ${body.module_book_title} ${body.questions.join(' ')} ${body.source_requirements || ''}`
         const [search, moduleMetadata] = await Promise.all([combinedSearch({ query, maxResults: 8 }), searchModuleMetadata(body.module_book_title, profile.university_name)])
@@ -100,11 +142,11 @@ export async function POST(request: NextRequest) {
         try { answers = parseBatchResponse(generated.text, body.questions.length) } catch (error) {
           const message = error instanceof Error ? error.message : 'Format respons AI tidak valid'
           await prisma.taskItem.updateMany({ where: { session_id: taskSession.id }, data: { status: 'FAILED' } })
-          emit('progress', { stage: 'failed', message, providerName: generated.providerName, model: generated.model, items: items.map((item) => ({ ...item, status: 'FAILED', error: message })) })
+          emit('progress', { stage: 'failed', message, providerName: generated.providerName, model: generated.model, items: items.map((item: { questionOrder: number }) => ({ ...item, status: 'FAILED', error: message })) })
           throw error
         }
         const statuses: Array<'COMPLETED' | 'FAILED'> = []
-        for (const item of taskSession.task_items) {
+        for (const item of taskSession.task_items as Array<{ id: string; question_order: number | null }>) {
           const answer = answers.find((value) => value.questionOrder === item.question_order)
           if (!answer) {
             await prisma.taskItem.update({ where: { id: item.id }, data: { status: 'FAILED' } })
@@ -113,7 +155,7 @@ export async function POST(request: NextRequest) {
             await prisma.taskItem.update({ where: { id: item.id }, data: { answer_text: answer.answer.trim(), references_used: answer.references?.length ? JSON.parse(JSON.stringify({ references: answer.references })) : undefined, status: 'COMPLETED' } })
             statuses.push('COMPLETED')
           }
-          const completedItems = taskSession.task_items.map((taskItem, index) => ({ questionOrder: taskItem.question_order || 0, status: statuses[index] || 'GENERATING' }))
+          const completedItems = (taskSession.task_items as Array<{ question_order: number | null }>).map((taskItem, index) => ({ questionOrder: taskItem.question_order || 0, status: statuses[index] || 'GENERATING' }))
           emit('progress', { stage: 'saving', message: 'Menyimpan hasil per soal...', providerName: generated.providerName, model: generated.model, items: completedItems })
         }
         await prisma.taskSession.update({ where: { id: taskSession.id }, data: { ai_provider_name: generated.providerName || null, ai_provider_type: generated.providerType || null, ai_model: generated.model || null } })
@@ -121,7 +163,13 @@ export async function POST(request: NextRequest) {
           prisma.user.update({ where: { id: session.user.id }, data: { weekly_usage_count: { increment: 1 }, week_start_date: weekStart } }),
           prisma.dailyUsageLog.create({ data: { user_id: session.user.id, session_id: taskSession.id, llm_tokens_used: generated.usage?.totalTokens || 0, tavily_calls: search.tavilyResults, exa_calls: search.exaResults, ai_provider_name: generated.providerName || null, ai_provider_type: generated.providerType || null, date: new Date() } }),
         ])
-        const saved = await prisma.taskItem.findMany({ where: { session_id: taskSession.id }, orderBy: { question_order: 'asc' } })
+        let saved: Awaited<ReturnType<typeof prisma.taskItem.findMany>>
+        try {
+          saved = await prisma.taskItem.findMany({ where: { session_id: taskSession.id }, orderBy: { question_order: 'asc' } })
+        } catch {
+          saved = await prisma.taskItem.findMany({ where: { session_id: taskSession.id }, orderBy: { created_at: 'asc' } })
+          saved = saved.map((item, index) => ({ ...item, question_order: index + 1 } as typeof item))
+        }
         const result = { sessionId: taskSession.id, answers: saved.map((item) => item.answer_text || ''), itemStatuses: saved.map((item) => item.status), references: [], providerName: generated.providerName, providerType: generated.providerType, model: generated.model }
         emit('progress', { stage: 'formatting', message: 'Menyusun format dokumen akhir...', providerName: generated.providerName, model: generated.model, items: saved.map((item) => ({ questionOrder: item.question_order || 0, status: item.status })) })
         emit('complete', { result })
